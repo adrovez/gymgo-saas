@@ -1,0 +1,50 @@
+# .azure-pipelines/cd-staging.yml
+# Pipeline CD Staging — GymGo SaaS
+# Se activa al mergear un PR hacia la rama develop.
+# Compila, aplica migraciones EF Core y despliega en SmarterASP.NET Staging via Web Deploy.
+
+trigger:
+  branches:
+    include:
+      - develop
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  publishFolder: '$(Build.ArtifactStagingDirectory)/publish'
+
+steps:
+
+  - task: UseDotNet@2
+    displayName: 'Instalar .NET 8 SDK'
+    inputs:
+      version: '8.0.x'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Restaurar y compilar'
+    inputs:
+      command: 'publish'
+      publishWebProjects: true
+      arguments: '--configuration $(buildConfiguration) --output $(publishFolder)'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Aplicar migraciones EF Core a Staging'
+    inputs:
+      command: 'custom'
+      custom: 'ef'
+      arguments: 'database update --project src/GymGo.Infrastructure --startup-project src/GymGo.API'
+    env:
+      ConnectionStrings__Default: $(STAGING_DB_CONN)
+
+  - task: WebDeploy@1
+    displayName: 'Deploy a SmarterASP.NET Staging'
+    inputs:
+      WebSiteName: 'gymgo-staging'
+      Package: '$(publishFolder)/**/*.zip'
+      RemoveAdditionalFilesFlag: true
+      AdditionalArguments: >
+        /u:$(SMARTERASP_USER_STAGING)
+        /p:$(SMARTERASP_PASS_STAGING)
+        /m:https://$(SMARTERASP_SERVER_STAGING):8172/MsDeploy.axd

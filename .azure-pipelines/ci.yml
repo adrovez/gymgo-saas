@@ -1,193 +1,54 @@
-# ============================================================
-#  GymGo SaaS — Pipeline de Integración Continua (CI)
-#  Disparador: Push o PR hacia main y develop
-# ============================================================
+# .azure-pipelines/ci.yml
+# Pipeline de Integracion Continua — GymGo SaaS
+# Se ejecuta automaticamente al abrir o actualizar un PR hacia develop o main.
+# Debe pasar obligatoriamente para poder completar el PR.
 
-trigger:
-  branches:
-    include:
-      - main
-      - develop
-      - feature/*
-      - fix/*
+trigger: none  # Solo se activa por Pull Requests, no por push directo
 
 pr:
   branches:
     include:
-      - main
       - develop
+      - main
 
-# ─────────────────────────────────────────
-#  Variables globales
-# ─────────────────────────────────────────
+pool:
+  vmImage: 'windows-latest'  # SQL Server se ejecuta en Windows
+
 variables:
   buildConfiguration: 'Release'
-  dotnetVersion: '8.x'
-  solutionPath: 'GymGo.sln'
-  # Connection string para SQL Server del agente (tests de integración)
-  integrationDbConnectionString: >-
-    Server=localhost,1433;
-    Database=GymGo_CI;
-    User Id=sa;
-    Password=$(SA_PASSWORD);
-    TrustServerCertificate=True;
 
-# ─────────────────────────────────────────
-#  Pool del agente
-# ─────────────────────────────────────────
-pool:
-  vmImage: 'ubuntu-latest'
+steps:
 
-# ─────────────────────────────────────────
-#  Stages
-# ─────────────────────────────────────────
-stages:
+  - task: UseDotNet@2
+    displayName: 'Instalar .NET 8 SDK'
+    inputs:
+      version: '8.0.x'
 
-  # ══════════════════════════════════════
-  #  STAGE 1 — Build & Análisis de código
-  # ══════════════════════════════════════
-  - stage: Build
-    displayName: '🔨 Build'
-    jobs:
-      - job: BuildSolution
-        displayName: 'Compilar solución'
-        steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'Restaurar dependencias'
+    inputs:
+      command: 'restore'
+      projects: '**/*.csproj'
 
-          - task: UseDotNet@2
-            displayName: 'Instalar .NET SDK $(dotnetVersion)'
-            inputs:
-              packageType: 'sdk'
-              version: '$(dotnetVersion)'
+  - task: DotNetCoreCLI@2
+    displayName: 'Compilar solucion'
+    inputs:
+      command: 'build'
+      projects: '**/*.csproj'
+      arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          - task: DotNetCoreCLI@2
-            displayName: 'Restaurar dependencias'
-            inputs:
-              command: 'restore'
-              projects: '$(solutionPath)'
+  - task: DotNetCoreCLI@2
+    displayName: 'Ejecutar tests unitarios'
+    inputs:
+      command: 'test'
+      projects: 'tests/GymGo.UnitTests/*.csproj'
+      arguments: '--configuration $(buildConfiguration) --no-build'
 
-          - task: DotNetCoreCLI@2
-            displayName: 'Compilar en modo $(buildConfiguration)'
-            inputs:
-              command: 'build'
-              projects: '$(solutionPath)'
-              arguments: '--configuration $(buildConfiguration) --no-restore'
-
-          # Publicar artefacto de build para stages posteriores
-          - task: DotNetCoreCLI@2
-            displayName: 'Publicar GymGo.API'
-            inputs:
-              command: 'publish'
-              publishWebProjects: false
-              projects: 'src/GymGo.API/GymGo.API.csproj'
-              arguments: '--configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)/api'
-              zipAfterPublish: true
-
-          - task: PublishBuildArtifacts@1
-            displayName: 'Subir artefacto: drop'
-            inputs:
-              pathToPublish: '$(Build.ArtifactStagingDirectory)'
-              artifactName: 'drop'
-
-  # ══════════════════════════════════════
-  #  STAGE 2 — Tests Unitarios
-  # ══════════════════════════════════════
-  - stage: UnitTests
-    displayName: '🧪 Unit Tests'
-    dependsOn: Build
-    jobs:
-      - job: RunUnitTests
-        displayName: 'Ejecutar tests unitarios (xUnit)'
-        steps:
-
-          - task: UseDotNet@2
-            displayName: 'Instalar .NET SDK $(dotnetVersion)'
-            inputs:
-              packageType: 'sdk'
-              version: '$(dotnetVersion)'
-
-          - task: DotNetCoreCLI@2
-            displayName: 'Restaurar dependencias'
-            inputs:
-              command: 'restore'
-              projects: '$(solutionPath)'
-
-          - task: DotNetCoreCLI@2
-            displayName: 'Ejecutar GymGo.UnitTests'
-            inputs:
-              command: 'test'
-              projects: 'tests/GymGo.UnitTests/GymGo.UnitTests.csproj'
-              arguments: >-
-                --configuration $(buildConfiguration)
-                --no-restore
-                --collect:"XPlat Code Coverage"
-                --results-directory $(Agent.TempDirectory)/coverage
-                --logger trx
-              publishTestResults: true
-
-          # Publicar reporte de cobertura de código
-          - task: PublishCodeCoverageResults@2
-            displayName: 'Publicar cobertura de código'
-            inputs:
-              summaryFileLocation: '$(Agent.TempDirectory)/coverage/**/coverage.cobertura.xml'
-              failIfCoverageEmpty: false
-
-  # ══════════════════════════════════════
-  #  STAGE 3 — Tests de Integración
-  # ══════════════════════════════════════
-  - stage: IntegrationTests
-    displayName: '🔗 Integration Tests'
-    dependsOn: UnitTests
-    # Solo corre en main y develop (no en feature branches)
-    condition: |
-      and(
-        succeeded(),
-        or(
-          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
-          eq(variables['Build.SourceBranch'], 'refs/heads/develop')
-        )
-      )
-    jobs:
-      - job: RunIntegrationTests
-        displayName: 'Ejecutar tests de integración con SQL Server'
-        services:
-          # Contenedor SQL Server para los tests de integración
-          sqlserver:
-            image: mcr.microsoft.com/mssql/server:2022-latest
-            env:
-              SA_PASSWORD: $(SA_PASSWORD)
-              ACCEPT_EULA: 'Y'
-              MSSQL_PID: 'Developer'
-            ports:
-              - 1433:1433
-            options: >-
-              --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -Q 'SELECT 1' -No"
-              --health-interval 10s
-              --health-timeout 5s
-              --health-retries 10
-
-        steps:
-
-          - task: UseDotNet@2
-            displayName: 'Instalar .NET SDK $(dotnetVersion)'
-            inputs:
-              packageType: 'sdk'
-              version: '$(dotnetVersion)'
-
-          - task: DotNetCoreCLI@2
-            displayName: 'Restaurar dependencias'
-            inputs:
-              command: 'restore'
-              projects: '$(solutionPath)'
-
-          - task: DotNetCoreCLI@2
-            displayName: 'Ejecutar GymGo.IntegrationTests'
-            inputs:
-              command: 'test'
-              projects: 'tests/GymGo.IntegrationTests/GymGo.IntegrationTests.csproj'
-              arguments: >-
-                --configuration $(buildConfiguration)
-                --no-restore
-                --logger trx
-            env:
-              # Inyectado como variable secreta en Azure DevOps
-              ConnectionStrings__DefaultConnection: $(integrationDbConnectionString)
+  - task: DotNetCoreCLI@2
+    displayName: 'Ejecutar tests de integracion'
+    inputs:
+      command: 'test'
+      projects: 'tests/GymGo.IntegrationTests/*.csproj'
+      arguments: '--configuration $(buildConfiguration)'
+    env:
+      ConnectionStrings__Default: $(STAGING_DB_CONN_TEST)
