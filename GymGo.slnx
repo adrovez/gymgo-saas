@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GymGo.API/GymGo.API.csproj" />
+    <Project Path="src/GymGo.Application/GymGo.Application.csproj" />
+    <Project Path="src/GymGo.Domain/GymGo.Domain.csproj" />
+    <Project Path="src/GymGo.Infrastructure/GymGo.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GymGo.IntegrationTests/GymGo.IntegrationTests.csproj" />
+    <Project Path="tests/GymGo.UnitTests/GymGo.UnitTests.csproj" />
+  </Folder>
+</Solution>
