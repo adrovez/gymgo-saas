@@ -1,0 +1,354 @@
+<!-- Member edit page -->
+<div class="p-6 max-w-3xl mx-auto space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Editar socio</h1>
+      @if (member(); as m) {
+        <p class="page-description">{{ m.fullName }} · RUT {{ m.rut }}</p>
+      } @else {
+        <p class="page-description">Modifica los datos del socio.</p>
+      }
+    </div>
+    <a routerLink="/app/members" class="btn btn-secondary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver
+    </a>
+  </div>
+
+  <!-- Loading del socio -->
+  @if (loadingMember()) {
+    <div class="card p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+      <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+      <span class="text-sm">Cargando datos del socio...</span>
+    </div>
+
+  } @else if (errorLoad()) {
+    <!-- Error al cargar -->
+    <div class="card p-8 flex flex-col items-center gap-4 text-center">
+      <div class="alert alert-error w-full" role="alert">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"/>
+        </svg>
+        <span>{{ errorLoad() }}</span>
+      </div>
+      <a routerLink="/app/members" class="btn btn-secondary btn-sm">Volver a la lista</a>
+    </div>
+
+  } @else {
+
+    <!-- ── Formulario de datos (PUT) ─────────────────────────── -->
+    <div class="card">
+
+      <!-- Error banner de submit -->
+      @if (error()) {
+        <div class="alert alert-error mb-6" role="alert">
+          <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"/>
+          </svg>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-8">
+
+        <!-- ── Datos personales ─────────────────────────────────── -->
+        <fieldset class="space-y-5">
+          <legend class="text-sm font-semibold pb-2 w-full"
+                  style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+            Datos personales
+          </legend>
+
+          <!-- Nombre / Apellido -->
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="firstName" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Nombre <span style="color: var(--color-error)" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="firstName"
+                type="text"
+                formControlName="firstName"
+                autocomplete="given-name"
+                class="input w-full"
+                [class.input-error]="isInvalid('firstName')"
+                aria-describedby="firstName-error"
+                aria-required="true"
+              />
+              @if (isInvalid('firstName')) {
+                <p id="firstName-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+                  El nombre es obligatorio.
+                </p>
+              }
+            </div>
+            <div>
+              <label for="lastName" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Apellido <span style="color: var(--color-error)" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="lastName"
+                type="text"
+                formControlName="lastName"
+                autocomplete="family-name"
+                class="input w-full"
+                [class.input-error]="isInvalid('lastName')"
+                aria-describedby="lastName-error"
+                aria-required="true"
+              />
+              @if (isInvalid('lastName')) {
+                <p id="lastName-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+                  El apellido es obligatorio.
+                </p>
+              }
+            </div>
+          </div>
+
+          <!-- Fecha de nacimiento / Género -->
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="birthDate" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Fecha de nacimiento <span style="color: var(--color-error)" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="birthDate"
+                type="date"
+                formControlName="birthDate"
+                class="input w-full"
+                [class.input-error]="isInvalid('birthDate')"
+                aria-required="true"
+              />
+              @if (isInvalid('birthDate')) {
+                <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+                  La fecha de nacimiento es obligatoria.
+                </p>
+              }
+            </div>
+            <div>
+              <label for="gender" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Género
+              </label>
+              <select id="gender" formControlName="gender" class="input w-full">
+                @for (g of genderOptions; track g.value) {
+                  <option [ngValue]="g.value">{{ g.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- ── Contacto ─────────────────────────────────────────── -->
+        <fieldset class="space-y-5">
+          <legend class="text-sm font-semibold pb-2 w-full"
+                  style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+            Contacto
+          </legend>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="email" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Email <span style="color: var(--color-error)" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                class="input w-full"
+                [class.input-error]="isInvalid('email')"
+                aria-describedby="email-error"
+                aria-required="true"
+              />
+              @if (hasError('email', 'required')) {
+                <p id="email-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+                  El email es obligatorio.
+                </p>
+              } @else if (hasError('email', 'email')) {
+                <p id="email-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+                  Ingresa un email válido.
+                </p>
+              }
+            </div>
+            <div>
+              <label for="phone" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Teléfono / Celular <span style="color: var(--color-error)" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                formControlName="phone"
+                autocomplete="tel"
+                class="input w-full"
+                [class.input-error]="isInvalid('phone')"
+                aria-describedby="phone-error"
+                aria-required="true"
+              />
+              @if (hasError('phone', 'required')) {
+                <p id="phone-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+                  El teléfono es obligatorio.
+                </p>
+              }
+            </div>
+          </div>
+
+          <div>
+            <label for="address" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+              Dirección <span style="color: var(--color-error)" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="address"
+              type="text"
+              formControlName="address"
+              autocomplete="street-address"
+              class="input w-full"
+              [class.input-error]="isInvalid('address')"
+              aria-describedby="address-error"
+              aria-required="true"
+            />
+            @if (hasError('address', 'required')) {
+              <p id="address-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+                La dirección es obligatoria.
+              </p>
+            }
+          </div>
+        </fieldset>
+
+        <!-- ── Contacto de emergencia ──────────────────────────── -->
+        <fieldset class="space-y-5">
+          <legend class="text-sm font-semibold pb-2 w-full"
+                  style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+            Contacto de emergencia
+          </legend>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="emergencyContactName" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Nombre del contacto
+              </label>
+              <input
+                id="emergencyContactName"
+                type="text"
+                formControlName="emergencyContactName"
+                class="input w-full"
+              />
+            </div>
+            <div>
+              <label for="emergencyContactPhone" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Teléfono del contacto
+              </label>
+              <input
+                id="emergencyContactPhone"
+                type="tel"
+                formControlName="emergencyContactPhone"
+                class="input w-full"
+              />
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- ── Observaciones ─────────────────────────────────────── -->
+        <fieldset class="space-y-5">
+          <legend class="text-sm font-semibold pb-2 w-full"
+                  style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+            Observaciones
+          </legend>
+
+          <div>
+            <label for="notes" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+              Notas internas
+            </label>
+            <textarea
+              id="notes"
+              formControlName="notes"
+              rows="4"
+              class="input w-full resize-none"
+              aria-describedby="notes-hint"
+            ></textarea>
+            <p id="notes-hint" class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">
+              Máx. 1000 caracteres. Solo visible para el staff.
+            </p>
+          </div>
+        </fieldset>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3 pt-1">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">
+            @if (loading()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Guardando...</span>
+            } @else {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Guardar cambios
+            }
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- ── Cambiar estado (PATCH) ───────────────────── -->
+    <div class="card">
+      <h2 class="text-base font-semibold mb-1" style="color: var(--color-foreground)">Estado del socio</h2>
+      <p class="text-sm mb-5" style="color: var(--color-muted-fg)">
+        Cambia el estado operacional. El RUT no puede modificarse.
+      </p>
+
+      @if (successStatus()) {
+        <div class="alert alert-success mb-5" role="status">
+          <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"/>
+          </svg>
+          <span>Estado actualizado correctamente.</span>
+        </div>
+      }
+
+      @if (errorStatus()) {
+        <div class="alert alert-error mb-5" role="alert">
+          <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"/>
+          </svg>
+          <span>{{ errorStatus() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="statusForm" (ngSubmit)="onChangeStatus()" novalidate
+            class="flex flex-wrap items-end gap-4">
+        <div class="flex-1 min-w-48">
+          <label for="newStatus" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Nuevo estado
+          </label>
+          <select id="newStatus" formControlName="newStatus" class="input w-full">
+            @for (s of statusOptions; track s.value) {
+              <option [ngValue]="s.value">{{ s.label }}</option>
+            }
+          </select>
+        </div>
+        <button type="submit" class="btn btn-secondary" [disabled]="loadingStatus()">
+          @if (loadingStatus()) {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Aplicando...</span>
+          } @else {
+            Cambiar estado
+          }
+        </button>
+      </form>
+    </div>
+
+  }
+
+</div>

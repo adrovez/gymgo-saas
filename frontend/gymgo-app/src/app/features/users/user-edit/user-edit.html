@@ -1,0 +1,265 @@
+<!-- Edit user page -->
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Editar usuario</h1>
+      <p class="page-description">Modifica los datos del usuario.</p>
+    </div>
+    <a routerLink="/app/users" class="btn btn-secondary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver
+    </a>
+  </div>
+
+  <!-- ── Datos generales ──────────────────────────────────────────────────── -->
+  <div class="card">
+    <h2 class="text-base font-semibold mb-5" style="color: var(--color-foreground)">Datos generales</h2>
+
+    <!-- Error banner -->
+    @if (error()) {
+      <div class="alert alert-error mb-5" role="alert">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"/>
+        </svg>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-5">
+
+      <!-- Nombre completo -->
+      <div>
+        <label for="fullName" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Nombre completo <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="fullName"
+          type="text"
+          formControlName="fullName"
+          autocomplete="name"
+          placeholder="Ej. María García"
+          class="input w-full"
+          [class.input-error]="isInvalid('fullName')"
+          aria-describedby="fullName-error"
+          aria-required="true"
+        />
+        @if (isInvalid('fullName')) {
+          <p id="fullName-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+            El nombre es obligatorio (mín. 2 caracteres).
+          </p>
+        }
+      </div>
+
+      <!-- Rol -->
+      <div>
+        <label for="role" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Rol <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <select
+          id="role"
+          formControlName="role"
+          class="input w-full"
+          [class.input-error]="isInvalid('role')"
+          aria-required="true"
+        >
+          @for (r of assignableRoles; track r.value) {
+            <option [value]="r.value">{{ r.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Estado activo -->
+      <div>
+        <label class="block text-sm font-medium mb-2" style="color: var(--color-foreground)">Estado</label>
+        <label class="flex items-center gap-3 cursor-pointer w-fit">
+          <input
+            type="checkbox"
+            formControlName="isActive"
+            class="w-4 h-4 rounded accent-blue-600"
+            aria-label="Usuario activo"
+          />
+          <span class="text-sm" style="color: var(--color-foreground)">Usuario activo</span>
+        </label>
+        <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">
+          Los usuarios inactivos no pueden iniciar sesión.
+        </p>
+      </div>
+
+      <!-- Divider -->
+      <hr style="border-color: var(--color-border)"/>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-3 pt-1">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Guardando...</span>
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Guardar cambios
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ── Cambio de contraseña ─────────────────────────────────────────────── -->
+  <div class="card">
+    <h2 class="text-base font-semibold mb-1" style="color: var(--color-foreground)">Cambiar contraseña</h2>
+    <p class="text-sm mb-5" style="color: var(--color-muted-fg)">
+      La nueva contraseña reemplazará la actual inmediatamente.
+    </p>
+
+    <!-- Error banner -->
+    @if (errorPassword()) {
+      <div class="alert alert-error mb-5" role="alert">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"/>
+        </svg>
+        <span>{{ errorPassword() }}</span>
+      </div>
+    }
+
+    <!-- Success banner -->
+    @if (successPassword()) {
+      <div class="alert alert-success mb-5" role="status">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clip-rule="evenodd"/>
+        </svg>
+        <span>Contraseña actualizada correctamente.</span>
+      </div>
+    }
+
+    <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" novalidate class="space-y-5">
+
+      <!-- Nueva contraseña -->
+      <div>
+        <label for="newPassword" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Nueva contraseña <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <div class="relative">
+          <input
+            id="newPassword"
+            [type]="showNewPassword() ? 'text' : 'password'"
+            formControlName="newPassword"
+            autocomplete="new-password"
+            placeholder="Mínimo 6 caracteres"
+            class="input w-full pr-11"
+            [class.input-error]="isPasswordInvalid('newPassword')"
+            aria-describedby="newPassword-error"
+            aria-required="true"
+          />
+          <button
+            type="button"
+            (click)="showNewPassword.update(v => !v)"
+            class="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded transition-colors"
+            style="color: var(--color-muted-fg)"
+            [attr.aria-label]="showNewPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            tabindex="-1"
+          >
+            @if (showNewPassword()) {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+              </svg>
+            } @else {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            }
+          </button>
+        </div>
+        @if (isPasswordInvalid('newPassword')) {
+          <p id="newPassword-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+            La contraseña debe tener al menos 6 caracteres.
+          </p>
+        }
+      </div>
+
+      <!-- Confirmar contraseña -->
+      <div>
+        <label for="confirmPassword" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Confirmar contraseña <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <div class="relative">
+          <input
+            id="confirmPassword"
+            [type]="showConfirmPassword() ? 'text' : 'password'"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            placeholder="Repite la contraseña"
+            class="input w-full pr-11"
+            [class.input-error]="isPasswordInvalid('confirmPassword')"
+            aria-describedby="confirmPassword-error"
+            aria-required="true"
+          />
+          <button
+            type="button"
+            (click)="showConfirmPassword.update(v => !v)"
+            class="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded transition-colors"
+            style="color: var(--color-muted-fg)"
+            [attr.aria-label]="showConfirmPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            tabindex="-1"
+          >
+            @if (showConfirmPassword()) {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+              </svg>
+            } @else {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            }
+          </button>
+        </div>
+        @if (isPasswordInvalid('confirmPassword')) {
+          <p id="confirmPassword-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+            Este campo es obligatorio.
+          </p>
+        }
+      </div>
+
+      <!-- Divider -->
+      <hr style="border-color: var(--color-border)"/>
+
+      <!-- Action -->
+      <div class="flex justify-end">
+        <button type="submit" class="btn btn-secondary" [disabled]="loadingPassword()">
+          @if (loadingPassword()) {
+            <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)" aria-hidden="true"></span>
+            <span>Actualizando...</span>
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+            </svg>
+            Cambiar contraseña
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

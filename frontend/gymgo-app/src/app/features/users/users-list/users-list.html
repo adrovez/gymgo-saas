@@ -1,0 +1,182 @@
+<!-- Users list page -->
+<div class="p-6 space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Usuarios</h1>
+      <p class="page-description">Gestión de usuarios del gimnasio</p>
+    </div>
+    <a routerLink="/app/users/new" class="btn btn-primary">
+      <!-- Plus icon -->
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nuevo usuario
+    </a>
+  </div>
+
+  <!-- Filters bar -->
+  <div class="card p-4">
+    <div class="flex flex-wrap gap-3">
+      <!-- Search -->
+      <div class="relative flex-1 min-w-56">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+             style="color: var(--color-muted-fg)"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+        </svg>
+        <input
+          type="search"
+          placeholder="Buscar por nombre o email..."
+          class="input pl-9"
+          (input)="onSearch($any($event.target).value)"
+          aria-label="Buscar usuarios"
+        />
+      </div>
+
+      <!-- Role filter -->
+      <select
+        class="input w-auto"
+        (change)="onRoleFilterChange($any($event.target).value)"
+        aria-label="Filtrar por rol"
+      >
+        <option value="">Todos los roles</option>
+        @for (r of assignableRoles; track r.value) {
+          <option [value]="r.value">{{ r.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Table card -->
+  <div class="card p-0 overflow-hidden">
+    @if (loading()) {
+      <!-- Skeleton -->
+      <div class="p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+        <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+        <span class="text-sm">Cargando usuarios...</span>
+      </div>
+    } @else if (users().length === 0) {
+      <!-- Empty state -->
+      <div class="p-12 flex flex-col items-center gap-3 text-center">
+        <svg class="w-10 h-10" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <p class="text-sm font-medium" style="color: var(--color-foreground)">Sin usuarios</p>
+        <p class="text-sm" style="color: var(--color-muted-fg)">Crea el primer usuario para comenzar.</p>
+        <a routerLink="/app/users/new" class="btn btn-primary btn-sm mt-2">Nuevo usuario</a>
+      </div>
+    } @else {
+      <!-- Data table -->
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th class="cell-center">Estado</th>
+              <th>Último acceso</th>
+              <th class="cell-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.id) {
+              <tr>
+                <!-- Nombre -->
+                <td>
+                  <div class="flex items-center gap-3">
+                    <!-- Avatar inicial -->
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                         style="background: var(--color-primary-subtle); color: var(--color-primary)">
+                      {{ user.fullName.charAt(0).toUpperCase() }}
+                    </div>
+                    <span class="font-medium">{{ user.fullName }}</span>
+                  </div>
+                </td>
+
+                <!-- Email -->
+                <td style="color: var(--color-muted-fg)">{{ user.email }}</td>
+
+                <!-- Rol -->
+                <td>
+                  <span class="badge badge-active" style="background: var(--color-primary-subtle); color: var(--color-primary); border-color: var(--color-blue-200)">
+                    {{ roleLabels[user.role] }}
+                  </span>
+                </td>
+
+                <!-- Estado -->
+                <td class="cell-center">
+                  @if (user.isActive) {
+                    <span class="badge badge-active">Activo</span>
+                  } @else {
+                    <span class="badge badge-delinquent">Inactivo</span>
+                  }
+                </td>
+
+                <!-- Último acceso -->
+                <td style="color: var(--color-muted-fg); font-size: 0.8125rem">
+                  @if (user.lastLoginUtc) {
+                    {{ user.lastLoginUtc | slice:0:10 }}
+                  } @else {
+                    <span style="color: var(--color-muted-fg); font-style: italic">Nunca</span>
+                  }
+                </td>
+
+                <!-- Acciones -->
+                <td class="cell-actions">
+                  <div class="flex items-center justify-end gap-1">
+                    <!-- Editar -->
+                    <a
+                      [routerLink]="['/app/users', user.id, 'edit']"
+                      class="btn btn-ghost btn-sm"
+                      aria-label="Editar usuario"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                      </svg>
+                    </a>
+
+                    <!-- Activar / Desactivar -->
+                    @if (user.isActive) {
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        (click)="deactivateUser(user)"
+                        aria-label="Desactivar usuario"
+                        style="color: var(--color-warning)"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                        </svg>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        (click)="activateUser(user)"
+                        aria-label="Activar usuario"
+                        style="color: var(--color-success)"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+</div>
