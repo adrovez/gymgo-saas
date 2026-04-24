@@ -1,41 +1,99 @@
-var builder = WebApplication.CreateBuilder(args);
+using GymGo.API.Endpoints;
+using GymGo.API.Extensions;
+using GymGo.API.Middleware;
+using GymGo.Application;
+using GymGo.Infrastructure;
+using GymGo.Infrastructure.Persistence;
+using Serilog;
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// ──────────────────────────────────────────────────────────────────────
+// 1. BOOTSTRAP LOGGER (antes que builder, por si falla la configuración)
+// ──────────────────────────────────────────────────────────────────────
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+try
 {
-    app.MapOpenApi();
+    Log.Information("Iniciando GymGo.API...");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // ──────────────────────────────────────────────────────────────────
+    // 2. SERILOG (lee de appsettings.json -> "Serilog")
+    // ──────────────────────────────────────────────────────────────────
+    builder.Host.UseSerilog((ctx, services, cfg) =>
+    {
+        cfg.ReadFrom.Configuration(ctx.Configuration)
+           .ReadFrom.Services(services)
+           .Enrich.FromLogContext();
+    });
+
+    // ──────────────────────────────────────────────────────────────────
+    // 3. SERVICIOS
+    // ──────────────────────────────────────────────────────────────────
+    builder.Services
+        .AddApplication()
+        .AddInfrastructure(builder.Configuration)
+        .AddJwtAuthentication(builder.Configuration)
+        .AddGymGoCors(builder.Configuration)
+        .AddSwaggerWithJwt();
+
+    builder.Services.AddControllers();
+    builder.Services.AddProblemDetails();
+    builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+    builder.Services.AddHealthChecks()
+        .AddSqlServer(
+            builder.Configuration.GetConnectionString("DefaultConnection")!,
+            name: "sqlserver",
+            tags: new[] { "db", "ready" },
+            failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded);
+
+    var app = builder.Build();
+
+    // ──────────────────────────────────────────────────────────────────
+    // 4. PIPELINE
+    // ──────────────────────────────────────────────────────────────────
+    app.UseExceptionHandler();
+    app.UseSerilogRequestLogging();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(opts =>
+        {
+            opts.SwaggerEndpoint("/swagger/v1/swagger.json", "GymGo API v1");
+            opts.RoutePrefix = "swagger";
+        });
+    }
+
+    app.UseHttpsRedirection();
+    app.UseCors(CorsExtensions.PolicyName);
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.UseMiddleware<TenantResolutionMiddleware>();
+
+    app.MapHealthEndpoints();
+    app.MapAuthEndpoints();
+    app.MapMemberEndpoints();
+    app.MapMembershipPlanEndpoints();
+    app.MapMembershipAssignmentEndpoints();
+    app.MapControllers();
+
+    Log.Information("GymGo.API listo. Escuchando...");
+    app.Run();
+}
+catch (Exception ex) when (ex is not HostAbortedException)
+{
+    Log.Fatal(ex, "GymGo.API falló al iniciar.");
+}
+finally
+{
+    Log.CloseAndFlush();
 }
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+// Hace Program público para WebApplicationFactory<Program> en tests.
+public partial class Program { }

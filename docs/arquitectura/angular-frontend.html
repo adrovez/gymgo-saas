@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GymGo — Arquitectura Angular Frontend</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8fafc;color:#0f172a;line-height:1.6}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+nav{background:#1e293b;color:#94a3b8;padding:1.5rem 1rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+nav h2{color:#f8fafc;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;margin-top:1.25rem}
+nav h2:first-child{margin-top:0}
+nav a{display:block;color:#94a3b8;text-decoration:none;font-size:.82rem;padding:.3rem .5rem;border-radius:.375rem;transition:background .1s}
+nav a:hover,nav a.active{background:#334155;color:#f1f5f9}
+main{padding:2rem 2.5rem;max-width:900px}
+h1{font-size:1.75rem;font-weight:700;color:#1e3a8a;border-bottom:3px solid #2563eb;padding-bottom:.5rem;margin-bottom:.25rem}
+.meta{color:#64748b;font-size:.85rem;margin-bottom:2rem}
+h2{font-size:1.2rem;font-weight:700;color:#1e293b;margin:2rem 0 .75rem;padding-left:.75rem;border-left:3px solid #2563eb}
+h3{font-size:1rem;font-weight:600;color:#334155;margin:1.25rem 0 .4rem}
+p{color:#475569;margin-bottom:.75rem;font-size:.9rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:1rem}
+th{background:#f1f5f9;text-align:left;padding:.5rem .75rem;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e2e8f0}
+td{padding:.5rem .75rem;border-bottom:1px solid #e2e8f0;color:#334155;vertical-align:top}
+tr:last-child td{border-bottom:none}
+td:first-child{font-weight:600;white-space:nowrap;color:#1e293b}
+code{font-family:'Cascadia Code','Fira Code',monospace;background:#f1f5f9;padding:.1rem .35rem;border-radius:.25rem;font-size:.82rem;color:#2563eb}
+pre{background:#1e293b;color:#e2e8f0;padding:1rem 1.25rem;border-radius:.5rem;font-size:.8rem;overflow-x:auto;margin:.75rem 0 1rem;line-height:1.7}
+pre .c{color:#64748b} pre .k{color:#60a5fa} pre .s{color:#86efac} pre .n{color:#fbbf24}
+.badge{display:inline-block;padding:.1rem .5rem;border-radius:99px;font-size:.7rem;font-weight:600;margin-right:.25rem}
+.b-blue{background:#dbeafe;color:#1e40af} .b-green{background:#dcfce7;color:#15803d}
+.b-amber{background:#fef3c7;color:#b45309} .b-slate{background:#f1f5f9;color:#475569}
+.tree{font-family:monospace;font-size:.82rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:.5rem;padding:1rem 1.25rem;line-height:1.9;color:#334155}
+.tree .dir{color:#2563eb;font-weight:600} .tree .file{color:#475569}
+.tree .comment{color:#94a3b8}
+.flow{display:flex;gap:.5rem;flex-wrap:wrap;margin:.75rem 0 1rem;align-items:center}
+.step{background:#dbeafe;color:#1e40af;padding:.35rem .75rem;border-radius:.375rem;font-size:.82rem;font-weight:600}
+.arrow{color:#94a3b8;font-size:.9rem}
+.section{margin-bottom:2.5rem}
+.highlight{background:#eff6ff;border-left:3px solid #2563eb;padding:.75rem 1rem;border-radius:0 .5rem .5rem 0;font-size:.85rem;color:#1e40af;margin:.75rem 0}
+@media(max-width:700px){.layout{grid-template-columns:1fr}nav{display:none}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR NAV -->
+<nav>
+  <h2>Arquitectura</h2>
+  <a href="#stack">Stack tecnológico</a>
+  <a href="#patron">Patrón arquitectónico</a>
+  <a href="#estructura">Estructura de archivos</a>
+  <h2>Módulos</h2>
+  <a href="#core">Core</a>
+  <a href="#auth">Auth (Login)</a>
+  <a href="#shell">Shell Layout</a>
+  <a href="#dashboard">Dashboard</a>
+  <h2>Técnico</h2>
+  <a href="#tokens">Design Tokens</a>
+  <a href="#flujo">Flujo de autenticación</a>
+  <a href="#rutas">Rutas</a>
+  <a href="#interceptor">Interceptor HTTP</a>
+  <a href="#proximos">Próximos módulos</a>
+  <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #334155">
+    <a href="../index.html" style="color:#60a5fa">← Volver al índice</a>
+  </div>
+</nav>
+
+<!-- CONTENT -->
+<main>
+  <h1>Arquitectura Angular — GymGo Frontend</h1>
+  <p class="meta">Versión 1.0 · Abril 2026 · Angular 21 · Tailwind CSS v4</p>
+
+  <!-- STACK -->
+  <div class="section" id="stack">
+    <h2>Stack Tecnológico</h2>
+    <table>
+      <tr><th>Tecnología</th><th>Versión</th><th>Rol</th></tr>
+      <tr><td>Angular</td><td>21.2.0</td><td>Framework SPA principal</td></tr>
+      <tr><td>TypeScript</td><td>~5.9</td><td>Lenguaje tipado</td></tr>
+      <tr><td>Tailwind CSS</td><td>v4.1</td><td>Utilidades CSS + design tokens vía <code>@theme</code></td></tr>
+      <tr><td>RxJS</td><td>~7.8</td><td>Streams reactivos (HTTP, eventos)</td></tr>
+      <tr><td>Angular Signals</td><td>built-in</td><td>Estado reactivo local y global</td></tr>
+      <tr><td>Angular Router</td><td>built-in</td><td>Navegación lazy-loaded</td></tr>
+      <tr><td>ReactiveForms</td><td>built-in</td><td>Formularios validados</td></tr>
+    </table>
+  </div>
+
+  <!-- PATRÓN -->
+  <div class="section" id="patron">
+    <h2>Patrón Arquitectónico</h2>
+    <p>La app sigue una arquitectura <strong>Feature-Based</strong> con separación estricta entre infraestructura reutilizable (<code>core/</code>) y módulos de negocio (<code>features/</code>). Todos los componentes son <strong>standalone</strong> (sin NgModules). El estado se maneja con <strong>Angular Signals</strong> en lugar de NgRx para mantener la simplicidad.</p>
+    <div class="highlight">Principio clave: <code>core/</code> no importa nada de <code>features/</code>. Los features pueden importar de core pero no entre sí.</div>
+  </div>
+
+  <!-- ESTRUCTURA -->
+  <div class="section" id="estructura">
+    <h2>Estructura de Archivos</h2>
+    <div class="tree">
+<span class="dir">src/app/</span>
+├── <span class="dir">core/</span>                    <span class="comment"># Infraestructura reutilizable</span>
+│   ├── <span class="dir">models/</span>
+│   │   └── <span class="file">auth.models.ts</span>       <span class="comment"># LoginRequest, LoginResponse, AuthSession, UserRole</span>
+│   ├── <span class="dir">services/</span>
+│   │   ├── <span class="file">auth.service.ts</span>      <span class="comment"># Signals: _session, isAuthenticated, currentUser</span>
+│   │   └── <span class="file">storage.service.ts</span>   <span class="comment"># localStorage wrapper — clave: gymgo_session</span>
+│   ├── <span class="dir">interceptors/</span>
+│   │   └── <span class="file">auth.interceptor.ts</span>  <span class="comment"># Agrega Authorization + X-Tenant-Id a cada request</span>
+│   └── <span class="dir">guards/</span>
+│       └── <span class="file">auth.guard.ts</span>        <span class="comment"># Redirige a /login si no autenticado</span>
+│
+├── <span class="dir">features/</span>                 <span class="comment"># Módulos de negocio (lazy-loaded)</span>
+│   ├── <span class="dir">auth/login/</span>
+│   │   ├── <span class="file">login.ts</span>             <span class="comment"># Signals: loading, error, showPassword</span>
+│   │   └── <span class="file">login.html</span>
+│   └── <span class="dir">shell/</span>
+│       ├── <span class="file">shell.ts</span>             <span class="comment"># Signal: sidebarOpen</span>
+│       ├── <span class="file">shell.html</span>
+│       └── <span class="dir">components/</span>
+│           ├── <span class="dir">sidebar/</span>           <span class="comment"># NavItems, logout, user avatar</span>
+│           └── <span class="dir">navbar/</span>            <span class="comment"># Hamburger (mobile), rol del usuario</span>
+│
+├── <span class="file">app.config.ts</span>             <span class="comment"># provideRouter, provideHttpClient, withInterceptors</span>
+├── <span class="file">app.routes.ts</span>             <span class="comment"># Rutas raíz con lazy loading</span>
+└── <span class="file">app.ts</span>                    <span class="comment"># Componente raíz con &lt;router-outlet&gt;</span>
+
+<span class="dir">src/</span>
+├── <span class="file">styles.scss</span>               <span class="comment"># Design tokens 3 capas + @layer components</span>
+└── <span class="dir">environments/</span>
+    └── <span class="file">environment.ts</span>          <span class="comment"># apiUrl: http://localhost:5126/api/v1</span>
+    </div>
+  </div>
+
+  <!-- CORE -->
+  <div class="section" id="core">
+    <h2>Módulo Core</h2>
+
+    <h3>auth.models.ts</h3>
+    <table>
+      <tr><th>Elemento</th><th>Descripción</th></tr>
+      <tr><td><code>UserRole</code></td><td>Enum: PlatformAdmin(0), GymOwner(1), GymStaff(2), Instructor(3), Member(4)</td></tr>
+      <tr><td><code>LoginRequest</code></td><td>email, password</td></tr>
+      <tr><td><code>LoginResponse</code></td><td>token, expiresAtUtc, userId, fullName, email, role, tenantId</td></tr>
+      <tr><td><code>AuthSession</code></td><td>Alias de LoginResponse — persiste en localStorage</td></tr>
+    </table>
+
+    <h3>storage.service.ts</h3>
+    <p>Wrapper de <code>localStorage</code>. Clave de sesión: <code>gymgo_session</code>. Métodos: <code>getSession()</code>, <code>saveSession()</code>, <code>clearSession()</code>, <code>getToken()</code>, <code>getTenantId()</code>, <code>isTokenValid()</code> (verifica <code>expiresAtUtc</code>).</p>
+
+    <h3>auth.service.ts</h3>
+    <pre><span class="c">// Estado reactivo con Angular Signals</span>
+<span class="k">private</span> _session = <span class="n">signal</span>&lt;AuthSession | null&gt;(storage.getSession());
+
+isAuthenticated = <span class="n">computed</span>(() => !!this._session() && storage.isTokenValid());
+currentUser     = <span class="n">computed</span>(() => this._session());
+
+<span class="c">// Login: POST /auth/login → tap() guarda en storage + actualiza signal</span>
+<span class="c">// Logout: clearSession() → signal(null) → router.navigate(['/login'])</span></pre>
+
+    <h3>auth.interceptor.ts — HttpInterceptorFn</h3>
+    <p>Inyectado en <code>provideHttpClient(withInterceptors([authInterceptor]))</code>. Clona cada request agregando:</p>
+    <pre><span class="k">Authorization</span>: <span class="s">Bearer &lt;token&gt;</span>
+<span class="k">X-Tenant-Id</span>: <span class="s">&lt;tenantId&gt;</span>   <span class="c">// solo si el rol no es PlatformAdmin</span></pre>
+
+    <h3>auth.guard.ts — CanActivateFn</h3>
+    <pre><span class="k">return</span> auth.isAuthenticated()
+  ? <span class="n">true</span>
+  : router.<span class="n">createUrlTree</span>([<span class="s">'/login'</span>]);</pre>
+  </div>
+
+  <!-- AUTH -->
+  <div class="section" id="auth">
+    <h2>Feature: Auth / Login</h2>
+    <p>Componente standalone con <code>ReactiveFormsModule</code>. Usa <code>FormBuilder.nonNullable</code> para evitar nulls en los valores.</p>
+    <table>
+      <tr><th>Campo</th><th>Validación</th></tr>
+      <tr><td><code>email</code></td><td>required, email</td></tr>
+      <tr><td><code>password</code></td><td>required, minLength(6)</td></tr>
+      <tr><td><code>tenantId</code></td><td>opcional — requerido para roles que no son PlatformAdmin</td></tr>
+    </table>
+    <p>Signals locales: <code>loading</code>, <code>error</code>, <code>showPassword</code>. El campo tenantId se almacena en localStorage vía <code>AuthService.login()</code> y el interceptor lo inyecta en cada request posterior.</p>
+  </div>
+
+  <!-- SHELL -->
+  <div class="section" id="shell">
+    <h2>Feature: Shell Layout</h2>
+    <p>Contenedor principal post-login. Compuesto por tres partes:</p>
+    <table>
+      <tr><th>Componente</th><th>Responsabilidad</th></tr>
+      <tr><td><code>ShellComponent</code></td><td>Signal <code>sidebarOpen</code>, layout flex con sidebar + main. Sidebar desktop siempre visible (lg+), mobile como overlay con backdrop.</td></tr>
+      <tr><td><code>SidebarComponent</code></td><td>Logo GymGo, nav items con <code>routerLinkActive="sidebar-nav-active"</code>, avatar de usuario, botón logout. Output: <code>closeMobile</code>.</td></tr>
+      <tr><td><code>NavbarComponent</code></td><td>Botón hamburger (solo mobile), nombre y rol del usuario. Output: <code>toggleSidebar</code>.</td></tr>
+    </table>
+    <p>Ancho del sidebar: <code>var(--sidebar-width): 16rem</code>. Altura del navbar: <code>var(--navbar-height): 3.5rem</code>.</p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="section" id="dashboard">
+    <h2>Feature: Dashboard</h2>
+    <p>Placeholder actual — ruta <code>/app/dashboard</code> lazy-loaded. Muestra tarjetas de métricas básicas. Pendiente conectar con endpoints de la API.</p>
+  </div>
+
+  <!-- DESIGN TOKENS -->
+  <div class="section" id="tokens">
+    <h2>Design System — 3 Capas de Tokens</h2>
+    <p>Definido en <code>src/styles.scss</code>. Arquitectura de tokens en tres niveles:</p>
+    <table>
+      <tr><th>Capa</th><th>Directiva CSS</th><th>Ejemplo</th><th>Uso</th></tr>
+      <tr><td><strong>1. Primitivos</strong></td><td><code>@theme {}</code></td><td><code>--color-blue-600: #2563eb</code></td><td>Nunca usar directamente en componentes</td></tr>
+      <tr><td><strong>2. Semánticos</strong></td><td><code>:root {}</code></td><td><code>--color-primary: var(--color-blue-600)</code></td><td>Usar en componentes para colores con propósito</td></tr>
+      <tr><td><strong>3. Componentes</strong></td><td><code>:root {}</code></td><td><code>--btn-height-md: 2.5rem</code></td><td>Tamaños y espaciado específicos por componente</td></tr>
+    </table>
+    <h3>Clases utilitarias (@layer components)</h3>
+    <p>
+      <span class="badge b-blue">.btn .btn-primary/secondary/ghost/destructive</span>
+      <span class="badge b-blue">.btn-sm .btn-lg</span>
+      <span class="badge b-green">.input .input-error</span>
+      <span class="badge b-green">.card .card-interactive</span>
+      <span class="badge b-amber">.badge-active/suspended/delinquent</span>
+      <span class="badge b-slate">.data-table .cell-number/center/actions</span>
+      <span class="badge b-slate">.alert-error/success/warning</span>
+      <span class="badge b-slate">.spinner .page-title .page-description</span>
+      <span class="badge b-slate">.sidebar-nav-item .sidebar-nav-active</span>
+    </p>
+  </div>
+
+  <!-- FLUJO AUTH -->
+  <div class="section" id="flujo">
+    <h2>Flujo de Autenticación</h2>
+    <h3>Login</h3>
+    <div class="flow">
+      <span class="step">1. Usuario ingresa email + password + tenantId</span>
+      <span class="arrow">→</span>
+      <span class="step">2. POST /api/v1/auth/login</span>
+      <span class="arrow">→</span>
+      <span class="step">3. tap(): StorageService.saveSession()</span>
+      <span class="arrow">→</span>
+      <span class="step">4. _session signal actualizado</span>
+      <span class="arrow">→</span>
+      <span class="step">5. router.navigate(['/app/dashboard'])</span>
+    </div>
+    <h3>Request autenticado</h3>
+    <div class="flow">
+      <span class="step">Componente hace HTTP call</span>
+      <span class="arrow">→</span>
+      <span class="step">authInterceptor clona req</span>
+      <span class="arrow">→</span>
+      <span class="step">Agrega Authorization + X-Tenant-Id</span>
+      <span class="arrow">→</span>
+      <span class="step">API valida y responde</span>
+    </div>
+    <h3>Guard de rutas protegidas</h3>
+    <div class="flow">
+      <span class="step">Navega a /app/*</span>
+      <span class="arrow">→</span>
+      <span class="step">authGuard: isAuthenticated()?</span>
+      <span class="arrow">→</span>
+      <span class="step">✓ permite acceso</span>
+      <span class="arrow">|</span>
+      <span class="step">✗ redirect /login</span>
+    </div>
+  </div>
+
+  <!-- RUTAS -->
+  <div class="section" id="rutas">
+    <h2>Tabla de Rutas</h2>
+    <table>
+      <tr><th>Path</th><th>Componente</th><th>Guard</th><th>Estado</th></tr>
+      <tr><td><code>/login</code></td><td>LoginComponent</td><td>—</td><td><span class="badge b-green">✓ Implementado</span></td></tr>
+      <tr><td><code>/app</code></td><td>ShellComponent</td><td>authGuard</td><td><span class="badge b-green">✓ Implementado</span></td></tr>
+      <tr><td><code>/app/dashboard</code></td><td>DashboardComponent</td><td>authGuard</td><td><span class="badge b-green">✓ Placeholder</span></td></tr>
+      <tr><td><code>/app/members</code></td><td>MembersComponent</td><td>authGuard</td><td><span class="badge b-amber">Pendiente</span></td></tr>
+      <tr><td><code>/app/membership-plans</code></td><td>MembershipPlansComponent</td><td>authGuard</td><td><span class="badge b-amber">Pendiente</span></td></tr>
+      <tr><td><code>/app/assignments</code></td><td>AssignmentsComponent</td><td>authGuard</td><td><span class="badge b-amber">Pendiente</span></td></tr>
+      <tr><td><code>/**</code></td><td>redirect</td><td>—</td><td>→ /app</td></tr>
+    </table>
+  </div>
+
+  <!-- INTERCEPTOR -->
+  <div class="section" id="interceptor">
+    <h2>Interceptor HTTP — Detalle</h2>
+    <pre><span class="k">export const</span> authInterceptor: HttpInterceptorFn = (req, next) => {
+  <span class="k">const</span> storage = inject(StorageService);
+  <span class="k">const</span> token    = storage.getToken();
+  <span class="k">const</span> tenantId = storage.getTenantId();
+
+  <span class="k">if</span> (!token) <span class="k">return</span> next(req);
+
+  <span class="k">let</span> headers = req.headers.set(<span class="s">'Authorization'</span>, <span class="s">`Bearer ${token}`</span>);
+  <span class="k">if</span> (tenantId) headers = headers.set(<span class="s">'X-Tenant-Id'</span>, tenantId);
+
+  <span class="k">return</span> next(req.clone({ headers }));
+};</pre>
+  </div>
+
+  <!-- PRÓXIMOS -->
+  <div class="section" id="proximos">
+    <h2>Próximos Módulos a Implementar</h2>
+    <table>
+      <tr><th>Módulo</th><th>Endpoints API</th><th>Componentes</th></tr>
+      <tr><td><strong>Members</strong></td><td>GET /members · POST /members · PUT /members/{id} · DELETE /members/{id}</td><td>Lista con tabla, modal alta/edición, badge de estado</td></tr>
+      <tr><td><strong>Membership Plans</strong></td><td>GET /membership-plans · POST · PUT · DELETE</td><td>Lista de planes, formulario de precio/duración</td></tr>
+      <tr><td><strong>Assignments</strong></td><td>GET /member-memberships · POST · PUT /status</td><td>Asignar plan a miembro, cambio de estado, fechas</td></tr>
+    </table>
+    <div class="highlight">Todos los módulos ya tienen rutas registradas en <code>app.routes.ts</code> con lazy loading. Solo falta crear los componentes en <code>features/members/</code>, <code>features/membership-plans/</code> y <code>features/assignments/</code>.</div>
+  </div>
+
+  <p style="margin-top:2rem;font-size:.75rem;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:1rem">GymGo SaaS · Documentación Técnica · Abril 2026</p>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<header
+  class="flex items-center justify-between px-4 gap-4 shrink-0"
+  style="
+    height: var(--navbar-height);
+    background: var(--color-navbar-bg);
+    border-bottom: 1px solid var(--color-navbar-border);
+  "
+>
+
+  <!-- Left: mobile menu toggle (hidden on lg+) -->
+  <div class="flex items-center gap-3">
+    <button
+      type="button"
+      (click)="toggleSidebar.emit()"
+      class="lg:hidden p-2 rounded-lg transition-colors"
+      style="color: var(--color-muted-fg); transition-duration: var(--duration-fast)"
+      aria-label="Abrir menú lateral"
+      aria-controls="sidebar"
+      aria-expanded="false"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Right: user info + avatar -->
+  @if (session(); as s) {
+    <div class="flex items-center gap-3" aria-label="Usuario actual">
+      <div class="text-right hidden sm:block">
+        <p class="text-sm font-semibold leading-tight" style="color: var(--color-foreground)">
+          {{ s.fullName }}
+        </p>
+        <p class="text-xs" style="color: var(--color-muted-fg)">
+          {{ getRoleLabel(s.role) }}
+        </p>
+      </div>
+      <!-- Avatar circle -->
+      <div
+        class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
+        style="
+          background: var(--color-primary);
+          color: white;
+          box-shadow: var(--shadow-sm);
+        "
+        aria-hidden="true"
+      >
+        {{ s.fullName.charAt(0).toUpperCase() }}
+      </div>
+    </div>
+  }
+
+</header>

@@ -1,0 +1,139 @@
+<!-- Login page: full-screen dark gradient + centered card -->
+<div class="min-h-screen flex items-center justify-center p-4"
+     style="background: linear-gradient(135deg, var(--color-blue-950) 0%, var(--color-blue-900) 50%, var(--color-slate-900) 100%)">
+  <div class="w-full max-w-md">
+
+    <!-- Logo / Header -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
+           style="background: var(--color-primary); box-shadow: 0 8px 24px oklch(from var(--color-primary) l c h / 0.4)">
+        <svg class="w-9 h-9" style="color: white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+        </svg>
+      </div>
+      <h1 class="text-3xl font-bold tracking-tight" style="color: white">GymGo</h1>
+      <p class="mt-1 text-sm" style="color: var(--color-blue-300)">Gestión inteligente de gimnasios</p>
+    </div>
+
+    <!-- Card -->
+    <div class="card p-8">
+      <h2 class="text-xl font-semibold mb-6" style="color: var(--color-foreground)">Iniciar sesión</h2>
+
+      <!-- Error banner -->
+      @if (error()) {
+        <div class="alert alert-error mb-5" role="alert">
+          <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+          </svg>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-5">
+
+        <!-- Email -->
+        <div>
+          <label for="email" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="usuario@gimnasio.com"
+            class="input w-full"
+            [class.input-error]="isInvalid('email')"
+            aria-describedby="email-error"
+          />
+          @if (isInvalid('email')) {
+            <p id="email-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+              Ingresa un email válido.
+            </p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label for="password" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Contraseña
+          </label>
+          <div class="relative">
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              class="input w-full pr-11"
+              [class.input-error]="isInvalid('password')"
+              aria-describedby="password-error"
+            />
+            <button
+              type="button"
+              (click)="togglePassword()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded transition-colors"
+              style="color: var(--color-muted-fg)"
+              [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              tabindex="-1"
+            >
+              @if (showPassword()) {
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                </svg>
+              } @else {
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              }
+            </button>
+          </div>
+          @if (isInvalid('password')) {
+            <p id="password-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+              La contraseña debe tener al menos 6 caracteres.
+            </p>
+          }
+        </div>
+
+        <!-- Tenant ID -->
+        <div>
+          <label for="tenantId" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            ID del Gimnasio
+            <span class="font-normal ml-1" style="color: var(--color-muted-fg)">(opcional para admins)</span>
+          </label>
+          <input
+            id="tenantId"
+            type="text"
+            formControlName="tenantId"
+            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            class="input w-full font-mono"
+          />
+          <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">
+            Requerido para GymOwner, Staff e Instructores.
+          </p>
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          [disabled]="loading()"
+          class="btn btn-primary w-full mt-2"
+        >
+          @if (loading()) {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Ingresando...</span>
+          } @else {
+            <span>Ingresar</span>
+          }
+        </button>
+
+      </form>
+    </div>
+
+    <p class="text-center text-xs mt-6" style="color: var(--color-blue-400)">
+      © {{ currentYear }} GymGo · Todos los derechos reservados
+    </p>
+  </div>
+</div>

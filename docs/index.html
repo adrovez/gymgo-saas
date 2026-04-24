@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GymGo — Documentación</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8fafc;color:#0f172a;padding:2rem}
+  h1{font-size:1.75rem;font-weight:700;color:#1e3a8a;margin-bottom:.25rem}
+  .subtitle{color:#64748b;margin-bottom:2rem;font-size:.95rem}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+  .card{background:white;border:1px solid #e2e8f0;border-radius:.75rem;padding:1.25rem;text-decoration:none;color:inherit;transition:box-shadow .15s}
+  .card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
+  .card-icon{font-size:1.5rem;margin-bottom:.5rem}
+  .card-title{font-weight:600;font-size:1rem;color:#1e293b}
+  .card-desc{font-size:.8rem;color:#64748b;margin-top:.25rem}
+  .tag{display:inline-block;font-size:.7rem;padding:.1rem .5rem;border-radius:99px;margin-top:.5rem;font-weight:600}
+  .tag-tech{background:#dbeafe;color:#1e40af}
+  .tag-manual{background:#dcfce7;color:#15803d}
+  .tag-sprint{background:#fef3c7;color:#b45309}
+  .tag-arch{background:#f3e8ff;color:#7e22ce}
+  h2{font-size:1rem;font-weight:600;color:#475569;margin:1.5rem 0 .75rem;text-transform:uppercase;letter-spacing:.05em}
+</style>
+</head>
+<body>
+<h1>📋 GymGo — Documentación del Proyecto</h1>
+<p class="subtitle">Índice central de manuales, arquitectura, backlog y referencias técnicas.</p>
+
+<h2>🏗️ Arquitectura</h2>
+<div class="grid">
+  <a class="card" href="arquitectura/angular-frontend.html">
+    <div class="card-icon">⚡</div>
+    <div class="card-title">Arquitectura Angular Frontend</div>
+    <div class="card-desc">Estructura de módulos, servicios, interceptores, design system y rutas.</div>
+    <span class="tag tag-arch">Angular 21</span>
+  </a>
+  <a class="card" href="ARQUITECTURA.md">
+    <div class="card-icon">🔧</div>
+    <div class="card-title">Arquitectura General del Sistema</div>
+    <div class="card-desc">Stack completo: .NET API, BD SQL Server, arquitectura multi-tenant.</div>
+    <span class="tag tag-arch">Backend</span>
+  </a>
+</div>
+
+<h2>📦 Backlog / Sprints</h2>
+<div class="grid">
+  <a class="card" href="backlog/GymGo_Sprint0_v3.docx">
+    <div class="card-icon">🗂️</div>
+    <div class="card-title">Sprint 0 — Setup y Base</div>
+    <div class="card-desc">Configuración inicial, estructura de proyecto y entidades base.</div>
+    <span class="tag tag-sprint">Sprint 0</span>
+  </a>
+  <a class="card" href="backlog/GymGo_Propuesta_Etapa1.docx">
+    <div class="card-icon">🎯</div>
+    <div class="card-title">Propuesta Etapa 1</div>
+    <div class="card-desc">Scope, módulos y entregables de la primera etapa del proyecto.</div>
+    <span class="tag tag-sprint">Etapa 1</span>
+  </a>
+</div>
+
+<h2>📚 Manuales</h2>
+<div class="grid">
+  <a class="card" href="manuales/gymgo_arquitectura_angular.docx">
+    <div class="card-icon">📄</div>
+    <div class="card-title">Manual Arquitectura Angular (docx)</div>
+    <div class="card-desc">Versión Word del documento de arquitectura frontend.</div>
+    <span class="tag tag-manual">Manual Técnico</span>
+  </a>
+</div>
+
+<h2>🔄 Proceso</h2>
+<div class="grid">
+  <a class="card" href="GIT-WORKFLOW.md">
+    <div class="card-icon">🌿</div>
+    <div class="card-title">Git Workflow</div>
+    <div class="card-desc">Convenciones de ramas, commits y pull requests del equipo.</div>
+    <span class="tag tag-tech">Git</span>
+  </a>
+  <a class="card" href="DEUDA_TECNICA.md">
+    <div class="card-icon">⚠️</div>
+    <div class="card-title">Deuda Técnica</div>
+    <div class="card-desc">Registro de decisiones técnicas postergadas y refactors pendientes.</div>
+    <span class="tag tag-tech">Tracking</span>
+  </a>
+</div>
+
+<p style="margin-top:2rem;font-size:.75rem;color:#94a3b8">Actualizado: Abril 2026 · GymGo SaaS</p>
+</body>
+</html>
