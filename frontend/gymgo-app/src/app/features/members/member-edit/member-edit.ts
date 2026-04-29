@@ -9,7 +9,13 @@ import {
   GENDER_OPTIONS,
   MEMBER_STATUS_OPTIONS,
 } from '../models/member.models';
+import {
+  MembershipAssignmentDto,
+  AssignmentStatus,
+  PaymentStatus,
+} from '../../assignments/models/membership-assignment.models';
 import { MemberService } from '../services/member.service';
+import { MembershipAssignmentService } from '../../assignments/services/membership-assignment.service';
 import { DialogService } from '../../../core/services/dialog.service';
 
 @Component({
@@ -19,22 +25,32 @@ import { DialogService } from '../../../core/services/dialog.service';
   templateUrl: './member-edit.html',
 })
 export class MemberEditComponent implements OnInit {
-  private readonly fb            = inject(FormBuilder);
-  private readonly router        = inject(Router);
-  private readonly memberService = inject(MemberService);
-  private readonly dialog        = inject(DialogService);
+  private readonly fb                = inject(FormBuilder);
+  private readonly router            = inject(Router);
+  private readonly memberService     = inject(MemberService);
+  private readonly assignmentService = inject(MembershipAssignmentService);
+  private readonly dialog            = inject(DialogService);
 
   /** Enlazado desde la ruta /members/:id/edit via withComponentInputBinding() */
   readonly id = input.required<string>();
 
-  readonly loadingMember  = signal(true);
-  readonly loading        = signal(false);
-  readonly loadingStatus  = signal(false);
-  readonly errorLoad      = signal<string | null>(null);
-  readonly error          = signal<string | null>(null);
-  readonly errorStatus    = signal<string | null>(null);
-  readonly successStatus  = signal(false);
-  readonly member         = signal<MemberDto | null>(null);
+  readonly loadingMember     = signal(true);
+  readonly loading           = signal(false);
+  readonly loadingStatus     = signal(false);
+  readonly loadingAssignment = signal(true);
+  readonly loadingAction     = signal(false);
+
+  readonly errorLoad       = signal<string | null>(null);
+  readonly error           = signal<string | null>(null);
+  readonly errorStatus     = signal<string | null>(null);
+  readonly errorAssignment = signal<string | null>(null);
+
+  readonly successStatus    = signal(false);
+  readonly member           = signal<MemberDto | null>(null);
+  readonly activeAssignment = signal<MembershipAssignmentDto | null>(null);
+
+  readonly AssignmentStatus = AssignmentStatus;
+  readonly PaymentStatus    = PaymentStatus;
 
   readonly genderOptions = GENDER_OPTIONS;
   readonly statusOptions = MEMBER_STATUS_OPTIONS;
@@ -73,6 +89,25 @@ export class MemberEditComponent implements OnInit {
         this.loadingMember.set(false);
       },
     });
+
+    this.loadActiveAssignment();
+  }
+
+  loadActiveAssignment(): void {
+    this.loadingAssignment.set(true);
+    this.errorAssignment.set(null);
+
+    this.assignmentService.getActiveAssignment(this.id()).subscribe({
+      next: (dto) => {
+        this.activeAssignment.set(dto);
+        this.loadingAssignment.set(false);
+      },
+      error: () => {
+        // 204 No Content → Angular puede lanzar error; tratar como sin membresía activa
+        this.activeAssignment.set(null);
+        this.loadingAssignment.set(false);
+      },
+    });
   }
 
   private populateForms(m: MemberDto): void {
@@ -91,6 +126,130 @@ export class MemberEditComponent implements OnInit {
 
     this.statusForm.patchValue({ newStatus: m.status });
   }
+
+  // ── Acciones sobre la membresía activa ────────────────────────────────────
+
+  formatAmount(amount: number): string {
+    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
+  }
+
+  shortId(id: string): string {
+    return `…${id.slice(-8)}`;
+  }
+
+  async registerPayment(): Promise<void> {
+    const a = this.activeAssignment();
+    if (!a || this.loadingAction()) return;
+
+    const result = await this.dialog.confirmAction(
+      'Registrar pago',
+      `¿Confirmas el pago de ${this.formatAmount(a.amountSnapshot)}? El socio se reactivará automáticamente.`,
+      'Sí, registrar pago',
+    );
+    if (!result.isConfirmed) return;
+
+    this.loadingAction.set(true);
+    this.errorAssignment.set(null);
+
+    this.assignmentService.registerPayment(a.id).subscribe({
+      next: () => {
+        this.dialog.toast('Pago registrado exitosamente', 'success');
+        this.loadingAction.set(false);
+        this.loadActiveAssignment();
+      },
+      error: () => {
+        this.errorAssignment.set('No se pudo registrar el pago. Intenta nuevamente.');
+        this.loadingAction.set(false);
+      },
+    });
+  }
+
+  async freezeMembership(): Promise<void> {
+    const a = this.activeAssignment();
+    if (!a || this.loadingAction()) return;
+
+    const result = await this.dialog.confirmAction(
+      'Congelar membresía',
+      'La membresía se pausará. Los días restantes quedarán en espera hasta que se descongele.',
+      'Sí, congelar',
+    );
+    if (!result.isConfirmed) return;
+
+    this.loadingAction.set(true);
+    this.errorAssignment.set(null);
+
+    this.assignmentService.freezeMembership(a.id).subscribe({
+      next: () => {
+        this.dialog.toast('Membresía congelada', 'success');
+        this.loadingAction.set(false);
+        this.loadActiveAssignment();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.errorAssignment.set(
+          err.status === 422
+            ? 'El plan no permite congelamiento.'
+            : 'No se pudo congelar la membresía. Intenta nuevamente.',
+        );
+        this.loadingAction.set(false);
+      },
+    });
+  }
+
+  async unfreezeMembership(): Promise<void> {
+    const a = this.activeAssignment();
+    if (!a || this.loadingAction()) return;
+
+    const result = await this.dialog.confirmAction(
+      'Descongelar membresía',
+      'La membresía se reanudará. La fecha de vencimiento se extenderá por los días congelados.',
+      'Sí, descongelar',
+    );
+    if (!result.isConfirmed) return;
+
+    this.loadingAction.set(true);
+    this.errorAssignment.set(null);
+
+    this.assignmentService.unfreezeMembership(a.id).subscribe({
+      next: () => {
+        this.dialog.toast('Membresía descongelada', 'success');
+        this.loadingAction.set(false);
+        this.loadActiveAssignment();
+      },
+      error: () => {
+        this.errorAssignment.set('No se pudo descongelar la membresía. Intenta nuevamente.');
+        this.loadingAction.set(false);
+      },
+    });
+  }
+
+  async cancelAssignment(): Promise<void> {
+    const a = this.activeAssignment();
+    if (!a || this.loadingAction()) return;
+
+    const result = await this.dialog.confirmDanger(
+      '¿Cancelar membresía?',
+      `Esta acción cancelará la membresía vigente (${a.startDate} → ${a.endDate}). Esta operación no se puede deshacer.`,
+      'Sí, cancelar membresía',
+    );
+    if (!result.isConfirmed) return;
+
+    this.loadingAction.set(true);
+    this.errorAssignment.set(null);
+
+    this.assignmentService.cancelAssignment(a.id).subscribe({
+      next: () => {
+        this.dialog.toast('Membresía cancelada', 'success');
+        this.loadingAction.set(false);
+        this.loadActiveAssignment();
+      },
+      error: () => {
+        this.errorAssignment.set('No se pudo cancelar la membresía. Intenta nuevamente.');
+        this.loadingAction.set(false);
+      },
+    });
+  }
+
+  // ── Formulario de datos ───────────────────────────────────────────────────
 
   async onSubmit(): Promise<void> {
     if (this.form.invalid || this.loading()) {
@@ -139,9 +298,9 @@ export class MemberEditComponent implements OnInit {
   async onChangeStatus(): Promise<void> {
     if (this.statusForm.invalid || this.loadingStatus()) return;
 
-    const raw       = this.statusForm.getRawValue();
-    const newStatus = Number(raw.newStatus) as MemberStatus;
-    const statusLabel = this.statusOptions.find(s => s.value === newStatus)?.label ?? '';
+    const raw         = this.statusForm.getRawValue();
+    const newStatus   = Number(raw.newStatus) as MemberStatus;
+    const statusLabel = this.statusOptions.find((s) => s.value === newStatus)?.label ?? '';
 
     const confirm = await this.dialog.confirmAction(
       'Cambiar estado',

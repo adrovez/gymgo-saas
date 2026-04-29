@@ -1,0 +1,168 @@
+<div class="p-6 space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Maquinaria</h1>
+      <p class="page-description">Catálogo de equipos y máquinas del gimnasio</p>
+    </div>
+    <a routerLink="/app/equipment/new" class="btn btn-primary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nueva máquina
+    </a>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Filter -->
+  <div class="card p-4">
+    <div class="flex flex-wrap gap-3">
+      <select class="input w-auto" (change)="onFilterChange($any($event.target).value)" aria-label="Filtrar por estado">
+        <option value="">Todas</option>
+        <option value="true">Solo activas</option>
+        <option value="false">Solo inactivas</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card p-0 overflow-hidden">
+    @if (loading()) {
+      <div class="p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+        <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+        <span class="text-sm">Cargando maquinaria...</span>
+      </div>
+    } @else if (equipment().length === 0) {
+      <div class="p-12 flex flex-col items-center gap-3 text-center">
+        <svg class="w-10 h-10" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+        <p class="text-sm font-medium" style="color: var(--color-foreground)">Sin máquinas registradas</p>
+        <p class="text-sm" style="color: var(--color-muted-fg)">Agrega el primer equipo para comenzar.</p>
+        <a routerLink="/app/equipment/new" class="btn btn-primary btn-sm mt-2">Nueva máquina</a>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Máquina</th>
+              <th>Marca / Modelo</th>
+              <th>N° Serie</th>
+              <th>Compra</th>
+              <th class="cell-center">Estado</th>
+              <th class="cell-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of equipment(); track item.id) {
+              <tr>
+
+                <!-- Nombre + imagen -->
+                <td>
+                  <div class="flex items-center gap-3">
+                    @if (item.imageUrl) {
+                      <img [src]="item.imageUrl" [alt]="item.name"
+                           class="w-9 h-9 rounded-lg object-cover shrink-0"
+                           style="border: 1px solid var(--color-border)"/>
+                    } @else {
+                      <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                           style="background: var(--color-primary-subtle)">
+                        <svg class="w-5 h-5" style="color: var(--color-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        </svg>
+                      </div>
+                    }
+                    <span class="font-medium">{{ item.name }}</span>
+                  </div>
+                </td>
+
+                <!-- Marca / Modelo -->
+                <td style="color: var(--color-muted-fg); font-size: 0.8125rem">
+                  @if (item.brand || item.model) {
+                    <span>{{ item.brand }}{{ item.brand && item.model ? ' · ' : '' }}{{ item.model }}</span>
+                  } @else {
+                    <span style="font-style: italic">—</span>
+                  }
+                </td>
+
+                <!-- Nº serie -->
+                <td style="color: var(--color-muted-fg); font-size: 0.8125rem; font-variant-numeric: tabular-nums">
+                  {{ item.serialNumber ?? '—' }}
+                </td>
+
+                <!-- Fecha compra -->
+                <td style="color: var(--color-muted-fg); font-size: 0.8125rem">
+                  {{ item.purchaseDate ?? '—' }}
+                </td>
+
+                <!-- Estado -->
+                <td class="cell-center">
+                  @if (item.isActive) {
+                    <span class="badge badge-active">Activa</span>
+                  } @else {
+                    <span class="badge badge-suspended">Inactiva</span>
+                  }
+                </td>
+
+                <!-- Acciones -->
+                <td class="cell-actions">
+                  <div class="flex items-center justify-end gap-1">
+
+                    <!-- Ver mantenciones -->
+                    <button type="button" class="btn btn-ghost btn-sm" (click)="viewMaintenance(item)"
+                            title="Ver mantenciones">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                      </svg>
+                    </button>
+
+                    <!-- Editar -->
+                    <button type="button" class="btn btn-ghost btn-sm" (click)="edit(item)"
+                            aria-label="Editar máquina">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                      </svg>
+                    </button>
+
+                    <!-- Activar / Desactivar -->
+                    <button type="button" class="btn btn-ghost btn-sm" (click)="toggleActive(item)"
+                            [title]="item.isActive ? 'Desactivar' : 'Reactivar'"
+                            [style.color]="item.isActive ? 'var(--color-error)' : 'var(--color-success, #16a34a)'">
+                      @if (item.isActive) {
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                        </svg>
+                      } @else {
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                      }
+                    </button>
+
+                  </div>
+                </td>
+
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="px-4 py-3 text-sm" style="border-top: 1px solid var(--color-border); color: var(--color-muted-fg)">
+        {{ equipment().length }} máquina(s)
+      </div>
+    }
+  </div>
+
+</div>

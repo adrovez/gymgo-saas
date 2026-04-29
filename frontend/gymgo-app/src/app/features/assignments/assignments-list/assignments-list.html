@@ -1,0 +1,201 @@
+<!-- Assignments list page -->
+<div class="p-6 space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Membresías</h1>
+      <p class="page-description">Gestión de membresías y asignaciones de planes</p>
+    </div>
+    <a routerLink="/app/assignments/new" class="btn btn-primary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nueva asignación
+    </a>
+  </div>
+
+  <!-- Error banner -->
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Sección: Morosas -->
+  <section aria-labelledby="overdue-heading">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 id="overdue-heading" class="text-base font-semibold" style="color: var(--color-foreground)">
+          Membresías morosas
+        </h2>
+        <p class="text-sm mt-0.5" style="color: var(--color-muted-fg)">
+          Socios con pago vencido que requieren gestión
+        </p>
+      </div>
+      <button
+        type="button"
+        class="btn btn-ghost btn-sm"
+        (click)="loadOverdue()"
+        aria-label="Recargar lista"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Actualizar
+      </button>
+    </div>
+
+    <div class="card p-0 overflow-hidden">
+      @if (loading()) {
+        <div class="p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+          <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+          <span class="text-sm">Cargando membresías morosas...</span>
+        </div>
+      } @else if (overdue().length === 0) {
+        <div class="p-12 flex flex-col items-center gap-3 text-center">
+          <svg class="w-10 h-10" style="color: var(--color-success, #16a34a)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-sm font-medium" style="color: var(--color-foreground)">Sin membresías morosas</p>
+          <p class="text-sm" style="color: var(--color-muted-fg)">Todos los socios tienen sus pagos al día.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Socio</th>
+                <th>Plan</th>
+                <th>Período</th>
+                <th class="cell-right">Monto</th>
+                <th class="cell-center">Estado pago</th>
+                <th class="cell-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of overdue(); track a.id) {
+                <tr>
+
+                  <!-- Socio (link al perfil de edición) -->
+                  <td>
+                    <a
+                      [routerLink]="['/app/members', a.memberId, 'edit']"
+                      class="flex items-center gap-2 group"
+                      style="color: var(--color-foreground)"
+                      [attr.title]="'Ver socio ' + a.memberId"
+                    >
+                      <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                           style="background: var(--color-error-subtle, #fee2e2); color: var(--color-error)">
+                        !
+                      </div>
+                      <span class="font-mono text-xs group-hover:underline"
+                            style="color: var(--color-muted-fg)">
+                        {{ shortId(a.memberId) }}
+                      </span>
+                    </a>
+                  </td>
+
+                  <!-- Plan (link al plan) -->
+                  <td>
+                    <a
+                      [routerLink]="['/app/membership-plans', a.membershipPlanId, 'edit']"
+                      class="font-mono text-xs hover:underline"
+                      style="color: var(--color-muted-fg)"
+                      [attr.title]="'Ver plan ' + a.membershipPlanId"
+                    >
+                      {{ shortId(a.membershipPlanId) }}
+                    </a>
+                  </td>
+
+                  <!-- Período -->
+                  <td style="font-size: 0.8125rem; color: var(--color-muted-fg)">
+                    <span class="block">{{ a.startDate }} → {{ a.endDate }}</span>
+                  </td>
+
+                  <!-- Monto -->
+                  <td class="cell-right font-medium" style="font-variant-numeric: tabular-nums">
+                    {{ formatAmount(a.amountSnapshot) }}
+                  </td>
+
+                  <!-- Estado de pago -->
+                  <td class="cell-center">
+                    <span class="badge badge-delinquent">Morosa</span>
+                  </td>
+
+                  <!-- Acciones -->
+                  <td class="cell-actions">
+                    <div class="flex items-center justify-end gap-1">
+
+                      <!-- Registrar pago -->
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        (click)="registerPayment(a)"
+                        aria-label="Registrar pago"
+                        title="Registrar pago"
+                        style="color: var(--color-success, #16a34a)"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Cancelar membresía -->
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        (click)="cancelAssignment(a)"
+                        aria-label="Cancelar membresía"
+                        title="Cancelar membresía"
+                        style="color: var(--color-error)"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
+
+                    </div>
+                  </td>
+
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Contador -->
+        <div class="flex items-center px-4 py-3"
+             style="border-top: 1px solid var(--color-border); color: var(--color-muted-fg); font-size: 0.8125rem">
+          <span>{{ overdue().length }} membresía(s) morosa(s)</span>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Nota informativa sobre gestión por socio -->
+  <div class="card p-4 flex items-start gap-3" style="border-color: var(--color-border)">
+    <svg class="w-5 h-5 shrink-0 mt-0.5" style="color: var(--color-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <div>
+      <p class="text-sm font-medium" style="color: var(--color-foreground)">Gestión individual de membresías</p>
+      <p class="text-sm mt-1" style="color: var(--color-muted-fg)">
+        Para congelar, descongelar o ver el historial completo de un socio, accede desde
+        <a routerLink="/app/members" class="font-medium hover:underline" style="color: var(--color-primary)">Socios</a>
+        y edita su perfil.
+      </p>
+    </div>
+  </div>
+
+</div>

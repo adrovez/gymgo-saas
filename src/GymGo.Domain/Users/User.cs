@@ -57,6 +57,14 @@ public sealed class User : AggregateRoot, IAuditable, ITenantScoped, ISoftDeleta
         return new User(Guid.NewGuid(), tenantId, email.Trim().ToLowerInvariant(), passwordHash, fullName.Trim(), role);
     }
 
+    public void Update(string fullName, UserRole role)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new BusinessRuleViolationException("USER_FULLNAME_REQUIRED", "El nombre completo es obligatorio.");
+        FullName = fullName.Trim();
+        Role = role;
+    }
+
     public void ChangePassword(string newPasswordHash)
     {
         if (string.IsNullOrWhiteSpace(newPasswordHash))

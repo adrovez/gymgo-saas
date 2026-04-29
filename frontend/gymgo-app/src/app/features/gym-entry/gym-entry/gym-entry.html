@@ -1,0 +1,386 @@
+<!-- Gym Entry — pantalla de recepción -->
+<div class="p-6 space-y-6">
+
+  <!-- ── Encabezado ─────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Registro de Ingreso</h1>
+      <p class="page-description">{{ today() }}</p>
+    </div>
+
+    <!-- Contador del día -->
+    <div class="flex items-center gap-2 px-4 py-2 rounded-xl"
+         style="background: var(--color-primary-subtle); color: var(--color-primary)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <span class="text-sm font-semibold">{{ todayCount() }} ingreso{{ todayCount() !== 1 ? 's' : '' }} hoy</span>
+    </div>
+  </div>
+
+  <!-- ── Layout de dos columnas ──────────────────────────────────────────── -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+    <!-- ════════════════════════════════════════════════════════════
+         PANEL IZQUIERDO — Buscar socio + registrar ingreso (3/5)
+         ════════════════════════════════════════════════════════════ -->
+    <div class="lg:col-span-3 space-y-4">
+
+      <!-- Buscador de socio -->
+      <div class="card p-5 space-y-4">
+        <h2 class="text-sm font-semibold" style="color: var(--color-foreground)">
+          Buscar socio
+        </h2>
+
+        <div class="relative">
+          <!-- Icono lupa -->
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+               style="color: var(--color-muted-fg)"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+          </svg>
+
+          <!-- Input -->
+          <input
+            type="search"
+            [value]="searchQuery()"
+            (input)="onSearchInput($any($event.target).value)"
+            (blur)="closeDropdown()"
+            placeholder="Nombre o RUT del socio..."
+            class="input pl-9 pr-9"
+            autocomplete="off"
+            aria-label="Buscar socio por nombre o RUT"
+          />
+
+          <!-- Spinner de búsqueda -->
+          @if (searchLoading()) {
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 spinner"
+                  style="border-top-color: var(--color-primary); border-color: var(--color-border); width:16px; height:16px"></span>
+          }
+
+          <!-- Limpiar selección -->
+          @if (selectedMember() && !searchLoading()) {
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2"
+              style="color: var(--color-muted-fg)"
+              (click)="clearSelection()"
+              aria-label="Limpiar selección"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          }
+
+          <!-- Dropdown resultados -->
+          @if (showDropdown() && searchResults().length > 0) {
+            <ul
+              class="absolute z-20 w-full mt-1 rounded-xl overflow-hidden shadow-lg"
+              style="background: var(--color-surface); border: 1px solid var(--color-border)"
+              role="listbox"
+              aria-label="Resultados de búsqueda"
+            >
+              @for (member of searchResults(); track member.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                    style="color: var(--color-foreground)"
+                    [style.background]="'transparent'"
+                    (mousedown)="selectMember(member)"
+                    role="option"
+                  >
+                    <!-- Avatar -->
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                         style="background: var(--color-primary-subtle); color: var(--color-primary)">
+                      {{ member.fullName.charAt(0).toUpperCase() }}
+                    </div>
+                    <!-- Info -->
+                    <div class="min-w-0 flex-1">
+                      <p class="text-sm font-medium truncate">{{ member.fullName }}</p>
+                      <p class="text-xs truncate" style="color: var(--color-muted-fg)">{{ member.rut }}</p>
+                    </div>
+                    <!-- Estado -->
+                    @switch (member.status) {
+                      @case (MemberStatus.Active)     { <span class="badge badge-active text-xs">Activo</span> }
+                      @case (MemberStatus.Suspended)  { <span class="badge badge-suspended text-xs">Suspendido</span> }
+                      @case (MemberStatus.Delinquent) { <span class="badge badge-delinquent text-xs">Moroso</span> }
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+
+      <!-- Tarjeta del socio seleccionado -->
+      @if (selectedMember(); as member) {
+        <div class="card p-5 space-y-5">
+
+          <!-- Cabecera del socio -->
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shrink-0"
+                 style="background: var(--color-primary-subtle); color: var(--color-primary)">
+              {{ member.fullName.charAt(0).toUpperCase() }}
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-lg font-semibold leading-tight" style="color: var(--color-foreground)">
+                {{ member.fullName }}
+              </p>
+              <p class="text-sm" style="color: var(--color-muted-fg)">{{ member.rut }}</p>
+            </div>
+            @switch (member.status) {
+              @case (MemberStatus.Active)     { <span class="badge badge-active">Activo</span> }
+              @case (MemberStatus.Suspended)  { <span class="badge badge-suspended">Suspendido</span> }
+              @case (MemberStatus.Delinquent) { <span class="badge badge-delinquent">Moroso</span> }
+            }
+          </div>
+
+          <!-- Alerta si socio no está activo -->
+          @if (member.status !== MemberStatus.Active) {
+            <div class="alert alert-error" role="alert">
+              <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              <span>
+                @if (member.status === MemberStatus.Suspended) {
+                  El socio está <strong>suspendido</strong> y no puede ingresar al gimnasio.
+                } @else {
+                  El socio está en estado <strong>moroso</strong> y no puede ingresar al gimnasio.
+                }
+              </span>
+            </div>
+          }
+
+          <!-- Membresía activa -->
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide mb-2"
+               style="color: var(--color-muted-fg)">Membresía vigente</p>
+
+            @if (assignmentLoading()) {
+              <div class="flex items-center gap-2 py-3" style="color: var(--color-muted-fg)">
+                <span class="spinner"
+                      style="border-top-color: var(--color-primary); border-color: var(--color-border); width:14px; height:14px"></span>
+                <span class="text-sm">Verificando membresía...</span>
+              </div>
+            } @else if (activeAssignment(); as a) {
+              <div class="rounded-xl p-4 space-y-3"
+                   style="background: var(--color-surface-raised); border: 1px solid var(--color-border)">
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p class="text-xs" style="color: var(--color-muted-fg)">Estado</p>
+                    <p class="font-medium">{{ a.statusLabel }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs" style="color: var(--color-muted-fg)">Pago</p>
+                    <p class="font-medium">{{ a.paymentStatusLabel }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs" style="color: var(--color-muted-fg)">Vence</p>
+                    <p class="font-medium">{{ a.endDate }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs" style="color: var(--color-muted-fg)">Días restantes</p>
+                    <p class="font-medium"
+                       [style.color]="a.daysRemaining <= 5 ? 'var(--color-warning)' : 'inherit'">
+                      {{ a.daysRemaining }} día{{ a.daysRemaining !== 1 ? 's' : '' }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Alerta membresía congelada -->
+                @if (a.status === AssignmentStatus.Frozen) {
+                  <div class="flex items-center gap-2 text-xs rounded-lg px-3 py-2"
+                       style="background: var(--color-warning-subtle); color: var(--color-warning)">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Membresía congelada desde {{ a.frozenSince }}
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="rounded-xl p-4 text-sm"
+                   style="background: var(--color-error-subtle); color: var(--color-error); border: 1px solid var(--color-error-border, #fecaca)">
+                Sin membresía activa
+              </div>
+            }
+          </div>
+
+          <!-- Separador -->
+          <div style="border-top: 1px solid var(--color-border)"></div>
+
+          <!-- Método de ingreso -->
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide mb-3"
+               style="color: var(--color-muted-fg)">Método de ingreso</p>
+            <div class="flex gap-2 flex-wrap">
+              @for (opt of methodOptions; track opt.value) {
+                <button
+                  type="button"
+                  (click)="selectedMethod.set(opt.value)"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors"
+                  [style]="selectedMethod() === opt.value
+                    ? 'background: var(--color-primary); color: white; border-color: var(--color-primary)'
+                    : 'background: transparent; color: var(--color-foreground); border-color: var(--color-border)'"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="opt.icon"/>
+                  </svg>
+                  {{ opt.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Notas opcionales -->
+          <div>
+            <label class="text-xs font-semibold uppercase tracking-wide block mb-1"
+                   style="color: var(--color-muted-fg)">
+              Observaciones <span style="color: var(--color-muted-fg); font-weight: 400">(opcional)</span>
+            </label>
+            <textarea
+              class="input resize-none"
+              rows="2"
+              maxlength="500"
+              placeholder="Ej: Presenta documentación pendiente..."
+              [value]="notes()"
+              (input)="notes.set($any($event.target).value)"
+            ></textarea>
+          </div>
+
+          <!-- Feedback de error / éxito -->
+          @if (lastError()) {
+            <div class="alert alert-error" role="alert">
+              <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+              </svg>
+              <span>{{ lastError() }}</span>
+            </div>
+          }
+
+          @if (lastSuccess()) {
+            <div class="alert alert-success" role="status">
+              <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <span>{{ lastSuccess() }}</span>
+            </div>
+          }
+
+          <!-- Botón de registro -->
+          <button
+            type="button"
+            class="btn btn-primary w-full py-3 text-base"
+            [disabled]="!canRegister()"
+            (click)="registerEntry()"
+          >
+            @if (registering()) {
+              <span class="spinner"
+                    style="border-top-color: white; border-color: rgba(255,255,255,0.3); width:16px; height:16px"></span>
+              <span>Registrando...</span>
+            } @else {
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>Registrar Ingreso</span>
+            }
+          </button>
+        </div>
+      } @else {
+        <!-- Placeholder cuando no hay socio seleccionado -->
+        <div class="card p-10 flex flex-col items-center gap-3 text-center"
+             style="border-style: dashed">
+          <svg class="w-10 h-10" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <p class="text-sm font-medium" style="color: var(--color-foreground)">
+            Busca un socio para comenzar
+          </p>
+          <p class="text-sm" style="color: var(--color-muted-fg)">
+            Escribe el nombre o RUT en el campo de búsqueda.
+          </p>
+        </div>
+      }
+
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         PANEL DERECHO — Log de ingresos del día (2/5)
+         ════════════════════════════════════════════════════════════ -->
+    <div class="lg:col-span-2">
+      <div class="card p-0 overflow-hidden h-full flex flex-col">
+
+        <!-- Cabecera log -->
+        <div class="flex items-center justify-between px-5 py-4"
+             style="border-bottom: 1px solid var(--color-border)">
+          <h2 class="text-sm font-semibold" style="color: var(--color-foreground)">
+            Ingresos de hoy
+          </h2>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                style="background: var(--color-primary-subtle); color: var(--color-primary)">
+            {{ todayCount() }}
+          </span>
+        </div>
+
+        <!-- Lista -->
+        <div class="flex-1 overflow-y-auto" style="max-height: 520px">
+          @if (entriesLoading()) {
+            <div class="p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+              <span class="spinner"
+                    style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+              <span class="text-sm">Cargando...</span>
+            </div>
+          } @else if (todayEntries().length === 0) {
+            <div class="p-8 flex flex-col items-center gap-2 text-center">
+              <svg class="w-8 h-8" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <p class="text-sm" style="color: var(--color-muted-fg)">
+                Aún no hay ingresos registrados hoy.
+              </p>
+            </div>
+          } @else {
+            <ul class="divide-y" style="border-color: var(--color-border)">
+              @for (entry of todayEntries(); track entry.id) {
+                <li class="flex items-center gap-3 px-5 py-3">
+
+                  <!-- Check verde -->
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                       style="background: var(--color-success-subtle); color: var(--color-success)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </div>
+
+                  <!-- Nombre + hora + método -->
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium truncate" style="color: var(--color-foreground)">
+                      {{ entry.memberFullName }}
+                    </p>
+                    <p class="text-xs" style="color: var(--color-muted-fg)">
+                      {{ formatTime(entry.enteredAtUtc) }} · {{ entry.method }}
+                    </p>
+                  </div>
+
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,154 @@
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Nueva mantención</h1>
+      <p class="page-description">Programa una mantención preventiva o correctiva.</p>
+    </div>
+    <a routerLink="/app/maintenance" class="btn btn-secondary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver
+    </a>
+  </div>
+
+  <div class="card">
+
+    @if (error()) {
+      <div class="alert alert-error mb-6" role="alert">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-5">
+
+      <!-- Máquina -->
+      <div>
+        <label for="equipmentId" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Máquina <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <select id="equipmentId" formControlName="equipmentId" class="input w-full"
+                [class.input-error]="isInvalid('equipmentId')">
+          <option value="">— Selecciona una máquina —</option>
+          @for (eq of equipment(); track eq.id) {
+            <option [value]="eq.id">{{ eq.name }}{{ eq.brand ? ' · ' + eq.brand : '' }}</option>
+          }
+        </select>
+        @if (hasError('equipmentId', 'required')) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Selecciona una máquina.</p>
+        }
+      </div>
+
+      <!-- Tipo / Fecha -->
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div>
+          <label for="type" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Tipo <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <select id="type" formControlName="type" class="input w-full">
+            @for (t of typeOptions; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label for="scheduledDate" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Fecha programada <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <input id="scheduledDate" type="date" formControlName="scheduledDate" class="input w-full"
+                 [class.input-error]="isInvalid('scheduledDate')"/>
+          @if (hasError('scheduledDate', 'required')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">La fecha es obligatoria.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      <div>
+        <label for="description" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Descripción <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <textarea id="description" formControlName="description" rows="3"
+                  class="input w-full resize-none"
+                  [class.input-error]="isInvalid('description')"
+                  placeholder="Describe el trabajo a realizar..."></textarea>
+        @if (hasError('description', 'required')) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">La descripción es obligatoria.</p>
+        } @else if (hasError('description', 'maxlength')) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Máximo 500 caracteres.</p>
+        }
+      </div>
+
+      <!-- Tipo responsable -->
+      <div>
+        <label class="block text-sm font-medium mb-2" style="color: var(--color-foreground)">
+          Responsable <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <div class="flex gap-4">
+          @for (r of responsibleOptions; track r.value) {
+            <label class="flex items-center gap-2 cursor-pointer text-sm" style="color: var(--color-foreground)">
+              <input type="radio" formControlName="responsibleType" [value]="r.value" class="accent-primary"/>
+              {{ r.label }}
+            </label>
+          }
+        </div>
+      </div>
+
+      <!-- Campos condicionales: Interno -->
+      @if (isInternal) {
+        <div>
+          <label for="responsibleUserId" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            ID de usuario responsable <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <input id="responsibleUserId" type="text" formControlName="responsibleUserId"
+                 class="input w-full" placeholder="UUID del usuario del sistema" autocomplete="off"/>
+          <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">Ingresa el ID del usuario Staff o Instructor responsable.</p>
+        </div>
+      }
+
+      <!-- Campos condicionales: Externo -->
+      @if (!isInternal) {
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label for="externalProviderName" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+              Nombre del proveedor <span style="color: var(--color-error)" aria-hidden="true">*</span>
+            </label>
+            <input id="externalProviderName" type="text" formControlName="externalProviderName"
+                   class="input w-full" [class.input-error]="isInvalid('externalProviderName')"
+                   placeholder="Ej. ServiTecno Ltda." autocomplete="off"/>
+            @if (hasError('externalProviderName', 'maxlength')) {
+              <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Máximo 200 caracteres.</p>
+            }
+          </div>
+          <div>
+            <label for="externalProviderContact" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+              Contacto del proveedor
+            </label>
+            <input id="externalProviderContact" type="text" formControlName="externalProviderContact"
+                   class="input w-full" placeholder="Teléfono o email" autocomplete="off"/>
+          </div>
+        </div>
+      }
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-3 pt-2" style="border-top: 1px solid var(--color-border)">
+        <a routerLink="/app/maintenance" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner w-4 h-4" style="border-top-color: white; border-color: rgba(255,255,255,0.3)"></span>
+            Guardando...
+          } @else {
+            Registrar mantención
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

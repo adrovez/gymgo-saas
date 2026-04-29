@@ -1,0 +1,229 @@
+<!-- Assignment create page -->
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Nueva asignación</h1>
+      <p class="page-description">Asigna un plan de membresía a un socio.</p>
+    </div>
+    <a routerLink="/app/assignments" class="btn btn-secondary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver
+    </a>
+  </div>
+
+  <!-- Loading estado inicial -->
+  @if (loadingData()) {
+    <div class="card p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+      <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+      <span class="text-sm">Cargando socios y planes...</span>
+    </div>
+  }
+
+  <!-- Error de carga inicial -->
+  @if (errorLoad()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"/>
+      </svg>
+      <span>{{ errorLoad() }}</span>
+    </div>
+  }
+
+  <!-- Formulario -->
+  @if (!loadingData() && !errorLoad()) {
+    <div class="card">
+
+      <!-- Error banner de submit -->
+      @if (error()) {
+        <div class="alert alert-error mb-6" role="alert">
+          <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"/>
+          </svg>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-6">
+
+        <!-- ── Socio ──────────────────────────────────────────── -->
+        <div>
+          <label for="memberId" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Socio <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <select
+            id="memberId"
+            formControlName="memberId"
+            class="input w-full"
+            [class.input-error]="isInvalid('memberId')"
+            aria-required="true"
+          >
+            <option value="">-- Selecciona un socio --</option>
+            @for (m of members(); track m.id) {
+              <option [value]="m.id">{{ m.fullName }} — {{ m.rut }}</option>
+            }
+          </select>
+          @if (isInvalid('memberId')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+              Debes seleccionar un socio.
+            </p>
+          }
+          @if (members().length === 0) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">
+              No hay socios registrados. <a routerLink="/app/members/new" class="font-medium hover:underline" style="color: var(--color-primary)">Crear socio</a>
+            </p>
+          }
+        </div>
+
+        <!-- ── Plan ───────────────────────────────────────────── -->
+        <div>
+          <label for="membershipPlanId" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Plan de membresía <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <select
+            id="membershipPlanId"
+            formControlName="membershipPlanId"
+            class="input w-full"
+            [class.input-error]="isInvalid('membershipPlanId')"
+            aria-required="true"
+          >
+            <option value="">-- Selecciona un plan --</option>
+            @for (p of plans(); track p.id) {
+              <option [value]="p.id">
+                {{ p.name }} — {{ p.periodicityLabel }} — {{ formatAmount(p.amount) }}
+              </option>
+            }
+          </select>
+          @if (isInvalid('membershipPlanId')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+              Debes seleccionar un plan.
+            </p>
+          }
+          @if (plans().length === 0) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">
+              No hay planes activos. <a routerLink="/app/membership-plans/new" class="font-medium hover:underline" style="color: var(--color-primary)">Crear plan</a>
+            </p>
+          }
+        </div>
+
+        <!-- Info del plan seleccionado -->
+        @if (selectedPlan; as plan) {
+          <div class="rounded-lg p-4 space-y-1"
+               style="background: var(--color-primary-subtle); border: 1px solid var(--color-primary)">
+            <p class="text-sm font-semibold" style="color: var(--color-primary)">{{ plan.name }}</p>
+            <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-xs" style="color: var(--color-foreground)">
+              <span>Duración: <strong>{{ plan.durationDays }} días</strong></span>
+              <span>Días/semana: <strong>{{ plan.daysPerWeek }}</strong></span>
+              <span>Horario: <strong>{{ plan.scheduleLabel }}</strong></span>
+              <span>Congelamiento: <strong>{{ plan.allowsFreezing ? 'Sí' : 'No' }}</strong></span>
+            </div>
+          </div>
+        }
+
+        <!-- ── Método de pago ────────────────────────────────────── -->
+        <div>
+          <label for="paymentMethod" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Método de pago <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <div class="flex flex-wrap gap-2" role="group" aria-labelledby="paymentMethod-label">
+            @for (pm of PAYMENT_METHODS; track pm.value) {
+              <label
+                class="flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer text-sm font-medium transition-colors"
+                [style]="form.controls.paymentMethod.value === pm.value
+                  ? 'background: var(--color-primary-subtle); border-color: var(--color-primary); color: var(--color-primary)'
+                  : 'background: var(--color-card-bg); border-color: var(--color-border); color: var(--color-muted-fg)'"
+              >
+                <input
+                  type="radio"
+                  formControlName="paymentMethod"
+                  [value]="pm.value"
+                  class="sr-only"
+                />
+                {{ pm.label }}
+              </label>
+            }
+          </div>
+        </div>
+
+        <!-- ── Fecha de inicio (opcional) ─────────────────────── -->
+        <div class="sm:w-1/2">
+          <label for="startDate" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Fecha de inicio
+          </label>
+          <input
+            id="startDate"
+            type="date"
+            formControlName="startDate"
+            class="input w-full"
+          />
+          <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">
+            Si se omite, se usa la fecha de hoy.
+          </p>
+        </div>
+
+        <!-- ── Notas ──────────────────────────────────────────── -->
+        <div>
+          <label for="notes" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Notas internas
+          </label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            rows="3"
+            placeholder="Observaciones sobre esta asignación..."
+            class="input w-full resize-none"
+            [class.input-error]="isInvalid('notes')"
+          ></textarea>
+          <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">
+            Máx. 500 caracteres.
+          </p>
+        </div>
+
+        <!-- ── Aviso de negocio ───────────────────────────────── -->
+        <div class="flex items-start gap-3 rounded-lg p-3"
+             style="background: var(--color-muted-bg); border: 1px solid var(--color-border)">
+          <svg class="w-4 h-4 shrink-0 mt-0.5" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div class="text-xs space-y-1" style="color: var(--color-muted-fg)">
+            <p>Al confirmar se asignará el plan y se registrará el pago automáticamente.</p>
+            <p>El socio no puede tener ya una membresía activa o congelada. Si la tiene, cancélala primero desde su perfil.</p>
+          </div>
+        </div>
+
+        <!-- ── Actions ────────────────────────────────────────── -->
+        <div class="flex items-center justify-end gap-3 pt-1">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="loading() || plans().length === 0 || members().length === 0"
+          >
+            @if (loading()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Asignando...</span>
+            } @else {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+              </svg>
+              Asignar y registrar pago
+            }
+          </button>
+        </div>
+
+      </form>
+    </div>
+  }
+
+</div>

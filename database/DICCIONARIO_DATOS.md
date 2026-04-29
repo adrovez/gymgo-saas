@@ -8,6 +8,13 @@ Documento de referencia de todas las tablas de la base `GymGoDb_Dev`. Cada vez q
 | 1.1     | 2026-04-22  | Módulo de socios: tabla `Members`.                   |
 | 1.2     | 2026-04-22  | Módulo de planes: tabla `MembershipPlans`.            |
 | 1.3     | 2026-04-22  | Módulo de asignaciones: tabla `MembershipAssignments`.|
+| 1.4     | 2026-04-27  | Módulo de clases: tabla `GymClasses`.                |
+| 1.5     | 2026-04-27  | Módulo de clases: tabla `ClassSchedules`.            |
+| 1.6     | 2026-04-27  | Módulo de asistencia: tabla `ClassAttendances` (check-in manual y QR). |
+| 1.7     | 2026-04-27  | Módulo de ingreso: tabla `GymEntries`.               |
+| 1.8     | 2026-04-27  | Módulo de reservas: tabla `ClassReservations`.       |
+| 1.9     | 2026-04-28  | Módulo de maquinaria: tabla `Equipment`.             |
+| 2.0     | 2026-04-28  | Módulo de mantención: tabla `MaintenanceRecords`.    |
 
 ---
 
@@ -40,6 +47,13 @@ Documento de referencia de todas las tablas de la base `GymGoDb_Dev`. Cada vez q
 | [`dbo.Members`](#dbomembers) | Socios del gimnasio                          |       ✓      |      ✓      |
 | [`dbo.MembershipPlans`](#dbomembershipplans) | Planes de membresía disponibles |  ✓  |   ✓   |
 | [`dbo.MembershipAssignments`](#dbomembershipassignments) | Contratos socio-plan con control de pago | ✓ | ✓ |
+| [`dbo.GymClasses`](#dbogymclasses) | Catálogo de tipos de clase del gimnasio | ✓ | ✓ |
+| [`dbo.ClassSchedules`](#dboclassschedules) | Horarios semanales recurrentes de cada clase | ✓ | ✓ |
+| [`dbo.ClassAttendances`](#dboclassattendances) | Registro de check-in de socios a sesiones de clase | ✓ | — |
+| [`dbo.GymEntries`](#dbogympentries) | Registro de ingresos al gimnasio (acceso a instalaciones) | ✓ | — |
+| [`dbo.ClassReservations`](#dboclassreservations) | Reservas de socios a sesiones de clase | ✓ | — |
+| [`dbo.Equipment`](#dboequipment) | Catálogo de maquinaria del gimnasio | ✓ | ✓ |
+| [`dbo.MaintenanceRecords`](#dbomaintenancerecords) | Mantenciones preventivas y correctivas de maquinaria | ✓ | — |
 
 ---
 
@@ -381,6 +395,414 @@ Documento de referencia de todas las tablas de la base `GymGoDb_Dev`. Cada vez q
 | `CK_MA_PaymentStatus`                       | CHECK       | `PaymentStatus`                | `BETWEEN 0 AND 2`.                                          |
 | `CK_MA_DateRange`                           | CHECK       | `StartDate`, `EndDate`         | `EndDate > StartDate`.                                      |
 | `CK_MA_AmountSnapshot`                      | CHECK       | `AmountSnapshot`               | `> 0`.                                                      |
+
+---
+
+---
+
+## `dbo.GymClasses`
+
+**Propósito de negocio.** Es el **catálogo de tipos de clase** que ofrece el gimnasio (Yoga, Spinning, Box Funcional, etc.). Funciona como plantilla de la que se generan los horarios semanales recurrentes (`ClassSchedules`). Desactivar una clase la oculta para nuevos horarios pero no elimina los ya existentes.
+
+**Origen de datos.** Alta y gestión exclusiva desde el panel del GymOwner/GymStaff.
+
+### Columnas
+
+| Columna           | Tipo            | Null | Default | Descripción                                                                                           |
+|-------------------|-----------------|:----:|---------|-------------------------------------------------------------------------------------------------------|
+| `Id`              | UNIQUEIDENTIFIER| No   | —       | Identificador único de la clase. Generado por la aplicación.                                          |
+| `TenantId`        | UNIQUEIDENTIFIER| No   | —       | Gimnasio al que pertenece.                                                                            |
+| `Name`            | NVARCHAR(100)   | No   | —       | Nombre de la clase. Ej: `"Yoga"`, `"Spinning"`, `"Box Funcional"`.                                    |
+| `Description`     | NVARCHAR(500)   | Sí   | —       | Descripción opcional visible al socio.                                                                |
+| `Category`        | INT             | No   | `0`     | Categoría de la clase. Ver tabla de valores más abajo.                                                |
+| `Color`           | NVARCHAR(7)     | Sí   | —       | Color hex para el calendario de clases. Ej: `"#3B82F6"`. Siempre empieza con `#`.                    |
+| `DurationMinutes` | INT             | No   | `60`    | Duración estándar en minutos. Debe ser mayor a cero.                                                  |
+| `MaxCapacity`     | INT             | No   | `20`    | Capacidad máxima estándar. Puede sobreescribirse por horario en `ClassSchedules.MaxCapacity`.         |
+| `IsActive`        | BIT             | No   | `1`     | `0` = clase desactivada, no disponible para nuevos horarios.                                          |
+| `CreatedAtUtc`    | DATETIME2(3)    | No   | —       | Cuándo se creó la clase.                                                                              |
+| `CreatedBy`       | NVARCHAR(200)   | Sí   | —       | Usuario que la creó.                                                                                  |
+| `ModifiedAtUtc`   | DATETIME2(3)    | Sí   | —       | Última modificación.                                                                                  |
+| `ModifiedBy`      | NVARCHAR(200)   | Sí   | —       | Quién modificó.                                                                                       |
+| `IsDeleted`       | BIT             | No   | `0`     | Soft delete.                                                                                          |
+| `DeletedAtUtc`    | DATETIME2(3)    | Sí   | —       | Cuándo se eliminó lógicamente.                                                                        |
+| `DeletedBy`       | NVARCHAR(200)   | Sí   | —       | Quién hizo el borrado lógico.                                                                         |
+
+### Valores válidos de `Category`
+
+| Valor | Enum         | Descripción                          |
+|:-----:|--------------|--------------------------------------|
+| `0`   | `Other`      | Otro / sin categoría (default).      |
+| `1`   | `Cardio`     | Cardio / aeróbico.                   |
+| `2`   | `Strength`   | Fuerza / musculación.                |
+| `3`   | `Flexibility`| Flexibilidad / movilidad.            |
+| `4`   | `Martial`    | Artes marciales / combate.           |
+| `5`   | `Dance`      | Baile.                               |
+| `6`   | `Aquatic`    | Acuático.                            |
+| `7`   | `Mind`       | Mente y cuerpo (Yoga, Pilates…).     |
+
+### Índices y constraints
+
+| Nombre                              | Tipo        | Columnas                    | Notas                                                              |
+|-------------------------------------|-------------|-----------------------------|--------------------------------------------------------------------|
+| `PK_GymClasses`                     | PRIMARY KEY | `Id`                        |                                                                    |
+| `FK_GymClasses_Tenants`             | FK          | `TenantId → Tenants.Id`     |                                                                    |
+| `IX_GymClasses_TenantId`            | NONCLUSTERED| `TenantId`                  | Filtrado por tenant.                                               |
+| `IX_GymClasses_TenantId_IsActive`   | NONCLUSTERED| `TenantId`, `IsActive`      | Filtrado: `WHERE IsDeleted=0`. Optimiza listado de clases activas. |
+| `CK_GymClasses_Category`            | CHECK       | `Category`                  | `BETWEEN 0 AND 7`.                                                 |
+| `CK_GymClasses_DurationMinutes`     | CHECK       | `DurationMinutes`           | `> 0`.                                                             |
+| `CK_GymClasses_MaxCapacity`         | CHECK       | `MaxCapacity`               | `> 0`.                                                             |
+
+### Relaciones
+
+| Tipo      | Tabla destino    | Columna(s) | Notas                                                   |
+|-----------|------------------|------------|---------------------------------------------------------|
+| Saliente  | `Tenants`        | `TenantId` | FK física. La clase siempre pertenece a un tenant.      |
+| Entrante  | `ClassSchedules` | `GymClassId`| Un tipo de clase puede tener múltiples horarios semanales. |
+
+---
+
+---
+
+## `dbo.ClassSchedules`
+
+**Propósito de negocio.** Define los **slots semanales recurrentes** de una clase. Cada registro representa "esta clase se dicta todos los Lunes a las 07:00". El calendario del gimnasio se construye cruzando estos slots con las fechas concretas de cada semana. Un horario inactivo no aparece en el calendario pero conserva su historial de asistencias.
+
+**Origen de datos.** Alta y gestión exclusiva desde el panel del GymOwner/GymStaff, dentro de la ficha de cada clase.
+
+### Columnas
+
+| Columna          | Tipo            | Null | Default | Descripción                                                                                                     |
+|------------------|-----------------|:----:|---------|----------------------------------------------------------------------------------------------------------------|
+| `Id`             | UNIQUEIDENTIFIER| No   | —       | Identificador único del horario. Generado por la aplicación.                                                   |
+| `TenantId`       | UNIQUEIDENTIFIER| No   | —       | Gimnasio al que pertenece.                                                                                     |
+| `GymClassId`     | UNIQUEIDENTIFIER| No   | —       | Clase padre a la que pertenece este horario. FK a `GymClasses`.                                                |
+| `DayOfWeek`      | INT             | No   | —       | Día de la semana: `0`=Domingo … `6`=Sábado (convención .NET `DayOfWeek`).                                      |
+| `StartTime`      | TIME(0)         | No   | —       | Hora de inicio de la clase (sin segundos).                                                                     |
+| `EndTime`        | TIME(0)         | No   | —       | Hora de término (calculada desde `StartTime` + `DurationMinutes` de la clase o definida explícitamente). Debe ser posterior a `StartTime`. |
+| `InstructorName` | NVARCHAR(100)   | Sí   | —       | Nombre del instructor que dicta el horario (sin relación FK a `Users` por ahora).                              |
+| `Room`           | NVARCHAR(100)   | Sí   | —       | Sala o espacio donde se dicta la clase.                                                                        |
+| `MaxCapacity`    | INT             | Sí   | —       | Capacidad máxima para este horario específico. Si es `NULL`, hereda `GymClasses.MaxCapacity`.                  |
+| `IsActive`       | BIT             | No   | `1`     | `0` = horario desactivado, no aparece en el calendario.                                                        |
+| `CreatedAtUtc`   | DATETIME2(3)    | No   | —       | Cuándo se creó el horario.                                                                                     |
+| `CreatedBy`      | NVARCHAR(200)   | Sí   | —       | Usuario que lo creó.                                                                                           |
+| `ModifiedAtUtc`  | DATETIME2(3)    | Sí   | —       | Última modificación.                                                                                           |
+| `ModifiedBy`     | NVARCHAR(200)   | Sí   | —       | Quién modificó.                                                                                                |
+| `IsDeleted`      | BIT             | No   | `0`     | Soft delete.                                                                                                   |
+| `DeletedAtUtc`   | DATETIME2(3)    | Sí   | —       | Cuándo se eliminó lógicamente.                                                                                 |
+| `DeletedBy`      | NVARCHAR(200)   | Sí   | —       | Quién hizo el borrado lógico.                                                                                  |
+
+### Índices y constraints
+
+| Nombre                                     | Tipo        | Columnas                            | Notas                                                                                  |
+|--------------------------------------------|-------------|-------------------------------------|----------------------------------------------------------------------------------------|
+| `PK_ClassSchedules`                        | PRIMARY KEY | `Id`                                |                                                                                        |
+| `FK_ClassSchedules_Tenants`                | FK          | `TenantId → Tenants.Id`             |                                                                                        |
+| `FK_ClassSchedules_GymClasses`             | FK          | `GymClassId → GymClasses.Id`        |                                                                                        |
+| `IX_ClassSchedules_TenantId`               | NONCLUSTERED| `TenantId`                          | Filtrado por tenant.                                                                   |
+| `IX_ClassSchedules_GymClassId`             | NONCLUSTERED| `GymClassId`                        | Listar horarios de una clase específica.                                               |
+| `IX_ClassSchedules_TenantId_DayOfWeek`     | NONCLUSTERED| `TenantId`, `DayOfWeek`, `StartTime`| Filtrado: `WHERE IsDeleted=0 AND IsActive=1`. Optimiza la consulta del calendario semanal. |
+| `CK_ClassSchedules_DayOfWeek`              | CHECK       | `DayOfWeek`                         | `BETWEEN 0 AND 6`.                                                                     |
+| `CK_ClassSchedules_TimeRange`              | CHECK       | `StartTime`, `EndTime`              | `EndTime > StartTime`.                                                                 |
+| `CK_ClassSchedules_MaxCapacity`            | CHECK       | `MaxCapacity`                       | `IS NULL OR MaxCapacity > 0`.                                                          |
+
+### Relaciones
+
+| Tipo     | Tabla destino      | Columna(s)      | Notas                                                              |
+|----------|--------------------|-----------------|--------------------------------------------------------------------|
+| Saliente | `Tenants`          | `TenantId`      | FK física.                                                         |
+| Saliente | `GymClasses`       | `GymClassId`    | FK física. El horario siempre pertenece a un tipo de clase.        |
+| Entrante | `ClassAttendances` | `ClassScheduleId`| Un horario puede tener múltiples registros de asistencia.          |
+
+---
+
+---
+
+## `dbo.ClassAttendances`
+
+**Propósito de negocio.** Registra el **check-in de un socio a una sesión concreta de clase**. Una sesión queda identificada por la combinación `(ClassScheduleId + SessionDate)`: el horario semanal recurrente más la fecha exacta en que ocurre. Permite a la recepcionista registrar la asistencia manualmente (por nombre o RUT) o mediante el escaneo del código QR del socio.
+
+**Decisiones de diseño:**
+- `MemberFullName` es un **snapshot** del nombre completo al momento del check-in. Así el historial se mantiene legible aunque el socio cambie de nombre en el futuro.
+- **No implementa soft delete**: los registros de asistencia son inmutables una vez creados. Si un check-in fue un error, se documenta por otra vía operativa.
+- La restricción `UNIQUE (MemberId, ClassScheduleId, SessionDate)` garantiza un único check-in por socio por sesión, tanto a nivel de base de datos como en la regla de negocio del dominio.
+
+**Origen de datos.** Creado exclusivamente por GymStaff o GymOwner desde el módulo de recepción, nunca por el socio directamente.
+
+### Columnas
+
+| Columna           | Tipo            | Null | Default | Descripción                                                                                                          |
+|-------------------|-----------------|:----:|---------|----------------------------------------------------------------------------------------------------------------------|
+| `Id`              | UNIQUEIDENTIFIER| No   | —       | Identificador único del check-in. Generado por la aplicación.                                                        |
+| `TenantId`        | UNIQUEIDENTIFIER| No   | —       | Gimnasio al que pertenece.                                                                                           |
+| `MemberId`        | UNIQUEIDENTIFIER| No   | —       | Socio que realizó el check-in. FK a `Members`.                                                                       |
+| `ClassScheduleId` | UNIQUEIDENTIFIER| No   | —       | Horario semanal al que asistió. FK a `ClassSchedules`.                                                               |
+| `SessionDate`     | DATE            | No   | —       | Fecha concreta de la sesión (sin hora, en UTC). Junto con `ClassScheduleId` identifica la sesión.                    |
+| `CheckedInAtUtc`  | DATETIME2(3)    | No   | —       | Timestamp exacto del momento del check-in (UTC).                                                                     |
+| `CheckInMethod`   | INT             | No   | `0`     | Método usado: `0`=Manual, `1`=QR.                                                                                    |
+| `MemberFullName`  | NVARCHAR(200)   | No   | —       | Nombre completo del socio en el momento del check-in (snapshot). Evita JOIN al mostrar historial.                    |
+| `Notes`           | NVARCHAR(500)   | Sí   | —       | Observaciones opcionales de la recepcionista.                                                                        |
+| `CreatedAtUtc`    | DATETIME2(3)    | No   | —       | Cuándo se creó el registro.                                                                                          |
+| `CreatedBy`       | NVARCHAR(200)   | Sí   | —       | Usuario (recepcionista) que realizó el check-in.                                                                     |
+| `ModifiedAtUtc`   | DATETIME2(3)    | Sí   | —       | Última modificación técnica.                                                                                         |
+| `ModifiedBy`      | NVARCHAR(200)   | Sí   | —       | Quién hizo la modificación.                                                                                          |
+
+> ⚠️ **Sin soft delete**: esta tabla no tiene columnas `IsDeleted / DeletedAtUtc / DeletedBy`. Los registros de asistencia son inmutables. Ver sección de Arquitectura para la justificación.
+
+### Valores válidos de `CheckInMethod`
+
+| Valor | Enum     | Descripción                                                             |
+|:-----:|----------|-------------------------------------------------------------------------|
+| `0`   | `Manual` | La recepcionista buscó al socio por nombre o RUT y registró manualmente.|
+| `1`   | `QR`     | El socio escaneó su código QR personal en recepción.                    |
+
+### Índices y constraints
+
+| Nombre                                          | Tipo        | Columnas                                    | Notas                                                            |
+|-------------------------------------------------|-------------|---------------------------------------------|------------------------------------------------------------------|
+| `PK_ClassAttendances`                           | PRIMARY KEY | `Id`                                        |                                                                  |
+| `FK_ClassAttendances_Tenants`                   | FK          | `TenantId → Tenants.Id`                     |                                                                  |
+| `FK_ClassAttendances_Members`                   | FK          | `MemberId → Members.Id`                     | `ON DELETE RESTRICT` — no se puede borrar un socio con check-ins. |
+| `FK_ClassAttendances_ClassSchedules`            | FK          | `ClassScheduleId → ClassSchedules.Id`       | `ON DELETE RESTRICT`.                                            |
+| `UQ_ClassAttendances_Member_Schedule_Date`      | UNIQUE      | `MemberId`, `ClassScheduleId`, `SessionDate`| Garantiza un único check-in por socio por sesión.                |
+| `IX_ClassAttendances_Schedule_Date`             | NONCLUSTERED| `TenantId`, `ClassScheduleId`, `SessionDate`| Consulta principal: lista de asistentes de una sesión.           |
+| `IX_ClassAttendances_Member`                    | NONCLUSTERED| `TenantId`, `MemberId`, `SessionDate DESC`  | Historial de asistencia de un socio.                             |
+| `CK_ClassAttendances_CheckInMethod`             | CHECK       | `CheckInMethod`                             | `IN (0, 1)`.                                                     |
+
+### Relaciones
+
+| Tipo     | Tabla destino    | Columna(s)        | Notas                                                                   |
+|----------|------------------|-------------------|-------------------------------------------------------------------------|
+| Saliente | `Tenants`        | `TenantId`        | FK física.                                                              |
+| Saliente | `Members`        | `MemberId`        | FK física con `RESTRICT`. El socio no puede eliminarse mientras tenga check-ins. |
+| Saliente | `ClassSchedules` | `ClassScheduleId` | FK física con `RESTRICT`.                                               |
+
+### Endpoints REST relacionados
+
+| Método | Ruta                                                   | Descripción                                                  |
+|--------|--------------------------------------------------------|--------------------------------------------------------------|
+| `POST` | `/api/v1/attendances`                                  | Registra un check-in (manual o QR). Retorna `201` con el Id. |
+| `GET`  | `/api/v1/schedules/{scheduleId}/attendances?sessionDate=` | Lista los check-ins de un horario para una fecha dada.    |
+
+---
+
+---
+
+## `dbo.GymEntries`
+
+**Propósito de negocio.** Registra cada **ingreso aprobado al gimnasio** (acceso a las instalaciones). Un ingreso se crea sólo cuando el socio cumple todas las condiciones: estado Active, membresía vigente (Status=Active, EndDate≥hoy), día habilitado por el plan y horario permitido.
+
+**Decisiones de diseño:**
+- No tiene soft delete: los ingresos son registros de auditoría inmutables.
+- `MemberFullName` es un snapshot del nombre al momento del ingreso.
+- `MembershipAssignmentId` vincula el ingreso a la membresía vigente al momento de acceder.
+
+### Columnas
+
+| Columna | Tipo | Null | Default | Descripción |
+|---|---|:---:|---|---|
+| `Id` | UNIQUEIDENTIFIER | No | — | PK generado por la aplicación. |
+| `TenantId` | UNIQUEIDENTIFIER | No | — | Gimnasio al que pertenece. |
+| `MemberId` | UNIQUEIDENTIFIER | No | — | Socio que ingresó. FK → `Members`. |
+| `MembershipAssignmentId` | UNIQUEIDENTIFIER | No | — | Membresía vigente al ingresar. FK → `MembershipAssignments`. |
+| `EntryMethod` | INT | No | `0` | Método: `0`=Manual, `1`=QR, `2`=Badge. |
+| `EnteredAtUtc` | DATETIME2(3) | No | — | Timestamp exacto del ingreso (UTC). |
+| `MemberFullName` | NVARCHAR(200) | No | — | Snapshot del nombre al momento del ingreso. |
+| `Notes` | NVARCHAR(500) | Sí | — | Observaciones opcionales. |
+| `CreatedAtUtc` | DATETIME2(3) | No | — | Cuándo se creó el registro. |
+| `CreatedBy` | NVARCHAR(200) | Sí | — | Recepcionista que registró el ingreso. |
+| `ModifiedAtUtc` | DATETIME2(3) | Sí | — | Última modificación. |
+| `ModifiedBy` | NVARCHAR(200) | Sí | — | Quién modificó. |
+
+> ⚠️ **Sin soft delete.**
+
+### Valores válidos de `EntryMethod`
+
+| Valor | Enum | Descripción |
+|:---:|---|---|
+| `0` | `Manual` | Registro manual por recepcionista. |
+| `1` | `QR` | Código QR escaneado. |
+| `2` | `Badge` | Tarjeta o llavero RFID/NFC. |
+
+### Índices y relaciones
+
+| Nombre | Tipo | Columnas |
+|---|---|---|
+| `PK_GymEntries` | PRIMARY KEY | `Id` |
+| `FK_GymEntries_Tenants` | FK | `TenantId → Tenants.Id` |
+| `FK_GymEntries_Members` | FK | `MemberId → Members.Id` (RESTRICT) |
+| `FK_GymEntries_MembershipAssignments` | FK | `MembershipAssignmentId → MembershipAssignments.Id` (RESTRICT) |
+| `IX_GymEntries_TenantId_EnteredAt` | NONCLUSTERED | `TenantId`, `EnteredAtUtc DESC` |
+| `IX_GymEntries_MemberId` | NONCLUSTERED | `TenantId`, `MemberId`, `EnteredAtUtc DESC` |
+
+---
+
+## `dbo.ClassReservations`
+
+**Propósito de negocio.** Registra las **reservas de socios a sesiones concretas de clase**. Una sesión queda identificada por `(ClassScheduleId + SessionDate)`. La unicidad de reservas activas (un socio por sesión) se valida en Application antes de persistir.
+
+**Decisiones de diseño:**
+- No tiene soft delete: las reservas son registros de auditoría inmutables.
+- `MemberFullName` es un snapshot del nombre al momento de la reserva.
+- Un socio puede tener a lo sumo una reserva `Active` por sesión.
+
+### Columnas
+
+| Columna | Tipo | Null | Default | Descripción |
+|---|---|:---:|---|---|
+| `Id` | UNIQUEIDENTIFIER | No | — | PK generado por la aplicación. |
+| `TenantId` | UNIQUEIDENTIFIER | No | — | Gimnasio al que pertenece. |
+| `MemberId` | UNIQUEIDENTIFIER | No | — | Socio que reservó. FK → `Members`. |
+| `ClassScheduleId` | UNIQUEIDENTIFIER | No | — | Horario reservado. FK → `ClassSchedules`. |
+| `SessionDate` | DATE | No | — | Fecha concreta de la sesión. |
+| `ReservedAtUtc` | DATETIME2(3) | No | — | Timestamp de la reserva (UTC). |
+| `Status` | INT | No | `0` | Estado de la reserva. Ver tabla de valores. |
+| `CancelledAtUtc` | DATETIME2(3) | Sí | — | Cuándo se canceló (si aplica). |
+| `CancelReason` | NVARCHAR(500) | Sí | — | Motivo de cancelación. |
+| `MemberFullName` | NVARCHAR(200) | No | — | Snapshot del nombre al reservar. |
+| `CreatedAtUtc` | DATETIME2(3) | No | — | Cuándo se creó el registro. |
+| `CreatedBy` | NVARCHAR(200) | Sí | — | Quién creó la reserva. |
+| `ModifiedAtUtc` | DATETIME2(3) | Sí | — | Última modificación. |
+| `ModifiedBy` | NVARCHAR(200) | Sí | — | Quién modificó. |
+
+> ⚠️ **Sin soft delete.**
+
+### Valores válidos de `Status`
+
+| Valor | Enum | Descripción |
+|:---:|---|---|
+| `0` | `Active` | Reserva vigente, lugar confirmado. |
+| `1` | `CancelledByMember` | El socio anuló su reserva. |
+| `2` | `CancelledByStaff` | El staff anuló la reserva. |
+| `3` | `NoShow` | El socio no se presentó. |
+
+### Índices y relaciones
+
+| Nombre | Tipo | Columnas |
+|---|---|---|
+| `PK_ClassReservations` | PRIMARY KEY | `Id` |
+| `FK_ClassReservations_Tenants` | FK | `TenantId → Tenants.Id` |
+| `FK_ClassReservations_Members` | FK | `MemberId → Members.Id` (RESTRICT) |
+| `FK_ClassReservations_ClassSchedules` | FK | `ClassScheduleId → ClassSchedules.Id` (RESTRICT) |
+| `IX_ClassReservations_Schedule_Date` | NONCLUSTERED | `TenantId`, `ClassScheduleId`, `SessionDate` |
+| `IX_ClassReservations_Member` | NONCLUSTERED | `TenantId`, `MemberId`, `SessionDate DESC` |
+| `CK_ClassReservations_Status` | CHECK | `Status BETWEEN 0 AND 3` |
+
+---
+
+## `dbo.Equipment`
+
+**Propósito de negocio.** Catálogo de **máquinas y equipos físicos** del gimnasio. Cada máquina puede tener múltiples registros de mantención a lo largo del tiempo. Desactivar una máquina la oculta para nuevas mantenciones pero conserva su historial.
+
+**Origen de datos.** Alta y gestión desde el panel del GymOwner/GymStaff (módulo Maquinaria).
+
+### Columnas
+
+| Columna | Tipo | Null | Default | Descripción |
+|---|---|:---:|---|---|
+| `Id` | UNIQUEIDENTIFIER | No | — | PK generado por la aplicación. |
+| `TenantId` | UNIQUEIDENTIFIER | No | — | Gimnasio al que pertenece. FK → `Tenants`. |
+| `Name` | NVARCHAR(100) | No | — | Nombre de la máquina. Ej: `"Cinta de correr 1"`. |
+| `Brand` | NVARCHAR(100) | Sí | — | Marca. Ej: `"Life Fitness"`. |
+| `Model` | NVARCHAR(100) | Sí | — | Modelo. Ej: `"T5-0"`. |
+| `SerialNumber` | NVARCHAR(50) | Sí | — | Número de serie del fabricante. |
+| `PurchaseDate` | DATE | Sí | — | Fecha de compra. |
+| `ImageUrl` | NVARCHAR(500) | Sí | — | URL de imagen de la máquina. |
+| `IsActive` | BIT | No | `1` | `0` = desactivada, no disponible para nuevas mantenciones. |
+| `CreatedAtUtc` | DATETIME2(3) | No | — | Auditoría. |
+| `CreatedBy` | NVARCHAR(200) | Sí | — | Auditoría. |
+| `ModifiedAtUtc` | DATETIME2(3) | Sí | — | Auditoría. |
+| `ModifiedBy` | NVARCHAR(200) | Sí | — | Auditoría. |
+| `IsDeleted` | BIT | No | `0` | Soft delete. |
+| `DeletedAtUtc` | DATETIME2(3) | Sí | — | Auditoría de borrado. |
+| `DeletedBy` | NVARCHAR(200) | Sí | — | Auditoría de borrado. |
+
+### Índices y relaciones
+
+| Nombre | Tipo | Columnas |
+|---|---|---|
+| `PK_Equipment` | PRIMARY KEY | `Id` |
+| `FK_Equipment_Tenants` | FK | `TenantId → Tenants.Id` |
+| `IX_Equipment_TenantId` | NONCLUSTERED | `TenantId` |
+| `IX_Equipment_TenantId_IsActive` | NONCLUSTERED | `TenantId`, `IsActive` |
+
+### Relaciones
+
+| Tipo | Tabla destino | Columna(s) | Notas |
+|---|---|---|---|
+| Saliente | `Tenants` | `TenantId` | FK física. |
+| Entrante | `MaintenanceRecords` | `EquipmentId` | Una máquina puede tener N mantenciones. ON DELETE RESTRICT. |
+
+---
+
+## `dbo.MaintenanceRecords`
+
+**Propósito de negocio.** Registra las **mantenciones preventivas y correctivas** de las máquinas del gimnasio. Gestiona el ciclo de vida: Pending → InProgress → Completed (o Cancelled). Permite asignar un responsable interno o externo, registrar costo y observaciones al cerrar.
+
+**Origen de datos.** Alta desde el panel del GymOwner/GymStaff (módulo Mantención).
+
+### Columnas
+
+| Columna | Tipo | Null | Default | Descripción |
+|---|---|:---:|---|---|
+| `Id` | UNIQUEIDENTIFIER | No | — | PK generado por la aplicación. |
+| `TenantId` | UNIQUEIDENTIFIER | No | — | Gimnasio al que pertenece. |
+| `EquipmentId` | UNIQUEIDENTIFIER | No | — | Máquina a mantener. FK → `Equipment`. |
+| `Type` | INT | No | — | Tipo: `0`=Preventive, `1`=Corrective. |
+| `Status` | INT | No | `0` | Estado: `0`=Pending, `1`=InProgress, `2`=Completed, `3`=Cancelled. |
+| `ScheduledDate` | DATE | No | — | Fecha programada de la mantención. |
+| `StartedAtUtc` | DATETIME2(3) | Sí | — | Timestamp real de inicio (al ejecutar "Iniciar"). |
+| `CompletedAtUtc` | DATETIME2(3) | Sí | — | Timestamp real de cierre (Completada o Cancelada). |
+| `Description` | NVARCHAR(500) | No | — | Qué se va a hacer / qué se hizo. |
+| `Notes` | NVARCHAR(1000) | Sí | — | Observaciones de cierre o motivo de cancelación. |
+| `Cost` | DECIMAL(10,2) | Sí | — | Costo incurrido (se registra al completar). |
+| `ResponsibleType` | INT | No | — | `0`=Internal, `1`=External. |
+| `ResponsibleUserId` | UNIQUEIDENTIFIER | Sí | — | FK → `Users` (solo si ResponsibleType=Internal). |
+| `ExternalProviderName` | NVARCHAR(200) | Sí | — | Nombre del proveedor externo. |
+| `ExternalProviderContact` | NVARCHAR(200) | Sí | — | Teléfono o email del proveedor. |
+| `CreatedAtUtc` | DATETIME2(3) | No | — | Auditoría. |
+| `CreatedBy` | NVARCHAR(200) | Sí | — | Auditoría. |
+| `ModifiedAtUtc` | DATETIME2(3) | Sí | — | Auditoría. |
+| `ModifiedBy` | NVARCHAR(200) | Sí | — | Auditoría. |
+
+> ⚠️ **Sin soft delete.** Los registros de mantención son inmutables una vez completados o cancelados. El ciclo de vida se gestiona via transiciones de estado.
+
+### Valores válidos de `Type`
+
+| Valor | Enum | Descripción |
+|:---:|---|---|
+| `0` | `Preventive` | Mantención programada / periódica. |
+| `1` | `Corrective` | Reparación ante falla o daño reportado. |
+
+### Valores válidos de `Status`
+
+| Valor | Enum | Transición permitida |
+|:---:|---|---|
+| `0` | `Pending` | → InProgress, → Cancelled |
+| `1` | `InProgress` | → Completed, → Cancelled |
+| `2` | `Completed` | Estado final |
+| `3` | `Cancelled` | Estado final |
+
+### Valores válidos de `ResponsibleType`
+
+| Valor | Enum | Campos que aplican |
+|:---:|---|---|
+| `0` | `Internal` | `ResponsibleUserId` (opcional) |
+| `1` | `External` | `ExternalProviderName` (requerido), `ExternalProviderContact` (opcional) |
+
+### Índices y relaciones
+
+| Nombre | Tipo | Columnas |
+|---|---|---|
+| `PK_MaintenanceRecords` | PRIMARY KEY | `Id` |
+| `FK_MaintenanceRecords_Tenants` | FK | `TenantId → Tenants.Id` |
+| `FK_MaintenanceRecords_Equipment` | FK | `EquipmentId → Equipment.Id` (RESTRICT) |
+| `FK_MaintenanceRecords_Users` | FK | `ResponsibleUserId → Users.Id` (RESTRICT, nullable) |
+| `IX_MR_TenantId` | NONCLUSTERED | `TenantId` |
+| `IX_MR_EquipmentId` | NONCLUSTERED | `EquipmentId` |
+| `IX_MR_TenantId_Status` | NONCLUSTERED | `TenantId`, `Status` |
+| `CK_MR_Type` | CHECK | `Type IN (0, 1)` |
+| `CK_MR_Status` | CHECK | `Status BETWEEN 0 AND 3` |
+| `CK_MR_ResponsibleType` | CHECK | `ResponsibleType IN (0, 1)` |
 
 ---
 

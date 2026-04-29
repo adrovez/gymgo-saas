@@ -1,0 +1,112 @@
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ isEdit() ? 'Editar máquina' : 'Nueva máquina' }}</h1>
+      <p class="page-description">{{ isEdit() ? 'Actualiza los datos del equipo.' : 'Registra un nuevo equipo en el catálogo.' }}</p>
+    </div>
+    <a routerLink="/app/equipment" class="btn btn-secondary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver
+    </a>
+  </div>
+
+  <div class="card">
+
+    @if (error()) {
+      <div class="alert alert-error mb-6" role="alert">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-5">
+
+      <!-- Nombre -->
+      <div>
+        <label for="name" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Nombre <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <input id="name" type="text" formControlName="name" class="input w-full"
+               [class.input-error]="isInvalid('name')"
+               placeholder="Ej. Cinta de correr Technogym" autocomplete="off"/>
+        @if (hasError('name', 'required')) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">El nombre es obligatorio.</p>
+        } @else if (hasError('name', 'maxlength')) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Máximo 100 caracteres.</p>
+        }
+      </div>
+
+      <!-- Marca / Modelo -->
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div>
+          <label for="brand" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">Marca</label>
+          <input id="brand" type="text" formControlName="brand" class="input w-full"
+                 [class.input-error]="isInvalid('brand')"
+                 placeholder="Ej. Technogym" autocomplete="off"/>
+          @if (hasError('brand', 'maxlength')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Máximo 100 caracteres.</p>
+          }
+        </div>
+        <div>
+          <label for="model" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">Modelo</label>
+          <input id="model" type="text" formControlName="model" class="input w-full"
+                 [class.input-error]="isInvalid('model')"
+                 placeholder="Ej. Run Personal" autocomplete="off"/>
+          @if (hasError('model', 'maxlength')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Máximo 100 caracteres.</p>
+          }
+        </div>
+      </div>
+
+      <!-- N° Serie / Fecha compra -->
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div>
+          <label for="serialNumber" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">N° de serie</label>
+          <input id="serialNumber" type="text" formControlName="serialNumber" class="input w-full"
+                 [class.input-error]="isInvalid('serialNumber')"
+                 placeholder="Ej. SN-20241201" autocomplete="off"/>
+          @if (hasError('serialNumber', 'maxlength')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Máximo 50 caracteres.</p>
+          }
+        </div>
+        <div>
+          <label for="purchaseDate" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">Fecha de compra</label>
+          <input id="purchaseDate" type="date" formControlName="purchaseDate" class="input w-full"/>
+        </div>
+      </div>
+
+      <!-- URL imagen -->
+      <div>
+        <label for="imageUrl" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">URL de imagen</label>
+        <input id="imageUrl" type="url" formControlName="imageUrl" class="input w-full"
+               [class.input-error]="isInvalid('imageUrl')"
+               placeholder="https://..." autocomplete="off"/>
+        @if (hasError('imageUrl', 'maxlength')) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Máximo 500 caracteres.</p>
+        }
+        <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">Opcional. URL pública de la foto de la máquina.</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-3 pt-2" style="border-top: 1px solid var(--color-border)">
+        <a routerLink="/app/equipment" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner w-4 h-4" style="border-top-color: white; border-color: rgba(255,255,255,0.3)"></span>
+            Guardando...
+          } @else {
+            {{ isEdit() ? 'Guardar cambios' : 'Registrar máquina' }}
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

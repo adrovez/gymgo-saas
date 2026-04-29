@@ -1,0 +1,315 @@
+<!-- Membership Plan create page -->
+<div class="p-6 max-w-3xl mx-auto space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Nuevo plan</h1>
+      <p class="page-description">Configura los parámetros del nuevo plan de membresía.</p>
+    </div>
+    <a routerLink="/app/membership-plans" class="btn btn-secondary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver
+    </a>
+  </div>
+
+  <!-- Form card -->
+  <div class="card">
+
+    <!-- Error banner -->
+    @if (error()) {
+      <div class="alert alert-error mb-6" role="alert">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"/>
+        </svg>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-8">
+
+      <!-- ── Sección: Información general ──────────────────── -->
+      <fieldset class="space-y-5">
+        <legend class="text-sm font-semibold pb-2 w-full"
+                style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+          Información general
+        </legend>
+
+        <!-- Nombre -->
+        <div>
+          <label for="name" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Nombre del plan <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            autocomplete="off"
+            placeholder="Ej. Mensual Full, Trimestral Básico..."
+            class="input w-full"
+            [class.input-error]="isInvalid('name')"
+            aria-describedby="name-error"
+            aria-required="true"
+          />
+          @if (isInvalid('name')) {
+            <p id="name-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+              El nombre es obligatorio.
+            </p>
+          }
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label for="description" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Descripción
+          </label>
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="3"
+            placeholder="Descripción opcional del plan..."
+            class="input w-full resize-none"
+            [class.input-error]="isInvalid('description')"
+          ></textarea>
+        </div>
+
+        <!-- Periodicidad / Precio -->
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label for="periodicity" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+              Periodicidad <span style="color: var(--color-error)" aria-hidden="true">*</span>
+            </label>
+            <select
+              id="periodicity"
+              formControlName="periodicity"
+              class="input w-full"
+              [class.input-error]="isInvalid('periodicity')"
+            >
+              @for (p of periodicityOptions; track p.value) {
+                <option [value]="p.value">{{ p.label }} ({{ p.days }} días)</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label for="amount" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+              Precio (CLP) <span style="color: var(--color-error)" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="amount"
+              type="number"
+              formControlName="amount"
+              min="0"
+              step="1000"
+              placeholder="0"
+              class="input w-full"
+              [class.input-error]="isInvalid('amount')"
+              aria-describedby="amount-error"
+              aria-required="true"
+            />
+            @if (hasError('amount', 'min')) {
+              <p id="amount-error" class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+                El precio no puede ser negativo.
+              </p>
+            }
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- ── Sección: Días de asistencia ───────────────────── -->
+      <fieldset class="space-y-5">
+        <legend class="text-sm font-semibold pb-2 w-full"
+                style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+          Días de asistencia
+        </legend>
+
+        <!-- Días por semana -->
+        <div class="sm:w-1/2">
+          <label for="daysPerWeek" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Días por semana <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="daysPerWeek"
+            type="number"
+            formControlName="daysPerWeek"
+            min="1"
+            max="7"
+            class="input w-full"
+            [class.input-error]="isInvalid('daysPerWeek')"
+            aria-required="true"
+          />
+          @if (hasError('daysPerWeek', 'min') || hasError('daysPerWeek', 'max')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+              Debe ser entre 1 y 7 días.
+            </p>
+          }
+        </div>
+
+        <!-- Días fijos toggle -->
+        <div class="flex items-start gap-3">
+          <div class="flex h-5 items-center mt-0.5">
+            <input
+              id="fixedDays"
+              type="checkbox"
+              formControlName="fixedDays"
+              class="h-4 w-4 rounded"
+              style="accent-color: var(--color-primary)"
+              (change)="onFixedDaysChange($any($event.target).checked)"
+            />
+          </div>
+          <div>
+            <label for="fixedDays" class="text-sm font-medium" style="color: var(--color-foreground)">
+              Días fijos de la semana
+            </label>
+            <p class="text-xs mt-0.5" style="color: var(--color-muted-fg)">
+              Activa para que el socio asista solo en días específicos.
+            </p>
+          </div>
+        </div>
+
+        <!-- Checkboxes de días (solo visible si fixedDays) -->
+        @if (fixedDays) {
+          <div>
+            <p class="text-sm font-medium mb-2" style="color: var(--color-foreground)">
+              Selecciona los días
+              <span class="text-xs font-normal ml-1" style="color: var(--color-muted-fg)">
+                ({{ checkedDaysCount }} de {{ form.controls.daysPerWeek.value }} seleccionados)
+              </span>
+            </p>
+            <div class="flex flex-wrap gap-2">
+              @for (day of daysOfWeek; track day.key) {
+                <label
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm font-medium transition-colors"
+                  [style]="form.get(day.key)?.value
+                    ? 'background: var(--color-primary-subtle); border-color: var(--color-primary); color: var(--color-primary)'
+                    : 'background: var(--color-card-bg); border-color: var(--color-border); color: var(--color-muted-fg)'"
+                >
+                  <input
+                    type="checkbox"
+                    [formControlName]="day.key"
+                    class="sr-only"
+                  />
+                  {{ day.label }}
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </fieldset>
+
+      <!-- ── Sección: Horario ───────────────────────────────── -->
+      <fieldset class="space-y-5">
+        <legend class="text-sm font-semibold pb-2 w-full"
+                style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+          Horario
+        </legend>
+
+        <!-- Horario libre toggle -->
+        <div class="flex items-start gap-3">
+          <div class="flex h-5 items-center mt-0.5">
+            <input
+              id="freeSchedule"
+              type="checkbox"
+              formControlName="freeSchedule"
+              class="h-4 w-4 rounded"
+              style="accent-color: var(--color-primary)"
+              (change)="onFreeScheduleChange($any($event.target).checked)"
+            />
+          </div>
+          <div>
+            <label for="freeSchedule" class="text-sm font-medium" style="color: var(--color-foreground)">
+              Horario libre
+            </label>
+            <p class="text-xs mt-0.5" style="color: var(--color-muted-fg)">
+              El socio puede asistir en cualquier horario dentro del día.
+            </p>
+          </div>
+        </div>
+
+        <!-- Rango horario (solo si no es horario libre) -->
+        @if (!freeSchedule) {
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="timeFrom" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Hora de inicio <span style="color: var(--color-error)" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="timeFrom"
+                type="time"
+                formControlName="timeFrom"
+                class="input w-full"
+                [class.input-error]="isInvalid('timeFrom')"
+                aria-required="true"
+              />
+            </div>
+            <div>
+              <label for="timeTo" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+                Hora de fin <span style="color: var(--color-error)" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="timeTo"
+                type="time"
+                formControlName="timeTo"
+                class="input w-full"
+                [class.input-error]="isInvalid('timeTo')"
+                aria-required="true"
+              />
+            </div>
+          </div>
+        }
+      </fieldset>
+
+      <!-- ── Sección: Opciones adicionales ─────────────────── -->
+      <fieldset class="space-y-5">
+        <legend class="text-sm font-semibold pb-2 w-full"
+                style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+          Opciones adicionales
+        </legend>
+
+        <!-- Permite congelamiento -->
+        <div class="flex items-start gap-3">
+          <div class="flex h-5 items-center mt-0.5">
+            <input
+              id="allowsFreezing"
+              type="checkbox"
+              formControlName="allowsFreezing"
+              class="h-4 w-4 rounded"
+              style="accent-color: var(--color-primary)"
+            />
+          </div>
+          <div>
+            <label for="allowsFreezing" class="text-sm font-medium" style="color: var(--color-foreground)">
+              Permite congelamiento de membresía
+            </label>
+            <p class="text-xs mt-0.5" style="color: var(--color-muted-fg)">
+              El socio podrá pausar temporalmente su membresía activa.
+            </p>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- ── Actions ────────────────────────────────────────── -->
+      <div class="flex items-center justify-end gap-3 pt-1">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Guardando...</span>
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Crear plan
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

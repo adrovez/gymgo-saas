@@ -2,7 +2,9 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { UserRole } from '../../../core/models/auth.models';
+import { DialogService } from '../../../core/services/dialog.service';
 import { ASSIGNABLE_ROLES } from '../models/user.models';
+import { UsersService } from '../services/users.service';
 
 @Component({
   selector: 'app-user-create',
@@ -11,8 +13,10 @@ import { ASSIGNABLE_ROLES } from '../models/user.models';
   templateUrl: './user-create.html',
 })
 export class UserCreateComponent {
-  private readonly fb     = inject(FormBuilder);
-  private readonly router = inject(Router);
+  private readonly fb           = inject(FormBuilder);
+  private readonly router       = inject(Router);
+  private readonly usersService = inject(UsersService);
+  private readonly dialog       = inject(DialogService);
 
   readonly loading         = signal(false);
   readonly error           = signal<string | null>(null);
@@ -28,9 +32,25 @@ export class UserCreateComponent {
 
   onSubmit(): void {
     if (this.form.invalid || this.loading()) return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) return;
+
     this.loading.set(true);
     this.error.set(null);
-    // TODO: llamar al servicio de creación
+
+    const { fullName, email, password, role } = this.form.getRawValue();
+
+    this.usersService.createUser({ fullName, email, password, role }).subscribe({
+      next: () => {
+        this.dialog.toast('Usuario creado correctamente.', 'success');
+        this.router.navigate(['/app/users']);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        const msg = err?.error?.detail ?? err?.error?.message ?? 'Error al crear el usuario.';
+        this.error.set(msg);
+      },
+    });
   }
 
   togglePassword(): void {

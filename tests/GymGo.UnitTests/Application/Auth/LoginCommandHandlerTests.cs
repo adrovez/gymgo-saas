@@ -2,6 +2,7 @@ using FluentAssertions;
 using GymGo.Application.Auth.Commands.Login;
 using GymGo.Application.Common.Interfaces;
 using GymGo.Domain.Exceptions;
+using GymGo.Domain.GymClasses;
 using GymGo.Domain.Members;
 using GymGo.Domain.MembershipAssignments;
 using GymGo.Domain.MembershipPlans;
@@ -196,6 +197,8 @@ internal sealed class AuthTestDbContext : DbContext, IApplicationDbContext
     public DbSet<Member>                 Members               => Set<Member>();
     public DbSet<MembershipPlan>         MembershipPlans       => Set<MembershipPlan>();
     public DbSet<MembershipAssignment>   MembershipAssignments => Set<MembershipAssignment>();
+    public DbSet<GymClass>               GymClasses            => Set<GymClass>();
+    public DbSet<ClassSchedule>          ClassSchedules        => Set<ClassSchedule>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -213,6 +216,16 @@ internal sealed class AuthTestDbContext : DbContext, IApplicationDbContext
         mb.Entity<Member>().HasKey(m => m.Id);
         mb.Entity<MembershipPlan>().HasKey(p => p.Id);
         mb.Entity<MembershipAssignment>().HasKey(a => a.Id);
+
+        mb.Entity<GymClass>().HasKey(c => c.Id);
+        mb.Entity<GymClass>().Ignore(c => c.DomainEvents);
+        mb.Entity<ClassSchedule>().HasKey(s => s.Id);
+        mb.Entity<ClassSchedule>().Ignore(s => s.DomainEvents);
+        mb.Entity<ClassSchedule>().Property(s => s.DayOfWeek).HasConversion<int>();
+        mb.Entity<GymClass>()
+            .HasMany(c => c.Schedules)
+            .WithOne(s => s.GymClass)
+            .HasForeignKey(s => s.GymClassId);
     }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

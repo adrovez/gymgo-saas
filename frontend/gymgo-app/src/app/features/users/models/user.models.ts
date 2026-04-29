@@ -42,8 +42,6 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export const ASSIGNABLE_ROLES: { value: UserRole; label: string }[] = [
-  { value: UserRole.GymOwner,   label: 'Dueño' },
   { value: UserRole.GymStaff,   label: 'Staff' },
   { value: UserRole.Instructor, label: 'Instructor' },
-  { value: UserRole.Member,     label: 'Socio' },
 ];

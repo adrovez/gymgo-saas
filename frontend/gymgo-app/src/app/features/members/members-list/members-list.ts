@@ -95,15 +95,8 @@ export class MembersListComponent implements OnInit {
     this.loadMembers();
   }
 
-  async editMember(member: MemberSummaryDto): Promise<void> {
-    const result = await this.dialog.confirmAction(
-      'Editar socio',
-      `¿Deseas editar los datos de ${member.fullName}?`,
-      'Ir a editar',
-    );
-    if (result.isConfirmed) {
-      this.router.navigate(['/app/members', member.id, 'edit']);
-    }
+  editMember(member: MemberSummaryDto): void {
+    this.router.navigate(['/app/members', member.id, 'edit']);
   }
 
   async deleteMember(member: MemberSummaryDto): Promise<void> {

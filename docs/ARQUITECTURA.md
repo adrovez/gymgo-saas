@@ -52,6 +52,8 @@ Sin tenant → no filtra (PlatformAdmin ve todo). Con tenant → sólo filas de 
 - `IAuditable` → `AuditableEntitySaveChangesInterceptor` completa `CreatedAtUtc/By` y `ModifiedAtUtc/By`.
 - `ISoftDeletable` → mismo interceptor convierte `Deleted` en `Modified` con `IsDeleted=1`. El `HasQueryFilter` los excluye automáticamente.
 
+> **Excepción — `ClassAttendance`:** esta entidad implementa `IAuditable` e `ITenantScoped` pero **no** `ISoftDeletable`. Los registros de asistencia son inmutables por diseño: una vez registrado un check-in no se borra físicamente ni lógicamente. Su `HasQueryFilter` en `ApplicationDbContext` sólo aplica el filtro de tenant, sin filtro de `IsDeleted`.
+
 ## Pipeline de MediatR
 
 Todo Command/Query pasa por:

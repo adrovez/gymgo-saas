@@ -1,0 +1,148 @@
+<div class="p-6 space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mantención</h1>
+      <p class="page-description">Registro de mantenciones preventivas y correctivas</p>
+    </div>
+    <a routerLink="/app/maintenance/new" class="btn btn-primary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nueva mantención
+    </a>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Filters -->
+  <div class="card p-4">
+    <div class="flex flex-wrap gap-3">
+
+      <!-- Máquina -->
+      <select class="input w-auto flex-1 min-w-48" (change)="onEquipmentFilter($any($event.target).value)"
+              aria-label="Filtrar por máquina">
+        <option value="">Todas las máquinas</option>
+        @for (eq of equipment(); track eq.id) {
+          <option [value]="eq.id">{{ eq.name }}</option>
+        }
+      </select>
+
+      <!-- Tipo -->
+      <select class="input w-auto" (change)="onTypeFilter($any($event.target).value)"
+              aria-label="Filtrar por tipo">
+        <option value="">Todos los tipos</option>
+        @for (t of typeOptions; track t.value) {
+          <option [value]="t.value">{{ t.label }}</option>
+        }
+      </select>
+
+      <!-- Estado -->
+      <select class="input w-auto" (change)="onStatusFilter($any($event.target).value)"
+              aria-label="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        @for (s of statusOptions; track s.value) {
+          <option [value]="s.value">{{ s.label }}</option>
+        }
+      </select>
+
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card p-0 overflow-hidden">
+    @if (loading()) {
+      <div class="p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+        <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+        <span class="text-sm">Cargando registros...</span>
+      </div>
+    } @else if (records().length === 0) {
+      <div class="p-12 flex flex-col items-center gap-3 text-center">
+        <svg class="w-10 h-10" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/>
+        </svg>
+        <p class="text-sm font-medium" style="color: var(--color-foreground)">Sin registros de mantención</p>
+        <p class="text-sm" style="color: var(--color-muted-fg)">Programa la primera mantención para comenzar.</p>
+        <a routerLink="/app/maintenance/new" class="btn btn-primary btn-sm mt-2">Nueva mantención</a>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Máquina</th>
+              <th class="cell-center">Tipo</th>
+              <th>Descripción</th>
+              <th>Fecha prog.</th>
+              <th>Responsable</th>
+              <th class="cell-center">Estado</th>
+              <th class="cell-actions">Ver</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rec of records(); track rec.id) {
+              <tr class="cursor-pointer" (click)="viewDetail(rec)">
+
+                <!-- Máquina -->
+                <td class="font-medium">{{ rec.equipmentName }}</td>
+
+                <!-- Tipo -->
+                <td class="cell-center">
+                  <span [class]="typeBadgeClass(rec.type)">{{ rec.typeLabel }}</span>
+                </td>
+
+                <!-- Descripción -->
+                <td style="color: var(--color-muted-fg); font-size: 0.8125rem; max-width: 260px">
+                  <span class="line-clamp-2">{{ rec.description }}</span>
+                </td>
+
+                <!-- Fecha -->
+                <td style="color: var(--color-muted-fg); font-size: 0.8125rem; white-space: nowrap">
+                  {{ rec.scheduledDate }}
+                </td>
+
+                <!-- Responsable -->
+                <td style="color: var(--color-muted-fg); font-size: 0.8125rem">
+                  @if (rec.responsibleType === 1) {
+                    <span>{{ rec.externalProviderName ?? 'Externo' }}</span>
+                  } @else {
+                    <span>Staff interno</span>
+                  }
+                </td>
+
+                <!-- Estado -->
+                <td class="cell-center">
+                  <span [class]="statusBadgeClass(rec.status)">{{ rec.statusLabel }}</span>
+                </td>
+
+                <!-- Ver detalle -->
+                <td class="cell-actions">
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="viewDetail(rec)" aria-label="Ver detalle">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </td>
+
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="px-4 py-3 text-sm" style="border-top: 1px solid var(--color-border); color: var(--color-muted-fg)">
+        {{ records().length }} registro(s)
+      </div>
+    }
+  </div>
+
+</div>

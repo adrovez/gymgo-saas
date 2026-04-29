@@ -1,0 +1,177 @@
+<!-- Class create page -->
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Nueva clase</h1>
+      <p class="page-description">Define un nuevo tipo de clase para el gimnasio.</p>
+    </div>
+    <a routerLink="/app/classes" class="btn btn-secondary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver
+    </a>
+  </div>
+
+  <div class="card">
+
+    <!-- Error banner -->
+    @if (formError) {
+      <div class="alert alert-error mb-6" role="alert">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"/>
+        </svg>
+        <span>{{ formError }}</span>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-6">
+
+      <!-- ── Nombre ──────────────────────────────────────────── -->
+      <div>
+        <label for="name" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Nombre <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          class="input w-full"
+          [class.input-error]="isInvalid('name')"
+          placeholder="Ej. Spinning, Yoga, Box Funcional"
+          aria-required="true"
+        />
+        @if (isInvalid('name')) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+            El nombre es obligatorio (máx. 100 caracteres).
+          </p>
+        }
+      </div>
+
+      <!-- ── Descripción ─────────────────────────────────────── -->
+      <div>
+        <label for="description" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Descripción
+        </label>
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="2"
+          placeholder="Breve descripción de la clase..."
+          class="input w-full resize-none"
+          [class.input-error]="isInvalid('description')"
+        ></textarea>
+        <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">Máx. 500 caracteres.</p>
+      </div>
+
+      <!-- ── Categoría ───────────────────────────────────────── -->
+      <div>
+        <label for="category" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Categoría
+        </label>
+        <select id="category" formControlName="category" class="input w-full">
+          @for (opt of CATEGORY_OPTIONS; track opt.value) {
+            <option [ngValue]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- ── Duración y Capacidad ────────────────────────────── -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="durationMinutes" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Duración (min) <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="durationMinutes"
+            type="number"
+            formControlName="durationMinutes"
+            class="input w-full"
+            [class.input-error]="isInvalid('durationMinutes')"
+            min="1" max="300"
+          />
+          @if (isInvalid('durationMinutes')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+              Ingresa una duración válida (1–300 min).
+            </p>
+          }
+        </div>
+        <div>
+          <label for="maxCapacity" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Capacidad máx. <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="maxCapacity"
+            type="number"
+            formControlName="maxCapacity"
+            class="input w-full"
+            [class.input-error]="isInvalid('maxCapacity')"
+            min="1" max="999"
+          />
+          @if (isInvalid('maxCapacity')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+              Ingresa una capacidad válida (1–999).
+            </p>
+          }
+        </div>
+      </div>
+
+      <!-- ── Color ───────────────────────────────────────────── -->
+      <div>
+        <label class="block text-sm font-medium mb-2" style="color: var(--color-foreground)">
+          Color en calendario
+        </label>
+        <div class="flex flex-wrap gap-2">
+          @for (preset of PRESET_COLORS; track preset.value) {
+            <button
+              type="button"
+              class="w-7 h-7 rounded-full border-2 transition-all"
+              [style.background]="preset.value"
+              [style.border-color]="form.controls.color.value === preset.value ? 'var(--color-foreground)' : 'transparent'"
+              [style.box-shadow]="form.controls.color.value === preset.value ? '0 0 0 2px var(--color-card-bg), 0 0 0 4px ' + preset.value : 'none'"
+              (click)="selectColor(preset.value)"
+              [attr.aria-label]="preset.label"
+              [attr.title]="preset.label"
+            ></button>
+          }
+        </div>
+        <!-- Preview -->
+        @if (form.controls.color.value) {
+          <div class="mt-3 flex items-center gap-2">
+            <div
+              class="w-3 h-3 rounded-full"
+              [style.background]="form.controls.color.value"
+            ></div>
+            <span class="text-xs font-mono" style="color: var(--color-muted-fg)">
+              {{ form.controls.color.value }}
+            </span>
+          </div>
+        }
+      </div>
+
+      <!-- ── Actions ────────────────────────────────────────── -->
+      <div class="flex items-center justify-end gap-3 pt-1">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          @if (isLoading) {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Creando...</span>
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Crear clase
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

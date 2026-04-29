@@ -81,6 +81,13 @@ try
     app.MapMemberEndpoints();
     app.MapMembershipPlanEndpoints();
     app.MapMembershipAssignmentEndpoints();
+    app.MapGymClassEndpoints();
+    app.MapClassAttendanceEndpoints();
+    app.MapGymEntryEndpoints();
+    app.MapClassReservationEndpoints();
+    app.MapEquipmentEndpoints();
+    app.MapMaintenanceEndpoints();
+    app.MapUserEndpoints();
     app.MapControllers();
 
     Log.Information("GymGo.API listo. Escuchando...");

@@ -1,4 +1,10 @@
 using GymGo.Application.Common.Interfaces;
+using GymGo.Domain.ClassAttendances;
+using GymGo.Domain.ClassReservations;
+using GymGo.Domain.Equipments;
+using GymGo.Domain.GymClasses;
+using GymGo.Domain.GymEntries;
+using GymGo.Domain.Maintenance;
 using GymGo.Domain.Members;
 using GymGo.Domain.MembershipAssignments;
 using GymGo.Domain.MembershipPlans;
@@ -23,6 +29,13 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Member> Members => Set<Member>();
     public DbSet<MembershipPlan> MembershipPlans => Set<MembershipPlan>();
     public DbSet<MembershipAssignment> MembershipAssignments => Set<MembershipAssignment>();
+    public DbSet<GymClass> GymClasses => Set<GymClass>();
+    public DbSet<ClassSchedule> ClassSchedules => Set<ClassSchedule>();
+    public DbSet<ClassAttendance> ClassAttendances => Set<ClassAttendance>();
+    public DbSet<GymEntry> GymEntries => Set<GymEntry>();
+    public DbSet<ClassReservation> ClassReservations => Set<ClassReservation>();
+    public DbSet<Equipment> Equipment => Set<Equipment>();
+    public DbSet<MaintenanceRecord> MaintenanceRecords => Set<MaintenanceRecord>();
 
     /// <summary>
     /// EF Core trata los accesos a propiedades de instancia del DbContext
@@ -66,5 +79,36 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<MembershipAssignment>().HasQueryFilter(a =>
             (!CurrentHasTenant || a.TenantId == CurrentTenantIdOrEmpty)
             && !a.IsDeleted);
+
+        // GymClasses: ITenantScoped + ISoftDeletable.
+        modelBuilder.Entity<GymClass>().HasQueryFilter(c =>
+            (!CurrentHasTenant || c.TenantId == CurrentTenantIdOrEmpty)
+            && !c.IsDeleted);
+
+        // ClassSchedules: ITenantScoped + ISoftDeletable.
+        modelBuilder.Entity<ClassSchedule>().HasQueryFilter(s =>
+            (!CurrentHasTenant || s.TenantId == CurrentTenantIdOrEmpty)
+            && !s.IsDeleted);
+
+        // ClassAttendances: ITenantScoped (sin soft delete — los registros son inmutables).
+        modelBuilder.Entity<ClassAttendance>().HasQueryFilter(a =>
+            !CurrentHasTenant || a.TenantId == CurrentTenantIdOrEmpty);
+
+        // GymEntries: ITenantScoped (sin soft delete — los ingresos son inmutables).
+        modelBuilder.Entity<GymEntry>().HasQueryFilter(e =>
+            !CurrentHasTenant || e.TenantId == CurrentTenantIdOrEmpty);
+
+        // ClassReservations: ITenantScoped (sin soft delete — las reservas son registros de auditoría).
+        modelBuilder.Entity<ClassReservation>().HasQueryFilter(r =>
+            !CurrentHasTenant || r.TenantId == CurrentTenantIdOrEmpty);
+
+        // Equipment: ITenantScoped + ISoftDeletable.
+        modelBuilder.Entity<Equipment>().HasQueryFilter(e =>
+            (!CurrentHasTenant || e.TenantId == CurrentTenantIdOrEmpty)
+            && !e.IsDeleted);
+
+        // MaintenanceRecords: ITenantScoped (sin soft delete — son registros de auditoría).
+        modelBuilder.Entity<MaintenanceRecord>().HasQueryFilter(m =>
+            !CurrentHasTenant || m.TenantId == CurrentTenantIdOrEmpty);
     }
 }

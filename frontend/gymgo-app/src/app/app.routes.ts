@@ -34,6 +34,13 @@ export const routes: Routes = [
           import('./features/members/member-edit/member-edit').then((m) => m.MemberEditComponent),
       },
       {
+        path: 'members/:id/assignments',
+        loadComponent: () =>
+          import('./features/members/member-assignments/member-assignments').then(
+            (m) => m.MemberAssignmentsComponent,
+          ),
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/users/users-list/users-list').then((m) => m.UsersListComponent),
@@ -51,12 +58,125 @@ export const routes: Routes = [
       {
         path: 'membership-plans',
         loadComponent: () =>
-          import('./features/dashboard/dashboard').then((m) => m.DashboardComponent), // placeholder
+          import('./features/membership-plans/membership-plans-list/membership-plans-list').then(
+            (m) => m.MembershipPlansListComponent,
+          ),
+      },
+      {
+        path: 'membership-plans/new',
+        loadComponent: () =>
+          import('./features/membership-plans/membership-plan-create/membership-plan-create').then(
+            (m) => m.MembershipPlanCreateComponent,
+          ),
+      },
+      {
+        path: 'membership-plans/:id/edit',
+        loadComponent: () =>
+          import('./features/membership-plans/membership-plan-edit/membership-plan-edit').then(
+            (m) => m.MembershipPlanEditComponent,
+          ),
       },
       {
         path: 'assignments',
         loadComponent: () =>
-          import('./features/dashboard/dashboard').then((m) => m.DashboardComponent), // placeholder
+          import('./features/assignments/assignments-list/assignments-list').then(
+            (m) => m.AssignmentsListComponent,
+          ),
+      },
+      {
+        path: 'assignments/new',
+        loadComponent: () =>
+          import('./features/assignments/assignment-create/assignment-create').then(
+            (m) => m.AssignmentCreateComponent,
+          ),
+      },
+      // ── Registro de Ingreso ───────────────────────────────────────────────
+      {
+        path: 'gym-entry',
+        loadComponent: () =>
+          import('./features/gym-entry/gym-entry/gym-entry').then(
+            (m) => m.GymEntryComponent,
+          ),
+      },
+      // ── Reservas de Clases ────────────────────────────────────────────────
+      {
+        path: 'reservations',
+        loadComponent: () =>
+          import('./features/reservations/reservations/reservations').then(
+            (m) => m.ReservationsComponent,
+          ),
+      },
+      // ── Maquinaria & Mantención ────────────────────────────────────────
+      {
+        path: 'equipment',
+        loadComponent: () =>
+          import('./features/maintenance/equipment-list/equipment-list').then(
+            (m) => m.EquipmentListComponent,
+          ),
+      },
+      {
+        path: 'equipment/new',
+        loadComponent: () =>
+          import('./features/maintenance/equipment-form/equipment-form').then(
+            (m) => m.EquipmentFormComponent,
+          ),
+      },
+      {
+        path: 'equipment/:id/edit',
+        loadComponent: () =>
+          import('./features/maintenance/equipment-form/equipment-form').then(
+            (m) => m.EquipmentFormComponent,
+          ),
+      },
+      {
+        path: 'maintenance',
+        loadComponent: () =>
+          import('./features/maintenance/maintenance-list/maintenance-list').then(
+            (m) => m.MaintenanceListComponent,
+          ),
+      },
+      {
+        path: 'maintenance/new',
+        loadComponent: () =>
+          import('./features/maintenance/maintenance-form/maintenance-form').then(
+            (m) => m.MaintenanceFormComponent,
+          ),
+      },
+      {
+        path: 'maintenance/:id',
+        loadComponent: () =>
+          import('./features/maintenance/maintenance-detail/maintenance-detail').then(
+            (m) => m.MaintenanceDetailComponent,
+          ),
+      },
+      // ── Classes & Calendar (Sprint 3) ──────────────────────────────────
+      {
+        path: 'classes',
+        loadComponent: () =>
+          import('./features/classes/classes-list/classes-list').then(
+            (m) => m.ClassesListComponent,
+          ),
+      },
+      {
+        path: 'classes/new',
+        loadComponent: () =>
+          import('./features/classes/class-create/class-create').then(
+            (m) => m.ClassCreateComponent,
+          ),
+      },
+      {
+        path: 'classes/calendar',
+        loadComponent: () =>
+          import('./features/classes/class-calendar/class-calendar').then(
+            (m) => m.ClassCalendarComponent,
+          ),
+      },
+      {
+        path: 'classes/:id/edit',
+        loadComponent: () =>
+          import('./features/classes/class-edit/class-edit').then(
+            (m) => m.ClassEditComponent,
+          ),
       },
       {
         path: '',

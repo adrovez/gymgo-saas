@@ -349,6 +349,207 @@
       </form>
     </div>
 
+    <!-- ── Membresía activa ─────────────────────────────── -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-base font-semibold" style="color: var(--color-foreground)">Membresía actual</h2>
+          <p class="text-sm mt-0.5" style="color: var(--color-muted-fg)">Estado de la membresía vigente o congelada.</p>
+        </div>
+        <a
+          [routerLink]="['/app/members', id(), 'assignments']"
+          class="btn btn-ghost btn-sm"
+          style="color: var(--color-primary)"
+        >
+          Ver historial completo
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Error de acción -->
+      @if (errorAssignment()) {
+        <div class="alert alert-error mb-4" role="alert">
+          <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"/>
+          </svg>
+          <span>{{ errorAssignment() }}</span>
+        </div>
+      }
+
+      @if (loadingAssignment()) {
+        <!-- Skeleton -->
+        <div class="flex items-center gap-3 py-4" style="color: var(--color-muted-fg)">
+          <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+          <span class="text-sm">Cargando membresía...</span>
+        </div>
+      } @else if (!activeAssignment()) {
+        <!-- Sin membresía activa -->
+        <div class="flex flex-col items-center gap-3 py-6 text-center rounded-lg"
+             style="background: var(--color-muted-bg); border: 1px dashed var(--color-border)">
+          <svg class="w-8 h-8" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+          </svg>
+          <p class="text-sm font-medium" style="color: var(--color-foreground)">Sin membresía activa</p>
+          <p class="text-sm" style="color: var(--color-muted-fg)">Este socio no tiene un plan vigente en este momento.</p>
+          <a routerLink="/app/assignments/new" class="btn btn-primary btn-sm mt-1">
+            Asignar plan
+          </a>
+        </div>
+      } @else {
+        <!-- Membresía activa -->
+        @let a = activeAssignment()!;
+        <div class="space-y-4">
+
+          <!-- Cabecera: plan + badges -->
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <a
+                [routerLink]="['/app/membership-plans', a.membershipPlanId, 'edit']"
+                class="font-mono text-xs hover:underline"
+                style="color: var(--color-muted-fg)"
+                title="Ver plan"
+              >
+                Plan {{ shortId(a.membershipPlanId) }}
+              </a>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Badge estado de asignación -->
+              @switch (a.status) {
+                @case (AssignmentStatus.Active) {
+                  <span class="badge badge-active">Activa</span>
+                }
+                @case (AssignmentStatus.Frozen) {
+                  <span class="badge" style="background: #dbeafe; color: #1d4ed8">Congelada</span>
+                }
+                @default {
+                  <span class="badge badge-suspended">{{ a.statusLabel }}</span>
+                }
+              }
+              <!-- Badge estado de pago -->
+              @switch (a.paymentStatus) {
+                @case (PaymentStatus.Paid) {
+                  <span class="badge badge-active">Pagada</span>
+                }
+                @case (PaymentStatus.Pending) {
+                  <span class="badge" style="background: #fef9c3; color: #854d0e">Pago pendiente</span>
+                }
+                @case (PaymentStatus.Overdue) {
+                  <span class="badge badge-delinquent">Morosa</span>
+                }
+              }
+            </div>
+          </div>
+
+          <!-- Datos de la membresía -->
+          <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-4">
+            <div>
+              <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Inicio</p>
+              <p style="color: var(--color-foreground)">{{ a.startDate }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Vencimiento</p>
+              <p style="color: var(--color-foreground)">{{ a.endDate }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Días restantes</p>
+              <p [style.color]="a.daysRemaining <= 7 ? 'var(--color-error)' : 'var(--color-foreground)'"
+                 class="font-medium">
+                {{ a.daysRemaining }}
+              </p>
+            </div>
+            <div>
+              <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Monto</p>
+              <p style="color: var(--color-foreground)" class="font-medium">{{ formatAmount(a.amountSnapshot) }}</p>
+            </div>
+          </div>
+
+          <!-- Congelada desde -->
+          @if (a.status === AssignmentStatus.Frozen && a.frozenSince) {
+            <div class="flex items-center gap-2 text-sm rounded-lg px-3 py-2"
+                 style="background: #dbeafe; color: #1d4ed8">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m3.343-5.657l-.707-.707M17.364 17.364l-.707-.707M6.343 17.364l-.707-.707M17.364 6.343l-.707-.707"/>
+              </svg>
+              Congelada desde {{ a.frozenSince }} · {{ a.frozenDaysAccumulated }} día(s) acumulado(s)
+            </div>
+          }
+
+          <!-- Acciones contextuales -->
+          <div class="flex flex-wrap gap-2 pt-1" style="border-top: 1px solid var(--color-border)">
+
+            <!-- Registrar pago (si está pendiente o morosa) -->
+            @if (a.paymentStatus === PaymentStatus.Pending || a.paymentStatus === PaymentStatus.Overdue) {
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                (click)="registerPayment()"
+                [disabled]="loadingAction()"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Registrar pago
+              </button>
+            }
+
+            <!-- Congelar (si está activa) -->
+            @if (a.status === AssignmentStatus.Active) {
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                (click)="freezeMembership()"
+                [disabled]="loadingAction()"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m3.343-5.657l-.707-.707M17.364 17.364l-.707-.707M6.343 17.364l-.707-.707M17.364 6.343l-.707-.707"/>
+                </svg>
+                Congelar
+              </button>
+            }
+
+            <!-- Descongelar (si está congelada) -->
+            @if (a.status === AssignmentStatus.Frozen) {
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                (click)="unfreezeMembership()"
+                [disabled]="loadingAction()"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Descongelar
+              </button>
+            }
+
+            <!-- Cancelar -->
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm"
+              (click)="cancelAssignment()"
+              [disabled]="loadingAction()"
+              style="color: var(--color-error)"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              Cancelar membresía
+            </button>
+
+          </div>
+        </div>
+      }
+    </div>
+
   }
 
 </div>

@@ -1,0 +1,234 @@
+<div class="p-6 max-w-3xl mx-auto space-y-6">
+
+  @if (loading()) {
+    <div class="p-12 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+      <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+      <span class="text-sm">Cargando...</span>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  @if (record(); as rec) {
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div>
+          <h1 class="page-title">{{ rec.equipmentName }}</h1>
+          <p class="page-description">{{ rec.typeLabel }} · Programada: {{ rec.scheduledDate }}</p>
+        </div>
+        <span [class]="statusBadgeClass(rec.status)">{{ rec.statusLabel }}</span>
+      </div>
+      <a routerLink="/app/maintenance" class="btn btn-secondary">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Volver
+      </a>
+    </div>
+
+    <!-- Action bar -->
+    @if (rec.status === MaintenanceStatus.Pending || rec.status === MaintenanceStatus.InProgress) {
+      <div class="card p-4">
+        <p class="text-sm font-medium mb-3" style="color: var(--color-foreground)">Acciones disponibles</p>
+        <div class="flex flex-wrap gap-2">
+
+          @if (rec.status === MaintenanceStatus.Pending) {
+            <button type="button" class="btn btn-primary" (click)="startMaintenance()" [disabled]="actionLoading()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Iniciar mantención
+            </button>
+          }
+
+          @if (rec.status === MaintenanceStatus.InProgress) {
+            <button type="button" class="btn btn-primary" (click)="toggleCompleteForm()" [disabled]="actionLoading()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Marcar completada
+            </button>
+          }
+
+          <button type="button" class="btn btn-secondary" (click)="cancelMaintenance()" [disabled]="actionLoading()"
+                  style="color: var(--color-error)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Cancelar mantención
+          </button>
+
+        </div>
+
+        <!-- Complete form inline -->
+        @if (showCompleteForm()) {
+          <form [formGroup]="completeForm" (ngSubmit)="completeMaintenance()" novalidate
+                class="mt-4 pt-4 space-y-4" style="border-top: 1px solid var(--color-border)">
+            <p class="text-sm font-medium" style="color: var(--color-foreground)">Registrar cierre</p>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label for="cost" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">Costo ($)</label>
+                <input id="cost" type="number" formControlName="cost" class="input w-full"
+                       placeholder="0" min="0" step="0.01"/>
+              </div>
+              <div>
+                <label for="notes" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">Observaciones</label>
+                <textarea id="notes" formControlName="notes" rows="2"
+                          class="input w-full resize-none"
+                          placeholder="Notas de cierre opcionales..."></textarea>
+              </div>
+            </div>
+
+            <div class="flex gap-2">
+              <button type="submit" class="btn btn-primary btn-sm" [disabled]="actionLoading()">
+                @if (actionLoading()) {
+                  <span class="spinner w-3 h-3" style="border-top-color: white; border-color: rgba(255,255,255,0.3)"></span>
+                }
+                Confirmar cierre
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="toggleCompleteForm()">Cancelar</button>
+            </div>
+          </form>
+        }
+
+      </div>
+    }
+
+    <!-- Detail card -->
+    <div class="card space-y-6">
+
+      <!-- Sección: Descripción -->
+      <div>
+        <h2 class="text-sm font-semibold pb-2 mb-4"
+            style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+          Detalle de la mantención
+        </h2>
+        <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+          <div>
+            <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Máquina</dt>
+            <dd class="mt-1 text-sm font-medium" style="color: var(--color-foreground)">{{ rec.equipmentName }}</dd>
+          </div>
+
+          <div>
+            <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Tipo</dt>
+            <dd class="mt-1">
+              <span class="badge" [class.badge-preventive]="rec.type === MaintenanceType.Preventive"
+                    [class.badge-corrective]="rec.type === MaintenanceType.Corrective">
+                {{ rec.typeLabel }}
+              </span>
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Fecha programada</dt>
+            <dd class="mt-1 text-sm" style="color: var(--color-foreground)">{{ rec.scheduledDate }}</dd>
+          </div>
+
+          <div>
+            <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Estado</dt>
+            <dd class="mt-1"><span [class]="statusBadgeClass(rec.status)">{{ rec.statusLabel }}</span></dd>
+          </div>
+
+          @if (rec.startedAtUtc) {
+            <div>
+              <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Inicio real</dt>
+              <dd class="mt-1 text-sm" style="color: var(--color-foreground)">{{ rec.startedAtUtc | slice:0:16 | replace:'T':' ' }} UTC</dd>
+            </div>
+          }
+
+          @if (rec.completedAtUtc) {
+            <div>
+              <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">
+                {{ rec.status === MaintenanceStatus.Cancelled ? 'Cancelada en' : 'Completada en' }}
+              </dt>
+              <dd class="mt-1 text-sm" style="color: var(--color-foreground)">{{ rec.completedAtUtc | slice:0:16 | replace:'T':' ' }} UTC</dd>
+            </div>
+          }
+
+          @if (rec.cost != null) {
+            <div>
+              <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Costo</dt>
+              <dd class="mt-1 text-sm font-semibold" style="color: var(--color-foreground)">${{ rec.cost | number:'1.0-2' }}</dd>
+            </div>
+          }
+
+        </dl>
+
+        <!-- Descripción completa -->
+        <div class="mt-4">
+          <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Descripción</dt>
+          <dd class="mt-1 text-sm" style="color: var(--color-foreground); white-space: pre-wrap">{{ rec.description }}</dd>
+        </div>
+
+        @if (rec.notes) {
+          <div class="mt-4">
+            <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Notas / Motivo de cancelación</dt>
+            <dd class="mt-1 text-sm" style="color: var(--color-foreground); white-space: pre-wrap">{{ rec.notes }}</dd>
+          </div>
+        }
+      </div>
+
+      <!-- Sección: Responsable -->
+      <div>
+        <h2 class="text-sm font-semibold pb-2 mb-4"
+            style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+          Responsable
+        </h2>
+        <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Tipo</dt>
+            <dd class="mt-1 text-sm" style="color: var(--color-foreground)">{{ rec.responsibleTypeLabel }}</dd>
+          </div>
+
+          @if (rec.responsibleType === ResponsibleType.External) {
+            <div>
+              <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Proveedor</dt>
+              <dd class="mt-1 text-sm" style="color: var(--color-foreground)">{{ rec.externalProviderName ?? '—' }}</dd>
+            </div>
+            @if (rec.externalProviderContact) {
+              <div>
+                <dt class="text-xs font-medium" style="color: var(--color-muted-fg)">Contacto</dt>
+                <dd class="mt-1 text-sm" style="color: var(--color-foreground)">{{ rec.externalProviderContact }}</dd>
+              </div>
+            }
+          }
+        </dl>
+      </div>
+
+      <!-- Auditoría -->
+      <div>
+        <h2 class="text-sm font-semibold pb-2 mb-4"
+            style="color: var(--color-foreground); border-bottom: 1px solid var(--color-border)">
+          Auditoría
+        </h2>
+        <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 text-xs" style="color: var(--color-muted-fg)">
+          <div>
+            <dt class="font-medium">Creado</dt>
+            <dd class="mt-0.5">{{ rec.createdAtUtc | slice:0:16 | replace:'T':' ' }} UTC · {{ rec.createdBy ?? '—' }}</dd>
+          </div>
+          @if (rec.modifiedAtUtc) {
+            <div>
+              <dt class="font-medium">Modificado</dt>
+              <dd class="mt-0.5">{{ rec.modifiedAtUtc | slice:0:16 | replace:'T':' ' }} UTC · {{ rec.modifiedBy ?? '—' }}</dd>
+            </div>
+          }
+        </dl>
+      </div>
+
+    </div>
+
+  }
+
+</div>

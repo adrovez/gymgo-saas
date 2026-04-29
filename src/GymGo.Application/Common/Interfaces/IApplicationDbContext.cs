@@ -1,3 +1,9 @@
+using GymGo.Domain.ClassAttendances;
+using GymGo.Domain.ClassReservations;
+using GymGo.Domain.Equipments;
+using GymGo.Domain.GymClasses;
+using GymGo.Domain.GymEntries;
+using GymGo.Domain.Maintenance;
 using GymGo.Domain.Members;
 using GymGo.Domain.MembershipAssignments;
 using GymGo.Domain.MembershipPlans;
@@ -18,6 +24,13 @@ public interface IApplicationDbContext
     DbSet<Member> Members { get; }
     DbSet<MembershipPlan> MembershipPlans { get; }
     DbSet<MembershipAssignment> MembershipAssignments { get; }
+    DbSet<GymClass> GymClasses { get; }
+    DbSet<ClassSchedule> ClassSchedules { get; }
+    DbSet<ClassAttendance> ClassAttendances { get; }
+    DbSet<GymEntry> GymEntries { get; }
+    DbSet<ClassReservation> ClassReservations { get; }
+    DbSet<GymGo.Domain.Equipments.Equipment> Equipment { get; }
+    DbSet<MaintenanceRecord> MaintenanceRecords { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
