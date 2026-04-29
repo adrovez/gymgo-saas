@@ -1,102 +1,161 @@
-# GymGo · SaaS multi-tenant para gestión de gimnasios
+# GymGo SaaS
 
-Backend en **.NET 8** con **Clean Architecture**, **SQL Server** y **multi-tenancy** por `HasQueryFilter`.
+Plataforma **SaaS multi-tenant** para gestión de gimnasios con backend en **.NET 8** y frontend en **Angular (standalone + feature-based)**.
 
-## Estructura
+## 1) Arquitectura del sistema
 
+### Backend (.NET 8 · Clean Architecture)
+
+```text
+src/
+├── GymGo.Domain/         # Entidades, Value Objects, reglas y excepciones de dominio
+├── GymGo.Application/    # Casos de uso (MediatR), DTOs, validación, contratos
+├── GymGo.Infrastructure/ # EF Core, auth, implementación de repos/servicios
+└── GymGo.API/            # Endpoints, middleware, DI, observabilidad
 ```
+
+**Reglas clave:**
+- `Domain` no depende de otras capas.
+- `Application` define contratos y casos de uso.
+- `Infrastructure` implementa contratos de `Application`.
+- `API` solo orquesta (sin reglas de negocio pesadas).
+
+### Frontend (Angular)
+
+```text
+frontend/gymgo-app/src/app/
+├── core/      # Servicios transversales, guards, interceptors, modelos base
+└── features/  # Módulos de negocio lazy-loaded
+```
+
+**Reglas clave:**
+- Componentes standalone.
+- `core/` no depende de `features/`.
+- Auth y tenant headers centralizados en interceptor.
+
+---
+
+## 2) Multi-tenancy (criterio SaaS)
+
+Cada request queda asociada a tenant por:
+1. Claim `tenant_id` en JWT, o
+2. Header `X-Tenant-Id` para flujos públicos (ej: login).
+
+### Garantías esperadas
+- Filtrado automático por tenant sobre entidades `ITenantScoped`.
+- Interceptor de persistencia para asignar `TenantId` en altas y bloquear cruces de tenant.
+- `PlatformAdmin` con visibilidad global; resto de roles acotados a tenant.
+
+---
+
+## 3) Estructura del repositorio
+
+```text
 gymgo-saas/
-├── src/
-│   ├── GymGo.Domain/           Entidades, Value Objects, eventos de dominio (sin dependencias)
-│   ├── GymGo.Application/      Casos de uso (MediatR), validación (FluentValidation), abstracciones
-│   ├── GymGo.Infrastructure/   EF Core, repositorios, JWT, BCrypt, servicios de tenant/usuario
-│   └── GymGo.API/              ASP.NET Core, endpoints, middleware, Swagger, Serilog
-├── tests/
-│   ├── GymGo.UnitTests/        xUnit + FluentAssertions
-│   └── GymGo.IntegrationTests/ WebApplicationFactory + EF InMemory
-├── database/
-│   └── sql/                    Scripts T-SQL versionados (ejecución manual). Ver database/README.md
-├── docs/                       Documentación de arquitectura y workflow
-├── backlog/                    Documentos de planificación (Sprint 0, propuesta)
-├── .azure-pipelines/           Pipelines de Azure DevOps (a configurar después)
-└── GymGo.slnx                  Solution
+├── src/                    # Proyectos backend
+├── frontend/gymgo-app/     # SPA Angular principal
+├── tests/                  # Unit + Integration tests
+├── database/sql/           # Scripts SQL versionados (schema + seed)
+├── docs/                   # Documentación funcional y técnica
+└── AGENTS.md               # Guía operativa para contribuciones
 ```
 
-## Stack
+---
 
-| Capa            | Tecnología                                                |
-|-----------------|-----------------------------------------------------------|
-| Lenguaje        | C# 12 (.NET 8 LTS)                                        |
-| API             | ASP.NET Core 8 Minimal APIs + Controllers                 |
-| ORM             | Entity Framework Core 8 + SQL Server provider             |
-| BD              | SQL Server 2022 (LocalDB en desarrollo)                   |
-| Auth            | JWT Bearer + BCrypt                                       |
-| Mediator        | MediatR + FluentValidation + Mapster                      |
-| Logs            | Serilog (Console + File)                                  |
-| Tests           | xUnit + FluentAssertions + Moq + WebApplicationFactory    |
+## 4) Stack tecnológico
 
-## Setup local (primera vez)
+| Capa | Tecnología |
+|---|---|
+| Backend | .NET 8, ASP.NET Core, MediatR, FluentValidation |
+| Persistencia | EF Core 8 + SQL Server |
+| Seguridad | JWT Bearer + BCrypt |
+| Frontend | Angular (standalone), RxJS, Signals |
+| Logging | Serilog |
+| Testing | xUnit, FluentAssertions, Moq, WebApplicationFactory |
 
-### 1. Restaurar paquetes y compilar
+---
 
-```powershell
-cd C:\Adrovez\DevAzure\gymgo-saas
+## 5) Setup local
+
+## Prerrequisitos
+- .NET SDK 8
+- Node.js LTS + npm
+- SQL Server (local/dev)
+
+### 5.1 Backend
+
+```bash
 dotnet restore
 dotnet build
 ```
 
-### 2. Crear y poblar la base de datos local
+### 5.2 Base de datos
 
-Ver [`database/README.md`](database/README.md). En resumen, ejecutar en orden:
+Ejecutar scripts SQL en orden:
 
-```
+```text
 database/sql/00_database/01_CreateDatabase.sql
 database/sql/01_schema/01_Tenants.sql
 database/sql/01_schema/02_Users.sql
 database/sql/02_seed/01_DefaultData.sql
 ```
 
-> ⚠️ Antes de loguearte por primera vez, regenerá los hashes BCrypt del seed (instrucciones en `database/README.md`).
+### 5.3 Secrets (desarrollo)
 
-### 3. Configurar secrets de desarrollo
-
-El `appsettings.Development.json` trae un JWT secret de juguete. Para no commitearlo, podés moverlo a User Secrets:
-
-```powershell
-cd src\GymGo.API
+```bash
+cd src/GymGo.API
 dotnet user-secrets init
-dotnet user-secrets set "JwtSettings:Secret" "TU_SECRET_REAL_DE_AL_MENOS_32_CHARS"
+dotnet user-secrets set "JwtSettings:Secret" "TU_SECRET_REAL_MIN_32_CHARS"
 ```
 
-### 4. Correr la API
+### 5.4 Ejecutar API
 
-```powershell
-dotnet run --project src\GymGo.API
+```bash
+dotnet run --project src/GymGo.API
 ```
 
-- Swagger UI: `https://localhost:7xxx/swagger`
-- Health: `https://localhost:7xxx/health`
-- Ping: `https://localhost:7xxx/api/v1/ping`
+Endpoints típicos:
+- Swagger: `https://localhost:<puerto>/swagger`
+- Health: `https://localhost:<puerto>/health`
 
-### 5. Correr los tests
+### 5.5 Frontend Angular
 
-```powershell
+```bash
+cd frontend/gymgo-app
+npm install
+npm run start
+```
+
+---
+
+## 6) Calidad y validación
+
+### Backend
+```bash
 dotnet test
 ```
 
-## Multi-tenancy
+### Frontend
+```bash
+cd frontend/gymgo-app
+npm run lint
+npm run test
+npm run build
+```
 
-Cada request se asocia a un tenant a través de:
-1. El claim `tenant_id` del JWT (cuando hay autenticación), **o**
-2. El header `X-Tenant-Id` (para endpoints públicos como login)
+---
 
-`ApplicationDbContext` aplica un `HasQueryFilter` automático sobre toda entidad `ITenantScoped` para filtrar por el tenant actual. El `TenantScopeSaveChangesInterceptor` asegura que toda inserción lleve el `TenantId` correcto y bloquea cross-tenant updates.
+## 7) Convenciones operativas
 
-`PlatformAdmin` (rol 0) no tiene tenant; ve y administra todos.
+- Mantener aislamiento multi-tenant como requisito no negociable.
+- No introducir cambios de esquema sin script SQL asociado.
+- Evitar lógica de negocio en controladores/endpoints/componentes de infraestructura.
+- Documentar cambios de arquitectura en `docs/` y/o `AGENTS.md` cuando aplique.
 
-## Convenciones
+---
 
-- **Excepciones de dominio** (`DomainException`, `NotFoundException`, `BusinessRuleViolationException`) se traducen a HTTP en `GlobalExceptionHandler`.
-- **Logs estructurados** con Serilog. Cada request se enriquece con `TenantId` y `UserId` vía `LogContext`.
-- **Schema de BD** se gestiona con scripts T-SQL en `database/sql/`, no con `dotnet ef migrations`.
-- **Soft delete**: implementar `ISoftDeletable` en la entidad; el interceptor convierte `DELETE` en `UPDATE IsDeleted=1` y el `HasQueryFilter` los excluye.
+## 8) Documentación complementaria
+
+- `AGENTS.md`: guía operativa para cambios de código y seguridad SaaS.
+- `docs/arquitectura/`: documentación técnica de backend/frontend.
+- `database/README.md`: operación de base de datos y seed.
