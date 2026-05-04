@@ -1,53 +1,234 @@
+<!-- ═══════════════════════════════════════════════════════════
+     TOPNAV — barra de navegación horizontal
+     Desktop (lg+): logo | items | usuario + logout
+     Mobile (<lg):  logo | hamburger → panel desplegable
+     ═══════════════════════════════════════════════════════════ -->
 <header
-  class="flex items-center justify-between px-4 gap-4 shrink-0"
+  class="flex items-center px-4 gap-2 shrink-0"
   style="
     height: var(--navbar-height);
-    background: var(--color-navbar-bg);
-    border-bottom: 1px solid var(--color-navbar-border);
+    background: var(--color-sidebar-bg);
+    border-bottom: 1px solid var(--color-sidebar-border);
+    position: relative;
+    z-index: 30;
   "
 >
 
-  <!-- Left: mobile menu toggle (hidden on lg+) -->
-  <div class="flex items-center gap-3">
-    <button
-      type="button"
-      (click)="toggleSidebar.emit()"
-      class="lg:hidden p-2 rounded-lg transition-colors"
-      style="color: var(--color-muted-fg); transition-duration: var(--duration-fast)"
-      aria-label="Abrir menú lateral"
-      aria-controls="sidebar"
-      aria-expanded="false"
+  <!-- ── Logo ──────────────────────────────────────────────── -->
+  <a
+    [routerLink]="'/app/dashboard'"
+    class="flex items-center gap-2.5 shrink-0 mr-2"
+    aria-label="GymGo — ir al dashboard"
+    (click)="closeMobileMenu()"
+  >
+    <div
+      class="flex items-center justify-center w-8 h-8 rounded-lg shrink-0"
+      style="background: var(--color-primary)"
     >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      <svg class="w-4 h-4" style="color: white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
       </svg>
-    </button>
-  </div>
+    </div>
+    <span class="font-bold text-base tracking-tight hidden sm:block" style="color: white">GymGo</span>
+  </a>
 
-  <!-- Right: user info + avatar -->
-  @if (session(); as s) {
-    <div class="flex items-center gap-3" aria-label="Usuario actual">
-      <div class="text-right hidden sm:block">
-        <p class="text-sm font-semibold leading-tight" style="color: var(--color-foreground)">
-          {{ s.fullName }}
-        </p>
-        <p class="text-xs" style="color: var(--color-muted-fg)">
-          {{ getRoleLabel(s.role) }}
-        </p>
-      </div>
-      <!-- Avatar circle -->
+  <!-- ── Separador vertical logo / nav ─────────────────────── -->
+  <div class="hidden lg:block w-px h-5 shrink-0 mx-1" style="background: var(--color-sidebar-border)"></div>
+
+  <!-- ── Nav items (desktop) ───────────────────────────────── -->
+  <nav
+    class="hidden lg:flex items-center gap-0.5 flex-1 overflow-x-auto"
+    aria-label="Navegación principal"
+    style="scrollbar-width: none"
+  >
+    @for (item of visibleNavItems(); track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="topnav-item-active"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="topnav-item flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+               whitespace-nowrap border border-transparent"
+        style="color: var(--color-sidebar-fg); transition-duration: var(--duration-fast)"
+        [title]="item.label"
+      >
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="item.icon" />
+        </svg>
+        <span class="hidden xl:inline">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <!-- ── Spacer mobile ─────────────────────────────────────── -->
+  <div class="flex-1 lg:hidden" aria-hidden="true"></div>
+
+  <!-- ── Right: usuario + logout (desktop) / avatar + hamburger (mobile) ── -->
+  <div class="flex items-center gap-1.5 shrink-0">
+
+    @if (session(); as s) {
+
+      <!-- Desktop: separador + avatar + nombre + botón salir -->
       <div
-        class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
-        style="
-          background: var(--color-primary);
-          color: white;
-          box-shadow: var(--shadow-sm);
-        "
+        class="hidden lg:flex items-center gap-2.5 pl-3"
+        style="border-left: 1px solid var(--color-sidebar-border)"
+      >
+        <!-- Avatar -->
+        <div
+          class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
+          style="background: var(--color-primary); color: white"
+          aria-hidden="true"
+        >
+          {{ s.fullName.charAt(0).toUpperCase() }}
+        </div>
+
+        <!-- Nombre + rol (solo xl+) -->
+        <div class="hidden xl:block leading-tight">
+          <p class="text-xs font-semibold" style="color: white">{{ s.fullName }}</p>
+          <p class="text-xs" style="color: var(--color-sidebar-fg)">{{ getRoleLabel(s.role) }}</p>
+        </div>
+
+        <!-- Botón Salir -->
+        <button
+          type="button"
+          (click)="logout()"
+          class="topnav-logout-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
+                 text-xs font-medium border border-transparent"
+          style="color: var(--color-sidebar-fg); transition-duration: var(--duration-fast)"
+          aria-label="Cerrar sesión"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span class="hidden xl:inline">Salir</span>
+        </button>
+      </div>
+
+      <!-- Mobile: solo avatar -->
+      <div
+        class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 lg:hidden"
+        style="background: var(--color-primary); color: white"
         aria-hidden="true"
       >
         {{ s.fullName.charAt(0).toUpperCase() }}
       </div>
-    </div>
-  }
 
+    }
+
+    <!-- Botón hamburguesa (mobile) -->
+    <button
+      type="button"
+      (click)="toggleMobileMenu()"
+      class="lg:hidden p-2 rounded-lg transition-colors"
+      style="color: var(--color-sidebar-fg); transition-duration: var(--duration-fast)"
+      [attr.aria-expanded]="mobileMenuOpen()"
+      aria-label="Abrir menú de navegación"
+      aria-controls="mobile-nav"
+    >
+      @if (mobileMenuOpen()) {
+        <!-- Icono X -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      } @else {
+        <!-- Icono hamburgesa -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      }
+    </button>
+
+  </div>
 </header>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MENÚ MOBILE — panel desplegable bajo el topnav
+     ═══════════════════════════════════════════════════════════ -->
+@if (mobileMenuOpen()) {
+
+  <!-- Backdrop semitransparente -->
+  <div
+    class="fixed inset-0 z-40 lg:hidden"
+    style="background: oklch(0 0 0 / 0.45); top: var(--navbar-height)"
+    (click)="closeMobileMenu()"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Panel nav -->
+  <nav
+    id="mobile-nav"
+    class="fixed left-0 right-0 z-50 lg:hidden overflow-y-auto"
+    style="
+      top: var(--navbar-height);
+      max-height: calc(100dvh - var(--navbar-height));
+      background: var(--color-sidebar-bg);
+      border-bottom: 1px solid var(--color-sidebar-border);
+      box-shadow: var(--shadow-xl);
+    "
+    aria-label="Menú de navegación móvil"
+  >
+    <!-- Items -->
+    <div class="px-3 py-3 space-y-0.5">
+      @for (item of visibleNavItems(); track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="sidebar-nav-active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          (click)="closeMobileMenu()"
+          class="sidebar-nav-item flex items-center gap-3 px-3 rounded-lg text-sm font-medium
+                 border border-transparent"
+          style="
+            min-height: var(--touch-target, 44px);
+            color: var(--color-sidebar-fg);
+          "
+        >
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="item.icon" />
+          </svg>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </div>
+
+    <!-- Usuario + cerrar sesión -->
+    @if (session(); as s) {
+      <div class="px-3 py-3" style="border-top: 1px solid var(--color-sidebar-border)">
+        <!-- Info usuario -->
+        <div class="flex items-center gap-3 px-3 py-2 mb-1 rounded-lg">
+          <div
+            class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm shrink-0"
+            style="background: var(--color-primary); color: white"
+            aria-hidden="true"
+          >
+            {{ s.fullName.charAt(0).toUpperCase() }}
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-medium truncate" style="color: white">{{ s.fullName }}</p>
+            <p class="text-xs truncate" style="color: var(--color-sidebar-fg)">{{ s.email }}</p>
+          </div>
+        </div>
+
+        <!-- Botón cerrar sesión -->
+        <button
+          type="button"
+          (click)="logout()"
+          class="w-full flex items-center gap-3 px-3 rounded-lg text-sm font-medium
+                 border border-transparent sidebar-logout-btn"
+          style="
+            min-height: var(--touch-target, 44px);
+            color: var(--color-sidebar-fg);
+          "
+          aria-label="Cerrar sesión"
+        >
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span>Cerrar sesión</span>
+        </button>
+      </div>
+    }
+
+  </nav>
+}

@@ -10,6 +10,7 @@ using GymGo.Domain.MembershipAssignments;
 using GymGo.Domain.MembershipPlans;
 using GymGo.Domain.Tenants;
 using GymGo.Domain.Users;
+using GymGo.Domain.WorkoutLogs;
 using Microsoft.EntityFrameworkCore;
 
 namespace GymGo.Infrastructure.Persistence;
@@ -36,6 +37,8 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<ClassReservation> ClassReservations => Set<ClassReservation>();
     public DbSet<Equipment> Equipment => Set<Equipment>();
     public DbSet<MaintenanceRecord> MaintenanceRecords => Set<MaintenanceRecord>();
+    public DbSet<WorkoutLog> WorkoutLogs => Set<WorkoutLog>();
+    public DbSet<WorkoutLogExercise> WorkoutLogExercises => Set<WorkoutLogExercise>();
 
     /// <summary>
     /// EF Core trata los accesos a propiedades de instancia del DbContext
@@ -110,5 +113,13 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
         // MaintenanceRecords: ITenantScoped (sin soft delete — son registros de auditoría).
         modelBuilder.Entity<MaintenanceRecord>().HasQueryFilter(m =>
             !CurrentHasTenant || m.TenantId == CurrentTenantIdOrEmpty);
+
+        // WorkoutLogs: ITenantScoped + ISoftDeletable.
+        modelBuilder.Entity<WorkoutLog>().HasQueryFilter(w =>
+            (!CurrentHasTenant || w.TenantId == CurrentTenantIdOrEmpty)
+            && !w.IsDeleted);
+
+        // WorkoutLogExercises: sin QueryFilter propio — el aislamiento es transitivo
+        // a través del WorkoutLog (cascade). EF carga ejercicios solo a través del log.
     }
 }

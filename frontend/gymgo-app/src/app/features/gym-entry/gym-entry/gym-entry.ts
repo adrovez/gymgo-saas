@@ -56,9 +56,13 @@ export class GymEntryComponent implements OnInit {
   readonly lastSuccess    = signal<string | null>(null);
 
   // ── Log del día ────────────────────────────────────────────────────────
-  readonly todayEntries  = signal<GymEntryDto[]>([]);
+  readonly todayEntries   = signal<GymEntryDto[]>([]);
   readonly entriesLoading = signal(false);
-  readonly todayCount    = computed(() => this.todayEntries().length);
+  readonly todayCount     = computed(() => this.todayEntries().length);
+
+  // ── Registro de salida ────────────────────────────────────────────────
+  /** Set de IDs de entradas con salida en proceso (para deshabilitar botón) */
+  readonly registeringExitIds = signal<Set<string>>(new Set());
 
   // ── Constantes ────────────────────────────────────────────────────────
   readonly MemberStatus    = MemberStatus;
@@ -67,14 +71,26 @@ export class GymEntryComponent implements OnInit {
   readonly GymEntryMethod  = GymEntryMethod;
   readonly methodOptions   = GYM_ENTRY_METHOD_OPTIONS;
 
+  /**
+   * Verdadero si el socio seleccionado ya tiene un ingreso registrado hoy.
+   * Usa los datos del log local (sin llamada extra al API).
+   */
+  readonly alreadyEnteredToday = computed(() => {
+    const member = this.selectedMember();
+    if (!member) return false;
+    return this.todayEntries().some(e => e.memberId === member.id);
+  });
+
   readonly canRegister = computed(() =>
     this.selectedMember() !== null &&
     this.selectedMember()!.status === MemberStatus.Active &&
     !this.registering() &&
-    !this.assignmentLoading()
+    !this.assignmentLoading() &&
+    !this.alreadyEnteredToday()
   );
 
   private readonly searchSubject = new Subject<string>();
+  private clearTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.searchSubject
@@ -128,6 +144,7 @@ export class GymEntryComponent implements OnInit {
     this.searchQuery.set(member.fullName);
     this.lastError.set(null);
     this.lastSuccess.set(null);
+    this.cancelClearTimer();
     this.loadActiveAssignment(member.id);
   }
 
@@ -136,12 +153,22 @@ export class GymEntryComponent implements OnInit {
   }
 
   clearSelection(): void {
+    this.cancelClearTimer();
     this.selectedMember.set(null);
     this.activeAssignment.set(null);
     this.searchQuery.set('');
     this.searchResults.set([]);
     this.lastError.set(null);
     this.lastSuccess.set(null);
+    this.notes.set('');
+    this.selectedMethod.set(GymEntryMethod.Manual);
+  }
+
+  private cancelClearTimer(): void {
+    if (this.clearTimer !== null) {
+      clearTimeout(this.clearTimer);
+      this.clearTimer = null;
+    }
   }
 
   // ── Membresía activa ──────────────────────────────────────────────────
@@ -155,7 +182,7 @@ export class GymEntryComponent implements OnInit {
     });
   }
 
-  // ── Registro ──────────────────────────────────────────────────────────
+  // ── Registro de ingreso ───────────────────────────────────────────────
 
   registerEntry(): void {
     const member = this.selectedMember();
@@ -176,6 +203,7 @@ export class GymEntryComponent implements OnInit {
           this.registering.set(false);
           this.lastSuccess.set(`¡Bienvenido/a, ${member.fullName}!`);
           this.dialog.toast(`✓ Ingreso registrado — ${member.fullName}`, 'success');
+
           const nowIso = new Date().toISOString();
           const newEntry: GymEntryDto = {
             id:                     res.id,
@@ -184,6 +212,7 @@ export class GymEntryComponent implements OnInit {
             membershipAssignmentId: '',
             entryDate:              nowIso.substring(0, 10),
             enteredAtUtc:           nowIso,
+            exitedAtUtc:            null,
             method:                 GYM_ENTRY_METHOD_OPTIONS.find(
                                       (o) => o.value === this.selectedMethod()
                                     )?.label ?? 'Manual',
@@ -191,7 +220,9 @@ export class GymEntryComponent implements OnInit {
             createdAtUtc:           nowIso,
           };
           this.todayEntries.update((list) => [newEntry, ...list]);
-          this.notes.set('');
+
+          // ── Mejora 3: auto-limpiar el formulario después de 2.5s ─────────
+          this.clearTimer = setTimeout(() => this.clearSelection(), 2500);
         },
         error: (err) => {
           this.registering.set(false);
@@ -200,6 +231,45 @@ export class GymEntryComponent implements OnInit {
           this.lastError.set(detail);
         },
       });
+  }
+
+  // ── Registro de salida ────────────────────────────────────────────────
+
+  registerExit(entry: GymEntryDto): void {
+    // Evitar doble click
+    const current = this.registeringExitIds();
+    if (current.has(entry.id)) return;
+
+    this.registeringExitIds.update(ids => new Set([...ids, entry.id]));
+
+    this.entryService.registerExit(entry.id).subscribe({
+      next: () => {
+        const exitedAt = new Date().toISOString();
+        this.todayEntries.update(list =>
+          list.map(e => e.id === entry.id ? { ...e, exitedAtUtc: exitedAt } : e)
+        );
+        this.registeringExitIds.update(ids => {
+          const next = new Set(ids);
+          next.delete(entry.id);
+          return next;
+        });
+        this.dialog.toast(`✓ Salida registrada — ${entry.memberFullName}`, 'success');
+      },
+      error: (err) => {
+        this.registeringExitIds.update(ids => {
+          const next = new Set(ids);
+          next.delete(entry.id);
+          return next;
+        });
+        const detail: string =
+          err?.error?.detail ?? 'No se pudo registrar la salida. Intenta nuevamente.';
+        this.dialog.toast(`✗ ${detail}`, 'error');
+      },
+    });
+  }
+
+  isRegisteringExit(entryId: string): boolean {
+    return this.registeringExitIds().has(entryId);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────

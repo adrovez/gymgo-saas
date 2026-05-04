@@ -39,11 +39,17 @@ export interface MembershipAssignmentDto {
   modifiedBy:             string | null;
 }
 
-/** Vista resumida para listados — respuesta de GET /members/{memberId}/assignments y GET /assignments/overdue */
+/** Vista resumida para listados — respuesta de GET /members/{memberId}/assignments, GET /assignments/overdue y GET /assignments/search */
 export interface MembershipAssignmentSummaryDto {
   id:                 string;
   memberId:           string;
+  /** Nombre completo del socio (vacío si el contexto ya lo conoce) */
+  memberFullName:     string;
+  /** RUT del socio (vacío si el contexto ya lo conoce) */
+  memberRut:          string;
   membershipPlanId:   string;
+  /** Nombre del plan de membresía */
+  planName:           string;
   startDate:          string;   // "YYYY-MM-DD"
   endDate:            string;   // "YYYY-MM-DD"
   daysRemaining:      number;

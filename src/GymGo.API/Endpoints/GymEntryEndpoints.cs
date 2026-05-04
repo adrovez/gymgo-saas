@@ -1,4 +1,5 @@
 using GymGo.Application.GymEntries.Commands.RegisterGymEntry;
+using GymGo.Application.GymEntries.Commands.RegisterGymExit;
 using GymGo.Application.GymEntries.Queries.GetGymEntriesByDate;
 using GymGo.Domain.GymEntries;
 using MediatR;
@@ -34,6 +35,25 @@ public static class GymEntryEndpoints
             .RequireAuthorization()
             .Produces(201)
             .ProducesProblem(400)
+            .ProducesProblem(404)
+            .ProducesProblem(422)
+            .ProducesProblem(401);
+
+        // ── Registrar salida del socio ────────────────────────────────────────
+        // PATCH /api/v1/gym-entries/{id}/exit
+        app.MapPatch("/api/v1/gym-entries/{id:guid}/exit",
+            async (Guid id, ISender sender, CancellationToken ct) =>
+            {
+                await sender.Send(new RegisterGymExitCommand(id), ct);
+                return Results.NoContent();
+            })
+            .WithTags("GymEntries")
+            .WithSummary("Registrar salida del gimnasio")
+            .WithDescription(
+                "Registra la hora de salida del socio para el registro de ingreso indicado. " +
+                "Retorna 422 si la salida ya fue registrada o si el id no existe.")
+            .RequireAuthorization()
+            .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
             .ProducesProblem(401);

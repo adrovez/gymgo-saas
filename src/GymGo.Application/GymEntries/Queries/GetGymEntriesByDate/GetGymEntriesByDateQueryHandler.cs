@@ -35,6 +35,7 @@ public sealed class GetGymEntriesByDateQueryHandler
                 e.MembershipAssignmentId,
                 e.EntryDate,
                 e.EnteredAtUtc,
+                e.ExitedAtUtc,
                 e.Method.ToString(),
                 e.Notes,
                 e.CreatedAtUtc))

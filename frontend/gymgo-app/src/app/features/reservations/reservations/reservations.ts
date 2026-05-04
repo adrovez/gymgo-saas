@@ -11,7 +11,11 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ClassService } from '../../classes/services/class.service';
-import { ClassScheduleDto, DAY_OF_WEEK_LABELS } from '../../classes/models/class.models';
+import {
+  ClassScheduleDto,
+  DAY_OF_WEEK_LABELS,
+  CALENDAR_DAYS,
+} from '../../classes/models/class.models';
 import { MemberService } from '../../members/services/member.service';
 import { MemberSummaryDto, MemberStatus } from '../../members/models/member.models';
 import { ReservationService } from '../services/reservation.service';
@@ -22,6 +26,17 @@ import {
   RESERVATION_STATUS_LABELS,
   RESERVATION_STATUS_CSS,
 } from '../models/reservation.models';
+
+/** Datos de un día en la vista de semana. */
+export interface WeekDay {
+  dayOfWeek: number;   // 0=Dom, 1=Lun … 6=Sáb
+  date: Date;
+  dateStr: string;     // "YYYY-MM-DD"
+  shortLabel: string;  // "Lun", "Mar" …
+  dayNum: number;      // día del mes
+  isToday: boolean;
+  isPast: boolean;
+}
 
 @Component({
   selector: 'app-reservations',
@@ -39,6 +54,55 @@ export class ReservationsComponent implements OnInit {
   readonly schedules        = signal<ClassScheduleDto[]>([]);
   readonly schedulesLoading = signal(false);
 
+  // ── Semana actual ─────────────────────────────────────────────────────────
+  readonly currentWeekStart = signal<Date>(this.mondayOf(new Date()));
+
+  readonly weekDays = computed<WeekDay[]>(() => {
+    const monday = this.currentWeekStart();
+    const todayMs = this.startOfDay(new Date()).getTime();
+    const SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+    return CALENDAR_DAYS.map((dayOfWeek, idx) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + idx);
+      const dateStr = this.toDateStr(d);
+      const dMs = d.getTime();
+      return {
+        dayOfWeek,
+        date: d,
+        dateStr,
+        shortLabel: SHORT[dayOfWeek],
+        dayNum: d.getDate(),
+        isToday: dMs === todayMs,
+        isPast: dMs < todayMs,
+      };
+    });
+  });
+
+  readonly schedulesByDay = computed(() => {
+    const map = new Map<number, ClassScheduleDto[]>();
+    for (const s of this.schedules()) {
+      const list = map.get(s.dayOfWeek) ?? [];
+      list.push(s);
+      map.set(s.dayOfWeek, [...list].sort((a, b) => a.startTime.localeCompare(b.startTime)));
+    }
+    return map;
+  });
+
+  readonly weekLabel = computed(() => {
+    const days = this.weekDays();
+    if (!days.length) return '';
+    const first = days[0].date;
+    const last  = days[6].date;
+    const f = first.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+    const l = last.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${f} — ${l}`;
+  });
+
+  readonly isCurrentWeek = computed(() =>
+    this.currentWeekStart().getTime() === this.mondayOf(new Date()).getTime()
+  );
+
   // ── Sesión seleccionada ───────────────────────────────────────────────────
   readonly selectedScheduleId = signal<string>('');
   readonly selectedDate        = signal<string>('');
@@ -55,39 +119,39 @@ export class ReservationsComponent implements OnInit {
     this.reservations().filter(r => r.status === ReservationStatus.Active)
   );
 
-  readonly effectiveCapacity = computed(() => {
-    const s = this.selectedSchedule();
-    return s?.maxCapacity ?? null;
-  });
+  readonly effectiveCapacity = computed(() =>
+    this.selectedSchedule()?.maxCapacity ?? null
+  );
 
   readonly availableSlots = computed(() => {
     const cap = this.effectiveCapacity();
     if (cap === null) return null;
-    return cap - this.activeReservations().length;
+    return Math.max(0, cap - this.activeReservations().length);
   });
 
   // ── Nueva reserva ─────────────────────────────────────────────────────────
-  readonly showCreateForm   = signal(false);
-  readonly searchQuery      = signal('');
-  readonly searchResults    = signal<MemberSummaryDto[]>([]);
-  readonly searchLoading    = signal(false);
-  readonly showDropdown     = signal(false);
-  readonly selectedMember   = signal<MemberSummaryDto | null>(null);
-  readonly newNotes         = signal('');
-  readonly creating         = signal(false);
-  readonly createError      = signal<string | null>(null);
+  readonly showCreateForm = signal(false);
+  readonly searchQuery    = signal('');
+  readonly searchResults  = signal<MemberSummaryDto[]>([]);
+  readonly searchLoading  = signal(false);
+  readonly showDropdown   = signal(false);
+  readonly selectedMember = signal<MemberSummaryDto | null>(null);
+  readonly newNotes       = signal('');
+  readonly creating       = signal(false);
+  readonly createError    = signal<string | null>(null);
 
   // ── Constantes ────────────────────────────────────────────────────────────
-  readonly ReservationStatus      = ReservationStatus;
+  readonly MemberStatus            = MemberStatus;
+  readonly ReservationStatus       = ReservationStatus;
   readonly RESERVATION_STATUS_LABELS = RESERVATION_STATUS_LABELS;
   readonly RESERVATION_STATUS_CSS    = RESERVATION_STATUS_CSS;
-  readonly DAY_OF_WEEK_LABELS        = DAY_OF_WEEK_LABELS;
 
   readonly canCreate = computed(() =>
     !!this.selectedScheduleId() &&
     !!this.selectedDate() &&
     !!this.selectedMember() &&
-    !this.creating()
+    !this.creating() &&
+    this.canReserveForDate(this.selectedDate())
   );
 
   private readonly searchSubject = new Subject<string>();
@@ -102,6 +166,58 @@ export class ReservationsComponent implements OnInit {
     this.loadSchedules();
   }
 
+  // ── Semana ────────────────────────────────────────────────────────────────
+
+  prevWeek(): void {
+    const d = new Date(this.currentWeekStart());
+    d.setDate(d.getDate() - 7);
+    this.currentWeekStart.set(d);
+    this.resetSession();
+  }
+
+  nextWeek(): void {
+    const d = new Date(this.currentWeekStart());
+    d.setDate(d.getDate() + 7);
+    this.currentWeekStart.set(d);
+    this.resetSession();
+  }
+
+  goToToday(): void {
+    this.currentWeekStart.set(this.mondayOf(new Date()));
+    this.resetSession();
+  }
+
+  resetSession(): void {
+    this.selectedScheduleId.set('');
+    this.selectedDate.set('');
+    this.reservations.set([]);
+    this.hideCreateForm();
+  }
+
+  // ── Selección de clase ────────────────────────────────────────────────────
+
+  selectClass(schedule: ClassScheduleDto, dateStr: string): void {
+    // Toggle off si se hace click en el mismo bloque
+    if (this.selectedScheduleId() === schedule.id && this.selectedDate() === dateStr) {
+      this.resetSession();
+      return;
+    }
+    this.selectedScheduleId.set(schedule.id);
+    this.selectedDate.set(dateStr);
+    this.loadReservations();
+    this.hideCreateForm();
+  }
+
+  isSelected(scheduleId: string, dateStr: string): boolean {
+    return this.selectedScheduleId() === scheduleId && this.selectedDate() === dateStr;
+  }
+
+  canReserveForDate(dateStr: string): boolean {
+    if (!dateStr) return false;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d) >= this.startOfDay(new Date());
+  }
+
   // ── Horarios ──────────────────────────────────────────────────────────────
 
   loadSchedules(): void {
@@ -110,28 +226,6 @@ export class ReservationsComponent implements OnInit {
       next:  (s) => { this.schedules.set(s.filter(sc => sc.isActive)); this.schedulesLoading.set(false); },
       error: ()  => this.schedulesLoading.set(false),
     });
-  }
-
-  onScheduleChange(id: string): void {
-    this.selectedScheduleId.set(id);
-    this.selectedDate.set('');
-    this.reservations.set([]);
-    this.hideCreateForm();
-  }
-
-  onDateChange(date: string): void {
-    this.selectedDate.set(date);
-    if (date && this.selectedScheduleId()) {
-      this.loadReservations();
-    } else {
-      this.reservations.set([]);
-    }
-    this.hideCreateForm();
-  }
-
-  scheduleDateMin(): string {
-    // Fechas a partir de hoy
-    return new Date().toISOString().substring(0, 10);
   }
 
   // ── Reservas ──────────────────────────────────────────────────────────────
@@ -169,14 +263,13 @@ export class ReservationsComponent implements OnInit {
           this.loadReservations();
         },
         error: (err) => {
-          const detail: string =
-            err?.error?.detail ?? 'No se pudo cancelar la reserva.';
+          const detail: string = err?.error?.detail ?? 'No se pudo cancelar la reserva.';
           this.dialog.toast(detail, 'error');
         },
       });
   }
 
-  // ── Nueva reserva — formulario ────────────────────────────────────────────
+  // ── Nueva reserva ─────────────────────────────────────────────────────────
 
   showNewReservationForm(): void {
     this.showCreateForm.set(true);
@@ -252,8 +345,7 @@ export class ReservationsComponent implements OnInit {
         },
         error: (err) => {
           this.creating.set(false);
-          const detail: string =
-            err?.error?.detail ?? 'No se pudo crear la reserva.';
+          const detail: string = err?.error?.detail ?? 'No se pudo crear la reserva.';
           this.createError.set(detail);
         },
       });
@@ -262,21 +354,47 @@ export class ReservationsComponent implements OnInit {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   formatTime(iso: string): string {
-    return new Date(iso).toLocaleTimeString('es-CL', {
-      hour: '2-digit', minute: '2-digit',
-    });
+    return new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
   }
 
-  formatDate(isoDate: string): string {
+  formatSessionDate(isoDate: string): string {
     const [y, m, d] = isoDate.split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString('es-CL', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     });
   }
 
-  scheduleLabel(s: ClassScheduleDto): string {
-    return `${s.gymClassName} — ${DAY_OF_WEEK_LABELS[s.dayOfWeek]} ${s.startTime}–${s.endTime}`;
+  classColor(schedule: ClassScheduleDto): string {
+    return schedule.gymClassColor ?? '#3B82F6';
   }
 
-  readonly MemberStatus = MemberStatus;
+  /** Devuelve el mes abreviado del primer día de la semana visible */
+  weekMonthLabel(): string {
+    const days = this.weekDays();
+    if (!days.length) return '';
+    return days[0].date.toLocaleDateString('es-CL', { month: 'long', year: 'numeric' });
+  }
+
+  // ── Utilidades de fecha ───────────────────────────────────────────────────
+
+  private mondayOf(d: Date): Date {
+    const result = new Date(d);
+    result.setHours(0, 0, 0, 0);
+    const dow = result.getDay();
+    result.setDate(result.getDate() - (dow === 0 ? 6 : dow - 1));
+    return result;
+  }
+
+  private startOfDay(d: Date): Date {
+    const r = new Date(d);
+    r.setHours(0, 0, 0, 0);
+    return r;
+  }
+
+  private toDateStr(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
 }

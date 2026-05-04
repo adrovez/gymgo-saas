@@ -103,7 +103,17 @@ public sealed class RegisterGymEntryCommandHandler : IRequestHandler<RegisterGym
                     $"Hora actual: {timeNow:HH:mm}.");
         }
 
-        // ── 7. Registrar el ingreso ───────────────────────────────────────────
+        // ── 7. Verificar que el socio no haya ingresado ya hoy ───────────────
+        var alreadyEnteredToday = await _context.GymEntries
+            .AnyAsync(e => e.MemberId == request.MemberId && e.EntryDate == today, cancellationToken);
+
+        if (alreadyEnteredToday)
+            throw new BusinessRuleViolationException(
+                "ENTRY_ALREADY_REGISTERED_TODAY",
+                $"El socio '{member.FirstName} {member.LastName}' ya registró su ingreso hoy. " +
+                "No se puede registrar un segundo ingreso para el mismo día.");
+
+        // ── 8. Registrar el ingreso ───────────────────────────────────────────
         var entry = GymEntry.Create(
             tenantId:               tenantId,
             memberId:               member.Id,

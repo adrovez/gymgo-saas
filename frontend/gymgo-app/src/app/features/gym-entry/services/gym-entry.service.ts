@@ -23,4 +23,9 @@ export class GymEntryService {
   registerEntry(request: RegisterGymEntryRequest): Observable<{ id: string }> {
     return this.http.post<{ id: string }>(this.apiUrl, request);
   }
+
+  /** PATCH /api/v1/gym-entries/{id}/exit — registrar salida */
+  registerExit(entryId: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${entryId}/exit`, {});
+  }
 }

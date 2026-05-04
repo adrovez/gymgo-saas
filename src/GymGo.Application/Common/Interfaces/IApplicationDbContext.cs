@@ -9,6 +9,7 @@ using GymGo.Domain.MembershipAssignments;
 using GymGo.Domain.MembershipPlans;
 using GymGo.Domain.Tenants;
 using GymGo.Domain.Users;
+using GymGo.Domain.WorkoutLogs;
 using Microsoft.EntityFrameworkCore;
 
 namespace GymGo.Application.Common.Interfaces;
@@ -31,6 +32,8 @@ public interface IApplicationDbContext
     DbSet<ClassReservation> ClassReservations { get; }
     DbSet<GymGo.Domain.Equipments.Equipment> Equipment { get; }
     DbSet<MaintenanceRecord> MaintenanceRecords { get; }
+    DbSet<WorkoutLog> WorkoutLogs { get; }
+    DbSet<WorkoutLogExercise> WorkoutLogExercises { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -1,41 +1,11 @@
-<div class="flex h-screen overflow-hidden" style="background: var(--color-background)">
+<div class="flex flex-col h-screen overflow-hidden" style="background: var(--color-background)">
 
-  <!-- Sidebar desktop (siempre visible en lg+) -->
-  <div class="hidden lg:flex">
-    <app-sidebar />
-  </div>
+  <!-- Topnav horizontal (incluye menú mobile) -->
+  <app-navbar />
 
-  <!-- Sidebar mobile (overlay) -->
-  @if (sidebarOpen()) {
-    <div
-      class="fixed inset-0 z-40 flex lg:hidden"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Menú de navegación"
-    >
-      <!-- Overlay oscuro -->
-      <div
-        class="fixed inset-0 backdrop-blur-sm"
-        style="background: oklch(0 0 0 / 0.55)"
-        (click)="closeSidebar()"
-      ></div>
-      <!-- Panel lateral -->
-      <div class="relative z-50 flex flex-col">
-        <app-sidebar (closeMobile)="closeSidebar()" />
-      </div>
-    </div>
-  }
+  <!-- Contenido principal -->
+  <main class="flex-1 overflow-y-auto p-6" id="main-content" tabindex="-1">
+    <router-outlet />
+  </main>
 
-  <!-- Main content -->
-  <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
-
-    <!-- Navbar -->
-    <app-navbar (toggleSidebar)="toggleSidebar()" />
-
-    <!-- Page content -->
-    <main class="flex-1 overflow-y-auto p-6" id="main-content" tabindex="-1">
-      <router-outlet />
-    </main>
-
-  </div>
 </div>

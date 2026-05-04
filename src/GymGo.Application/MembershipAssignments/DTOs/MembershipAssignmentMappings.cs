@@ -27,10 +27,25 @@ public static class MembershipAssignmentMappings
         ModifiedBy:             a.ModifiedBy
     );
 
-    public static MembershipAssignmentSummaryDto ToSummaryDto(this MembershipAssignment a) => new(
+    /// <summary>
+    /// Proyección básica sin datos de socio ni plan (para contextos donde ya son conocidos).
+    /// Usa las sobrecargas con parámetros adicionales cuando se requieren nombre/RUT/plan.
+    /// </summary>
+    public static MembershipAssignmentSummaryDto ToSummaryDto(this MembershipAssignment a) =>
+        a.ToSummaryDto(string.Empty, string.Empty, string.Empty);
+
+    /// <summary>Proyección enriquecida con nombre del socio, RUT y nombre del plan.</summary>
+    public static MembershipAssignmentSummaryDto ToSummaryDto(
+        this MembershipAssignment a,
+        string memberFullName,
+        string memberRut,
+        string planName) => new(
         Id:                 a.Id,
         MemberId:           a.MemberId,
+        MemberFullName:     memberFullName,
+        MemberRut:          memberRut,
         MembershipPlanId:   a.MembershipPlanId,
+        PlanName:           planName,
         StartDate:          a.StartDate,
         EndDate:            a.EndDate,
         DaysRemaining:      CalculateDaysRemaining(a),

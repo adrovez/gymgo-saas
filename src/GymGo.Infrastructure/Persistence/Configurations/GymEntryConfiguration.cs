@@ -51,6 +51,9 @@ public sealed class GymEntryConfiguration : IEntityTypeConfiguration<GymEntry>
         builder.Property(e => e.Notes)
             .HasMaxLength(500);
 
+        builder.Property(e => e.ExitedAtUtc)
+            .IsRequired(false);
+
         // ── Índices de consulta ────────────────────────────────────────
         // Historial de ingresos de un socio
         builder.HasIndex(e => new { e.TenantId, e.MemberId, e.EntryDate })

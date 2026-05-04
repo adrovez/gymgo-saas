@@ -156,6 +156,18 @@
             </div>
           }
 
+          <!-- Alerta: ya ingresó hoy -->
+          @if (alreadyEnteredToday()) {
+            <div class="alert" role="alert"
+                 style="background: var(--color-warning-subtle); color: var(--color-warning); border: 1px solid var(--color-warning-border, #fde68a)">
+              <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              </svg>
+              <span>Este socio <strong>ya registró su ingreso hoy</strong>. No se puede registrar un segundo ingreso.</span>
+            </div>
+          }
+
           <!-- Membresía activa -->
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide mb-2"
@@ -269,7 +281,7 @@
               <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
-              <span>{{ lastSuccess() }}</span>
+              <span>{{ lastSuccess() }} Limpiando formulario...</span>
             </div>
           }
 
@@ -284,6 +296,12 @@
               <span class="spinner"
                     style="border-top-color: white; border-color: rgba(255,255,255,0.3); width:16px; height:16px"></span>
               <span>Registrando...</span>
+            } @else if (alreadyEnteredToday()) {
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+              </svg>
+              <span>Ingreso ya registrado hoy</span>
             } @else {
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -351,26 +369,66 @@
           } @else {
             <ul class="divide-y" style="border-color: var(--color-border)">
               @for (entry of todayEntries(); track entry.id) {
-                <li class="flex items-center gap-3 px-5 py-3">
+                <li class="flex items-center gap-3 px-4 py-3">
 
-                  <!-- Check verde -->
+                  <!-- Ícono: dentro o salió -->
                   <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                       style="background: var(--color-success-subtle); color: var(--color-success)">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M5 13l4 4L19 7"/>
-                    </svg>
+                       [style]="entry.exitedAtUtc
+                         ? 'background: var(--color-surface-raised); color: var(--color-muted-fg)'
+                         : 'background: var(--color-success-subtle); color: var(--color-success)'">
+                    @if (entry.exitedAtUtc) {
+                      <!-- Ícono salida (puerta saliendo) -->
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                      </svg>
+                    } @else {
+                      <!-- Ícono check verde -->
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M5 13l4 4L19 7"/>
+                      </svg>
+                    }
                   </div>
 
-                  <!-- Nombre + hora + método -->
+                  <!-- Nombre + hora ingreso/salida + método -->
                   <div class="min-w-0 flex-1">
                     <p class="text-sm font-medium truncate" style="color: var(--color-foreground)">
                       {{ entry.memberFullName }}
                     </p>
                     <p class="text-xs" style="color: var(--color-muted-fg)">
-                      {{ formatTime(entry.enteredAtUtc) }} · {{ entry.method }}
+                      Entrada: {{ formatTime(entry.enteredAtUtc) }}
+                      @if (entry.exitedAtUtc) {
+                        · Salida: {{ formatTime(entry.exitedAtUtc) }}
+                      } @else {
+                        · {{ entry.method }}
+                      }
                     </p>
                   </div>
+
+                  <!-- Botón registrar salida (solo si no ha salido aún) -->
+                  @if (!entry.exitedAtUtc) {
+                    <button
+                      type="button"
+                      class="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-colors"
+                      style="color: var(--color-foreground); border-color: var(--color-border); background: transparent"
+                      [disabled]="isRegisteringExit(entry.id)"
+                      (click)="registerExit(entry)"
+                      title="Registrar salida de {{ entry.memberFullName }}"
+                      aria-label="Registrar salida de {{ entry.memberFullName }}"
+                    >
+                      @if (isRegisteringExit(entry.id)) {
+                        <span class="spinner"
+                              style="border-top-color: var(--color-primary); border-color: var(--color-border); width:10px; height:10px"></span>
+                      } @else {
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Salida
+                      }
+                    </button>
+                  }
 
                 </li>
               }

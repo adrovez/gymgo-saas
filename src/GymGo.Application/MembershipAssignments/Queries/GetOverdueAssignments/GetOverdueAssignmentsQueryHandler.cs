@@ -19,12 +19,19 @@ public sealed class GetOverdueAssignmentsQueryHandler
     public async Task<IReadOnlyList<MembershipAssignmentSummaryDto>> Handle(
         GetOverdueAssignmentsQuery request, CancellationToken cancellationToken)
     {
-        var entities = await _context.MembershipAssignments
-            .AsNoTracking()
-            .Where(a => a.PaymentStatus == PaymentStatus.Overdue)
-            .OrderBy(a => a.EndDate)
-            .ToListAsync(cancellationToken);
+        var rows = await (
+            from a in _context.MembershipAssignments.AsNoTracking()
+            join m in _context.Members.AsNoTracking()
+                on a.MemberId equals m.Id
+            join p in _context.MembershipPlans.AsNoTracking()
+                on a.MembershipPlanId equals p.Id
+            where a.PaymentStatus == PaymentStatus.Overdue
+            orderby a.EndDate
+            select new { Assignment = a, FullName = m.FirstName + " " + m.LastName, m.Rut, PlanName = p.Name }
+        ).ToListAsync(cancellationToken);
 
-        return entities.Select(a => a.ToSummaryDto()).ToList();
+        return rows
+            .Select(r => r.Assignment.ToSummaryDto(r.FullName, r.Rut, r.PlanName))
+            .ToList();
     }
 }

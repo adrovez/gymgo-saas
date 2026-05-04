@@ -88,6 +88,7 @@ try
     app.MapEquipmentEndpoints();
     app.MapMaintenanceEndpoints();
     app.MapUserEndpoints();
+    app.MapWorkoutLogEndpoints();
     app.MapControllers();
 
     Log.Information("GymGo.API listo. Escuchando...");

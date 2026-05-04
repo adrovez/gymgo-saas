@@ -1,154 +1,272 @@
-<!-- Reservas de Clases -->
-<div class="p-6 space-y-6">
+<!-- Reservas de Clases — Vista Calendario Semanal -->
+<div class="p-6 space-y-5">
 
   <!-- ── Encabezado ──────────────────────────────────────────────────────── -->
   <div class="page-header">
     <div>
       <h1 class="page-title">Reservas de Clases</h1>
-      <p class="page-description">Gestiona los cupos para las sesiones programadas</p>
+      <p class="page-description" style="text-transform: capitalize">{{ weekMonthLabel() }}</p>
     </div>
 
+    <!-- Contador activo (solo cuando hay sesión seleccionada) -->
     @if (selectedSchedule() && selectedDate()) {
       <div class="flex items-center gap-2 px-4 py-2 rounded-xl"
            style="background: var(--color-primary-subtle); color: var(--color-primary)">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
         <span class="text-sm font-semibold">
-          {{ activeReservations().length }} reserva{{ activeReservations().length !== 1 ? 's' : '' }} activa{{ activeReservations().length !== 1 ? 's' : '' }}
+          {{ activeReservations().length }} / {{ effectiveCapacity() ?? '∞' }} reservas
         </span>
       </div>
     }
   </div>
 
-  <!-- ── Layout de dos columnas ─────────────────────────────────────────── -->
-  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+  <!-- ════════════════════════════════════════════════════════════════════════
+       CALENDARIO SEMANAL
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="card p-0 overflow-hidden">
 
-    <!-- ════════════════════════════════════════════════════════════
-         PANEL IZQUIERDO — Selección de sesión + nueva reserva (3/5)
-         ════════════════════════════════════════════════════════════ -->
-    <div class="lg:col-span-3 space-y-4">
+    <!-- ── Navegación de semana ─────────────────────────────────────────── -->
+    <div class="flex items-center justify-between px-5 py-3"
+         style="border-bottom: 1px solid var(--color-border); background: var(--color-surface-raised)">
 
-      <!-- Selección de horario y fecha -->
-      <div class="card p-5 space-y-4">
-        <h2 class="text-sm font-semibold" style="color: var(--color-foreground)">
-          Seleccionar sesión
-        </h2>
+      <button
+        type="button"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+        style="color: var(--color-foreground); border: 1px solid var(--color-border); background: var(--color-surface)"
+        (click)="prevWeek()"
+        aria-label="Semana anterior"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        <span class="hidden sm:inline">Anterior</span>
+      </button>
 
-        <!-- Horario -->
-        <div class="space-y-1">
-          <label class="text-xs font-semibold uppercase tracking-wide"
-                 style="color: var(--color-muted-fg)">
-            Horario
-          </label>
-          @if (schedulesLoading()) {
-            <div class="flex items-center gap-2 py-3" style="color: var(--color-muted-fg)">
-              <span class="spinner"
-                    style="border-top-color: var(--color-primary); border-color: var(--color-border); width:14px; height:14px"></span>
-              <span class="text-sm">Cargando horarios...</span>
-            </div>
-          } @else {
-            <select
-              class="input"
-              [value]="selectedScheduleId()"
-              (change)="onScheduleChange($any($event.target).value)"
-              aria-label="Seleccionar horario"
-            >
-              <option value="">— Selecciona un horario —</option>
-              @for (s of schedules(); track s.id) {
-                <option [value]="s.id">{{ scheduleLabel(s) }}</option>
-              }
-            </select>
-          }
-        </div>
-
-        <!-- Fecha de la sesión -->
-        @if (selectedScheduleId()) {
-          <div class="space-y-1">
-            <label class="text-xs font-semibold uppercase tracking-wide"
-                   style="color: var(--color-muted-fg)">
-              Fecha de la sesión
-            </label>
-            <input
-              type="date"
-              class="input"
-              [value]="selectedDate()"
-              [min]="scheduleDateMin()"
-              (change)="onDateChange($any($event.target).value)"
-              aria-label="Fecha de la sesión"
-            />
-            @if (selectedSchedule(); as s) {
-              <p class="text-xs" style="color: var(--color-muted-fg)">
-                Este horario ocurre los <strong>{{ DAY_OF_WEEK_LABELS[s.dayOfWeek] }}</strong>.
-                Selecciona una fecha que corresponda.
-              </p>
-            }
-          </div>
-        }
-
-        <!-- Resumen de capacidad -->
-        @if (selectedSchedule() && selectedDate() && !reservationsLoading()) {
-          <div class="grid grid-cols-3 gap-3 pt-1">
-            <div class="rounded-xl p-3 text-center"
-                 style="background: var(--color-surface-raised); border: 1px solid var(--color-border)">
-              <p class="text-2xl font-bold" style="color: var(--color-foreground)">
-                {{ activeReservations().length }}
-              </p>
-              <p class="text-xs" style="color: var(--color-muted-fg)">Reservadas</p>
-            </div>
-
-            <div class="rounded-xl p-3 text-center"
-                 [style]="(availableSlots() !== null && availableSlots()! <= 2)
-                   ? 'background: var(--color-warning-subtle); border: 1px solid var(--color-warning)'
-                   : 'background: var(--color-success-subtle); border: 1px solid var(--color-border)'">
-              <p class="text-2xl font-bold"
-                 [style.color]="(availableSlots() !== null && availableSlots()! <= 2)
-                   ? 'var(--color-warning)' : 'var(--color-success)'">
-                {{ availableSlots() ?? '∞' }}
-              </p>
-              <p class="text-xs" style="color: var(--color-muted-fg)">Disponibles</p>
-            </div>
-
-            <div class="rounded-xl p-3 text-center"
-                 style="background: var(--color-surface-raised); border: 1px solid var(--color-border)">
-              <p class="text-2xl font-bold" style="color: var(--color-foreground)">
-                {{ effectiveCapacity() ?? '∞' }}
-              </p>
-              <p class="text-xs" style="color: var(--color-muted-fg)">Capacidad</p>
-            </div>
-          </div>
-
-          <!-- Botón nueva reserva -->
-          @if (!showCreateForm()) {
-            <button
-              type="button"
-              class="btn btn-primary w-full"
-              (click)="showNewReservationForm()"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              Nueva Reserva
-            </button>
-          }
+      <!-- Rango de semana + botón "Hoy" -->
+      <div class="flex items-center gap-3">
+        <span class="text-sm font-semibold" style="color: var(--color-foreground)">
+          {{ weekLabel() }}
+        </span>
+        @if (!isCurrentWeek()) {
+          <button
+            type="button"
+            class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+            style="background: var(--color-primary-subtle); color: var(--color-primary); border: 1px solid transparent"
+            (click)="goToToday()"
+          >
+            Hoy
+          </button>
         }
       </div>
 
-      <!-- ── Formulario de nueva reserva ──────────────────────────────────── -->
-      @if (showCreateForm()) {
-        <div class="card p-5 space-y-4" style="border-color: var(--color-primary)">
+      <button
+        type="button"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+        style="color: var(--color-foreground); border: 1px solid var(--color-border); background: var(--color-surface)"
+        (click)="nextWeek()"
+        aria-label="Semana siguiente"
+      >
+        <span class="hidden sm:inline">Siguiente</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
 
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold" style="color: var(--color-foreground)">
-              Nueva Reserva
-            </h2>
+    <!-- ── Grid de días ──────────────────────────────────────────────────── -->
+    @if (schedulesLoading()) {
+      <div class="p-12 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+        <span class="spinner"
+              style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+        <span class="text-sm">Cargando horarios...</span>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <div class="grid min-w-[700px]"
+             style="grid-template-columns: repeat(7, minmax(0, 1fr)); min-height: 280px">
+
+          @for (day of weekDays(); track day.dayOfWeek) {
+            <div
+              class="flex flex-col"
+              [style]="'border-right: 1px solid var(--color-border)' + (day === weekDays()[weekDays().length - 1] ? '; border-right: none' : '')"
+            >
+              <!-- Cabecera de día -->
+              <div
+                class="px-2 py-2.5 text-center sticky top-0"
+                [style]="day.isToday
+                  ? 'background: var(--color-primary-subtle); border-bottom: 2px solid var(--color-primary)'
+                  : 'background: var(--color-surface-raised); border-bottom: 1px solid var(--color-border)'"
+              >
+                <p class="text-xs font-semibold uppercase tracking-wide"
+                   [style.color]="day.isToday ? 'var(--color-primary)' : 'var(--color-muted-fg)'">
+                  {{ day.shortLabel }}
+                </p>
+                <p class="text-lg font-bold leading-tight mt-0.5"
+                   [style.color]="day.isToday ? 'var(--color-primary)' : 'var(--color-foreground)'">
+                  {{ day.dayNum }}
+                </p>
+              </div>
+
+              <!-- Bloques de clase del día -->
+              <div class="flex flex-col gap-1.5 p-1.5 flex-1"
+                   [style]="day.isPast && !day.isToday ? 'opacity: 0.65' : ''">
+
+                @for (s of schedulesByDay().get(day.dayOfWeek) ?? []; track s.id) {
+                  <!-- Bloque de clase clickeable -->
+                  <button
+                    type="button"
+                    class="w-full text-left rounded-lg px-2 py-2 transition-all focus:outline-none focus-visible:ring-2"
+                    [style]="isSelected(s.id, day.dateStr)
+                      ? 'background: ' + classColor(s) + '; color: white; box-shadow: 0 2px 8px ' + classColor(s) + '55'
+                      : 'background: var(--color-surface-raised); border-left: 3px solid ' + classColor(s) + '; border-top: 1px solid var(--color-border); border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border)'"
+                    (click)="selectClass(s, day.dateStr)"
+                    [attr.aria-pressed]="isSelected(s.id, day.dateStr)"
+                    [attr.aria-label]="s.gymClassName + ' — ' + day.shortLabel + ' ' + day.dayNum + ', ' + s.startTime"
+                  >
+                    <!-- Nombre clase -->
+                    <p class="text-xs font-semibold leading-tight truncate"
+                       [style.color]="isSelected(s.id, day.dateStr) ? 'white' : 'var(--color-foreground)'">
+                      {{ s.gymClassName }}
+                    </p>
+
+                    <!-- Horario -->
+                    <p class="text-xs mt-0.5 font-medium"
+                       [style.color]="isSelected(s.id, day.dateStr) ? 'rgba(255,255,255,0.85)' : 'var(--color-muted-fg)'">
+                      {{ s.startTime }} – {{ s.endTime }}
+                    </p>
+
+                    <!-- Instructor -->
+                    @if (s.instructorName) {
+                      <p class="text-xs mt-0.5 truncate"
+                         [style.color]="isSelected(s.id, day.dateStr) ? 'rgba(255,255,255,0.75)' : 'var(--color-muted-fg)'">
+                        {{ s.instructorName }}
+                      </p>
+                    }
+
+                    <!-- Capacidad máxima -->
+                    @if (s.maxCapacity) {
+                      <div class="mt-1.5 flex items-center gap-1">
+                        <svg class="w-2.5 h-2.5 shrink-0"
+                             [style.color]="isSelected(s.id, day.dateStr) ? 'rgba(255,255,255,0.8)' : 'var(--color-muted-fg)'"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span class="text-xs"
+                              [style.color]="isSelected(s.id, day.dateStr) ? 'rgba(255,255,255,0.8)' : 'var(--color-muted-fg)'">
+                          Máx {{ s.maxCapacity }}
+                        </span>
+                      </div>
+                    }
+                  </button>
+                }
+
+                <!-- Sin clases este día -->
+                @if (!(schedulesByDay().get(day.dayOfWeek)?.length)) {
+                  <div class="flex-1 flex items-center justify-center py-4">
+                    <span class="text-xs" style="color: var(--color-border)">—</span>
+                  </div>
+                }
+
+              </div>
+            </div>
+          }
+
+        </div>
+      </div>
+
+      <!-- Sin horarios en el sistema -->
+      @if (schedules().length === 0) {
+        <div class="p-12 flex flex-col items-center gap-3 text-center">
+          <svg class="w-10 h-10" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <p class="text-sm font-medium" style="color: var(--color-foreground)">
+            No hay clases programadas
+          </p>
+          <p class="text-sm" style="color: var(--color-muted-fg)">
+            Crea clases y agrega horarios desde la sección de Clases.
+          </p>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       PANEL DE SESIÓN SELECCIONADA
+       Aparece debajo del calendario cuando se hace click en un bloque
+       ════════════════════════════════════════════════════════════════════════ -->
+  @if (selectedSchedule(); as s) {
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+
+      <!-- ── INFO + CAPACIDAD + FORMULARIO NUEVA RESERVA (3/5) ────────────── -->
+      <div class="lg:col-span-3 space-y-4">
+
+        <!-- Tarjeta de la sesión seleccionada -->
+        <div class="card p-5 space-y-4">
+
+          <!-- Header con color de clase -->
+          <div class="flex items-start gap-4">
+            <!-- Indicador de color -->
+            <div class="w-3 self-stretch rounded-full shrink-0"
+                 [style.background]="classColor(s)"></div>
+
+            <div class="flex-1 min-w-0">
+              <h2 class="text-base font-bold" style="color: var(--color-foreground)">
+                {{ s.gymClassName }}
+              </h2>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm"
+                   style="color: var(--color-muted-fg)">
+                <!-- Fecha -->
+                <span class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span style="text-transform: capitalize">{{ formatSessionDate(selectedDate()) }}</span>
+                </span>
+                <!-- Horario -->
+                <span class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  {{ s.startTime }} – {{ s.endTime }}
+                </span>
+                <!-- Instructor -->
+                @if (s.instructorName) {
+                  <span class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    {{ s.instructorName }}
+                  </span>
+                }
+                <!-- Sala -->
+                @if (s.room) {
+                  <span class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    </svg>
+                    {{ s.room }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Botón cerrar -->
             <button
               type="button"
-              class="btn-ghost p-1 rounded-lg"
+              class="p-1.5 rounded-lg transition-colors shrink-0"
               style="color: var(--color-muted-fg)"
-              (click)="hideCreateForm()"
-              aria-label="Cerrar formulario"
+              (click)="resetSession()"
+              aria-label="Cerrar panel de sesión"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -156,284 +274,356 @@
             </button>
           </div>
 
-          <!-- Buscador de socio -->
-          <div class="space-y-1">
-            <label class="text-xs font-semibold uppercase tracking-wide"
-                   style="color: var(--color-muted-fg)">
-              Socio
-            </label>
-            <div class="relative">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-                   style="color: var(--color-muted-fg)"
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-              </svg>
-              <input
-                type="search"
-                [value]="searchQuery()"
-                (input)="onSearchInput($any($event.target).value)"
-                (blur)="closeDropdown()"
-                placeholder="Nombre o RUT del socio..."
-                class="input pl-9"
-                autocomplete="off"
-                aria-label="Buscar socio"
-              />
-              @if (searchLoading()) {
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 spinner"
-                      style="border-top-color: var(--color-primary); border-color: var(--color-border); width:14px; height:14px"></span>
-              }
+          <!-- Métricas de capacidad -->
+          @if (!reservationsLoading()) {
+            <div class="grid grid-cols-3 gap-3">
+              <div class="rounded-xl p-3 text-center"
+                   style="background: var(--color-surface-raised); border: 1px solid var(--color-border)">
+                <p class="text-2xl font-bold" style="color: var(--color-foreground)">
+                  {{ activeReservations().length }}
+                </p>
+                <p class="text-xs mt-0.5" style="color: var(--color-muted-fg)">Reservadas</p>
+              </div>
 
-              <!-- Dropdown resultados -->
-              @if (showDropdown() && searchResults().length > 0) {
-                <ul
-                  class="absolute z-20 w-full mt-1 rounded-xl overflow-hidden shadow-lg"
-                  style="background: var(--color-surface); border: 1px solid var(--color-border)"
-                  role="listbox"
-                >
-                  @for (member of searchResults(); track member.id) {
-                    <li>
-                      <button
-                        type="button"
-                        class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
-                        style="color: var(--color-foreground)"
-                        (mousedown)="selectMember(member)"
-                        role="option"
-                      >
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                             style="background: var(--color-primary-subtle); color: var(--color-primary)">
-                          {{ member.fullName.charAt(0).toUpperCase() }}
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="text-sm font-medium truncate">{{ member.fullName }}</p>
-                          <p class="text-xs truncate" style="color: var(--color-muted-fg)">{{ member.rut }}</p>
-                        </div>
-                        @if (member.status !== MemberStatus.Active) {
-                          <span class="badge badge-suspended text-xs">Inactivo</span>
-                        }
-                      </button>
-                    </li>
-                  }
-                </ul>
-              }
+              <div class="rounded-xl p-3 text-center"
+                   [style]="availableSlots() !== null && availableSlots()! <= 2
+                     ? 'background: var(--color-warning-subtle); border: 1px solid var(--color-warning)'
+                     : 'background: var(--color-success-subtle); border: 1px solid var(--color-border)'">
+                <p class="text-2xl font-bold"
+                   [style.color]="availableSlots() !== null && availableSlots()! <= 2
+                     ? 'var(--color-warning)' : 'var(--color-success)'">
+                  {{ availableSlots() ?? '∞' }}
+                </p>
+                <p class="text-xs mt-0.5" style="color: var(--color-muted-fg)">Disponibles</p>
+              </div>
+
+              <div class="rounded-xl p-3 text-center"
+                   style="background: var(--color-surface-raised); border: 1px solid var(--color-border)">
+                <p class="text-2xl font-bold" style="color: var(--color-foreground)">
+                  {{ effectiveCapacity() ?? '∞' }}
+                </p>
+                <p class="text-xs mt-0.5" style="color: var(--color-muted-fg)">Capacidad</p>
+              </div>
             </div>
 
-            <!-- Socio seleccionado -->
-            @if (selectedMember(); as m) {
-              <div class="flex items-center gap-3 mt-2 p-3 rounded-xl"
-                   style="background: var(--color-primary-subtle)">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                     style="background: var(--color-primary); color: white">
-                  {{ m.fullName.charAt(0).toUpperCase() }}
+            <!-- Barra de ocupación visual -->
+            @if (effectiveCapacity() !== null) {
+              <div>
+                <div class="w-full rounded-full overflow-hidden h-2"
+                     style="background: var(--color-surface-raised); border: 1px solid var(--color-border)">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    [style.width]="(activeReservations().length / (effectiveCapacity() ?? 1) * 100) + '%'"
+                    [style.background]="availableSlots() === 0
+                      ? 'var(--color-error)'
+                      : availableSlots()! <= 2
+                        ? 'var(--color-warning)'
+                        : classColor(s)"
+                  ></div>
                 </div>
-                <div class="min-w-0 flex-1">
-                  <p class="text-sm font-semibold" style="color: var(--color-foreground)">{{ m.fullName }}</p>
-                  <p class="text-xs" style="color: var(--color-muted-fg)">{{ m.rut }}</p>
-                </div>
+                <p class="text-xs mt-1" style="color: var(--color-muted-fg); text-align: right">
+                  {{ (activeReservations().length / (effectiveCapacity() ?? 1) * 100).toFixed(0) }}% ocupado
+                </p>
               </div>
             }
-          </div>
 
-          <!-- Notas opcionales -->
-          <div class="space-y-1">
-            <label class="text-xs font-semibold uppercase tracking-wide"
-                   style="color: var(--color-muted-fg)">
-              Observaciones <span style="font-weight: 400">(opcional)</span>
-            </label>
-            <textarea
-              class="input resize-none"
-              rows="2"
-              maxlength="500"
-              placeholder="Ej: Requiere lugar adaptado..."
-              [value]="newNotes()"
-              (input)="newNotes.set($any($event.target).value)"
-            ></textarea>
-          </div>
-
-          <!-- Error -->
-          @if (createError()) {
-            <div class="alert alert-error" role="alert">
-              <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fill-rule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clip-rule="evenodd"/>
-              </svg>
-              <span>{{ createError() }}</span>
-            </div>
-          }
-
-          <!-- Botones -->
-          <div class="flex gap-3">
-            <button
-              type="button"
-              class="btn btn-ghost flex-1"
-              (click)="hideCreateForm()"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary flex-1"
-              [disabled]="!canCreate()"
-              (click)="createReservation()"
-            >
-              @if (creating()) {
-                <span class="spinner"
-                      style="border-top-color: white; border-color: rgba(255,255,255,0.3); width:14px; height:14px"></span>
-                <span>Reservando...</span>
-              } @else {
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <!-- Alerta sin cupos -->
+            @if (availableSlots() === 0) {
+              <div class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+                   style="background: var(--color-error-subtle); color: var(--color-error); border: 1px solid var(--color-error-border, #fecaca)">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                 </svg>
-                Confirmar Reserva
+                <span><strong>Sin cupos disponibles.</strong> La sesión está completa.</span>
+              </div>
+            }
+
+            <!-- Botón Nueva Reserva (solo para hoy/futuro y si hay cupo) -->
+            @if (canReserveForDate(selectedDate()) && availableSlots() !== 0 && !showCreateForm()) {
+              <button
+                type="button"
+                class="btn btn-primary w-full"
+                (click)="showNewReservationForm()"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Nueva Reserva
+              </button>
+            }
+          }
+        </div>
+
+        <!-- ── Formulario de nueva reserva ────────────────────────────────── -->
+        @if (showCreateForm()) {
+          <div class="card p-5 space-y-4" style="border-color: var(--color-primary)">
+
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold" style="color: var(--color-foreground)">
+                Nueva Reserva
+              </h3>
+              <button
+                type="button"
+                class="p-1 rounded-lg"
+                style="color: var(--color-muted-fg)"
+                (click)="hideCreateForm()"
+                aria-label="Cerrar formulario"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Buscador de socio -->
+            <div class="space-y-1">
+              <label class="text-xs font-semibold uppercase tracking-wide"
+                     style="color: var(--color-muted-fg)">Socio</label>
+              <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                     style="color: var(--color-muted-fg)"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                </svg>
+                <input
+                  type="search"
+                  [value]="searchQuery()"
+                  (input)="onSearchInput($any($event.target).value)"
+                  (blur)="closeDropdown()"
+                  placeholder="Nombre o RUT del socio..."
+                  class="input pl-9"
+                  autocomplete="off"
+                  aria-label="Buscar socio"
+                />
+                @if (searchLoading()) {
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 spinner"
+                        style="border-top-color: var(--color-primary); border-color: var(--color-border); width:14px; height:14px"></span>
+                }
+
+                <!-- Dropdown resultados -->
+                @if (showDropdown() && searchResults().length > 0) {
+                  <ul class="absolute z-20 w-full mt-1 rounded-xl overflow-hidden shadow-lg"
+                      style="background: var(--color-surface); border: 1px solid var(--color-border)"
+                      role="listbox">
+                    @for (member of searchResults(); track member.id) {
+                      <li>
+                        <button
+                          type="button"
+                          class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                          style="color: var(--color-foreground)"
+                          (mousedown)="selectMember(member)"
+                          role="option"
+                        >
+                          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                               style="background: var(--color-primary-subtle); color: var(--color-primary)">
+                            {{ member.fullName.charAt(0).toUpperCase() }}
+                          </div>
+                          <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium truncate">{{ member.fullName }}</p>
+                            <p class="text-xs truncate" style="color: var(--color-muted-fg)">{{ member.rut }}</p>
+                          </div>
+                          @if (member.status !== MemberStatus.Active) {
+                            <span class="badge badge-suspended text-xs">Inactivo</span>
+                          }
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+
+              <!-- Socio seleccionado -->
+              @if (selectedMember(); as m) {
+                <div class="flex items-center gap-3 mt-2 p-3 rounded-xl"
+                     style="background: var(--color-primary-subtle)">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                       style="background: var(--color-primary); color: white">
+                    {{ m.fullName.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold" style="color: var(--color-foreground)">{{ m.fullName }}</p>
+                    <p class="text-xs" style="color: var(--color-muted-fg)">{{ m.rut }}</p>
+                  </div>
+                </div>
               }
-            </button>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="space-y-1">
+              <label class="text-xs font-semibold uppercase tracking-wide"
+                     style="color: var(--color-muted-fg)">
+                Observaciones <span style="font-weight: 400">(opcional)</span>
+              </label>
+              <textarea
+                class="input resize-none"
+                rows="2"
+                maxlength="500"
+                placeholder="Ej: Requiere lugar adaptado..."
+                [value]="newNotes()"
+                (input)="newNotes.set($any($event.target).value)"
+              ></textarea>
+            </div>
+
+            <!-- Error -->
+            @if (createError()) {
+              <div class="alert alert-error" role="alert">
+                <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clip-rule="evenodd"/>
+                </svg>
+                <span>{{ createError() }}</span>
+              </div>
+            }
+
+            <!-- Botones -->
+            <div class="flex gap-3">
+              <button type="button" class="btn btn-ghost flex-1" (click)="hideCreateForm()">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary flex-1"
+                [disabled]="!canCreate()"
+                (click)="createReservation()"
+              >
+                @if (creating()) {
+                  <span class="spinner"
+                        style="border-top-color: white; border-color: rgba(255,255,255,0.3); width:14px; height:14px"></span>
+                  <span>Reservando...</span>
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Confirmar Reserva
+                }
+              </button>
+            </div>
+
           </div>
+        }
 
-        </div>
-      }
+      </div>
 
-      <!-- Placeholder cuando no hay sesión seleccionada -->
-      @if (!selectedScheduleId() || !selectedDate()) {
-        <div class="card p-10 flex flex-col items-center gap-3 text-center"
-             style="border-style: dashed">
-          <svg class="w-10 h-10" style="color: var(--color-muted-fg)"
-               fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          <p class="text-sm font-medium" style="color: var(--color-foreground)">
-            Selecciona un horario y una fecha
-          </p>
-          <p class="text-sm" style="color: var(--color-muted-fg)">
-            Verás las reservas activas y podrás agregar nuevas.
-          </p>
-        </div>
-      }
+      <!-- ── LISTA DE RESERVAS DE LA SESIÓN (2/5) ─────────────────────────── -->
+      <div class="lg:col-span-2">
+        <div class="card p-0 overflow-hidden h-full flex flex-col">
 
-    </div>
-
-    <!-- ════════════════════════════════════════════════════════════
-         PANEL DERECHO — Lista de reservas de la sesión (2/5)
-         ════════════════════════════════════════════════════════════ -->
-    <div class="lg:col-span-2">
-      <div class="card p-0 overflow-hidden h-full flex flex-col">
-
-        <!-- Cabecera -->
-        <div class="flex items-center justify-between px-5 py-4"
-             style="border-bottom: 1px solid var(--color-border)">
-          <div>
-            <h2 class="text-sm font-semibold" style="color: var(--color-foreground)">
-              Reservas de la sesión
-            </h2>
-            @if (selectedDate()) {
-              <p class="text-xs mt-0.5" style="color: var(--color-muted-fg)">
-                {{ formatDate(selectedDate()) }}
+          <!-- Cabecera lista -->
+          <div class="flex items-center justify-between px-5 py-4"
+               style="border-bottom: 1px solid var(--color-border)">
+            <div>
+              <h3 class="text-sm font-semibold" style="color: var(--color-foreground)">
+                Lista de reservas
+              </h3>
+              <p class="text-xs mt-0.5 capitalize" style="color: var(--color-muted-fg)">
+                {{ formatSessionDate(selectedDate()) }}
               </p>
+            </div>
+            @if (reservations().length > 0) {
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style="background: var(--color-primary-subtle); color: var(--color-primary)">
+                {{ reservations().length }}
+              </span>
             }
           </div>
-          @if (reservations().length > 0) {
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
-                  style="background: var(--color-primary-subtle); color: var(--color-primary)">
-              {{ reservations().length }}
-            </span>
-          }
-        </div>
 
-        <!-- Contenido -->
-        <div class="flex-1 overflow-y-auto" style="max-height: 540px">
+          <!-- Contenido lista -->
+          <div class="flex-1 overflow-y-auto" style="max-height: 440px">
 
-          @if (!selectedScheduleId() || !selectedDate()) {
-            <div class="p-8 flex flex-col items-center gap-2 text-center">
-              <svg class="w-8 h-8" style="color: var(--color-muted-fg)"
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-              <p class="text-sm" style="color: var(--color-muted-fg)">
-                Selecciona una sesión para ver las reservas.
-              </p>
-            </div>
+            @if (reservationsLoading()) {
+              <div class="p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+                <span class="spinner"
+                      style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+                <span class="text-sm">Cargando...</span>
+              </div>
 
-          } @else if (reservationsLoading()) {
-            <div class="p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
-              <span class="spinner"
-                    style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
-              <span class="text-sm">Cargando reservas...</span>
-            </div>
+            } @else if (reservations().length === 0) {
+              <div class="p-8 flex flex-col items-center gap-2 text-center">
+                <svg class="w-8 h-8" style="color: var(--color-muted-fg)"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <p class="text-sm font-medium" style="color: var(--color-foreground)">
+                  Sin reservas para esta sesión
+                </p>
+                <p class="text-sm" style="color: var(--color-muted-fg)">
+                  Usa el botón "Nueva Reserva" para agregar socios.
+                </p>
+              </div>
 
-          } @else if (reservations().length === 0) {
-            <div class="p-8 flex flex-col items-center gap-2 text-center">
-              <svg class="w-8 h-8" style="color: var(--color-muted-fg)"
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-              </svg>
-              <p class="text-sm font-medium" style="color: var(--color-foreground)">
-                Sin reservas para esta sesión
-              </p>
-              <p class="text-sm" style="color: var(--color-muted-fg)">
-                Agrega la primera usando el botón "Nueva Reserva".
-              </p>
-            </div>
+            } @else {
+              <ul class="divide-y" style="border-color: var(--color-border)">
+                @for (r of reservations(); track r.id) {
+                  <li class="flex items-center gap-3 px-5 py-3"
+                      [style.opacity]="r.status !== ReservationStatus.Active ? '0.55' : '1'">
 
-          } @else {
-            <ul class="divide-y" style="border-color: var(--color-border)">
-              @for (r of reservations(); track r.id) {
-                <li class="flex items-center gap-3 px-5 py-3"
-                    [style.opacity]="r.status !== ReservationStatus.Active ? '0.6' : '1'">
-
-                  <!-- Avatar -->
-                  <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
-                       [style]="r.status === ReservationStatus.Active
-                         ? 'background: var(--color-primary-subtle); color: var(--color-primary)'
-                         : 'background: var(--color-surface-raised); color: var(--color-muted-fg)'">
-                    {{ r.memberFullName.charAt(0).toUpperCase() }}
-                  </div>
-
-                  <!-- Info -->
-                  <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium truncate" style="color: var(--color-foreground)">
-                      {{ r.memberFullName }}
-                    </p>
-                    <div class="flex items-center gap-2 mt-0.5">
-                      <span class="text-xs px-1.5 py-0.5 rounded-md font-medium"
-                            [ngClass]="RESERVATION_STATUS_CSS[r.status]">
-                        {{ RESERVATION_STATUS_LABELS[r.status] }}
-                      </span>
-                      <span class="text-xs" style="color: var(--color-muted-fg)">
-                        {{ formatTime(r.reservedAtUtc) }}
-                      </span>
+                    <!-- Avatar -->
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
+                         [style]="r.status === ReservationStatus.Active
+                           ? 'background: var(--color-primary-subtle); color: var(--color-primary)'
+                           : 'background: var(--color-surface-raised); color: var(--color-muted-fg)'">
+                      {{ r.memberFullName.charAt(0).toUpperCase() }}
                     </div>
-                  </div>
 
-                  <!-- Acción cancelar (solo reservas activas) -->
-                  @if (r.status === ReservationStatus.Active) {
-                    <button
-                      type="button"
-                      class="p-1.5 rounded-lg transition-colors shrink-0"
-                      style="color: var(--color-muted-fg)"
-                      (click)="cancelReservation(r)"
-                      title="Cancelar reserva"
-                      aria-label="Cancelar reserva de {{ r.memberFullName }}"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M6 18L18 6M6 6l12 12"/>
-                      </svg>
-                    </button>
-                  }
+                    <!-- Info -->
+                    <div class="min-w-0 flex-1">
+                      <p class="text-sm font-medium truncate" style="color: var(--color-foreground)">
+                        {{ r.memberFullName }}
+                      </p>
+                      <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-xs px-1.5 py-0.5 rounded-md font-medium"
+                              [ngClass]="RESERVATION_STATUS_CSS[r.status]">
+                          {{ RESERVATION_STATUS_LABELS[r.status] }}
+                        </span>
+                        <span class="text-xs" style="color: var(--color-muted-fg)">
+                          {{ formatTime(r.reservedAtUtc) }}
+                        </span>
+                      </div>
+                    </div>
 
-                </li>
-              }
-            </ul>
-          }
+                    <!-- Cancelar (solo activas) -->
+                    @if (r.status === ReservationStatus.Active) {
+                      <button
+                        type="button"
+                        class="p-1.5 rounded-lg transition-colors shrink-0"
+                        style="color: var(--color-muted-fg)"
+                        (click)="cancelReservation(r)"
+                        title="Cancelar reserva"
+                        aria-label="Cancelar reserva de {{ r.memberFullName }}"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    }
+                  </li>
+                }
+              </ul>
+            }
 
+          </div>
         </div>
       </div>
-    </div>
 
-  </div>
+    </div>
+  }
+
+  <!-- Placeholder cuando no hay sesión seleccionada -->
+  @if (!selectedSchedule()) {
+    <div class="flex items-center gap-3 px-5 py-4 rounded-xl text-sm"
+         style="background: var(--color-surface-raised); border: 1px dashed var(--color-border); color: var(--color-muted-fg)">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Haz click en un bloque del calendario para ver y gestionar las reservas de esa sesión.
+    </div>
+  }
 
 </div>

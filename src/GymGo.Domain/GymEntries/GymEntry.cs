@@ -46,6 +46,12 @@ public sealed class GymEntry : AggregateRoot, IAuditable, ITenantScoped
     /// <summary>Observaciones opcionales de la recepcionista.</summary>
     public string? Notes { get; private set; }
 
+    /// <summary>
+    /// Timestamp UTC de la salida del socio.
+    /// Null mientras el socio no ha registrado su salida.
+    /// </summary>
+    public DateTime? ExitedAtUtc { get; private set; }
+
     // ── IAuditable ────────────────────────────────────────────────────────
     public DateTime CreatedAtUtc { get; set; }
     public string? CreatedBy { get; set; }
@@ -128,5 +134,26 @@ public sealed class GymEntry : AggregateRoot, IAuditable, ITenantScoped
             method,
             memberFullName.Trim(),
             string.IsNullOrWhiteSpace(notes) ? null : notes.Trim());
+    }
+
+    // ── Salida ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Registra la salida del socio del gimnasio.
+    /// Solo puede llamarse una vez; si ya existe una salida registrada lanza excepción.
+    /// </summary>
+    public void RegisterExit(DateTime exitedAtUtc)
+    {
+        if (ExitedAtUtc.HasValue)
+            throw new BusinessRuleViolationException(
+                "EXIT_ALREADY_REGISTERED",
+                "La salida de este socio ya fue registrada.");
+
+        if (exitedAtUtc < EnteredAtUtc)
+            throw new BusinessRuleViolationException(
+                "EXIT_BEFORE_ENTRY",
+                "La hora de salida no puede ser anterior a la hora de ingreso.");
+
+        ExitedAtUtc = exitedAtUtc;
     }
 }

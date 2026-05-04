@@ -11,6 +11,7 @@ public static class GymEntryMappings
         MembershipAssignmentId: entry.MembershipAssignmentId,
         EntryDate:             entry.EntryDate,
         EnteredAtUtc:          entry.EnteredAtUtc,
+        ExitedAtUtc:           entry.ExitedAtUtc,
         Method:                entry.Method.ToString(),
         Notes:                 entry.Notes,
         CreatedAtUtc:          entry.CreatedAtUtc

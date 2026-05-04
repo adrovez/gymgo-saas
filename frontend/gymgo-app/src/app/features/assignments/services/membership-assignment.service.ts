@@ -38,6 +38,17 @@ export class MembershipAssignmentService {
     );
   }
 
+  /**
+   * GET /api/v1/assignments/search?q=... — buscar membresías por nombre o RUT del socio.
+   * Requiere mínimo 2 caracteres.
+   */
+  searchAssignments(query: string): Observable<MembershipAssignmentSummaryDto[]> {
+    return this.http.get<MembershipAssignmentSummaryDto[]>(
+      `${this.apiUrl}/assignments/search`,
+      { params: { q: query } },
+    );
+  }
+
   // ── Comandos ─────────────────────────────────────────────────────────────
 
   /** POST /api/v1/members/{memberId}/assignments — asignar plan */

@@ -549,4 +549,33 @@
     background: rgba(239, 68, 68, 0.1);
     color: var(--color-red-400);
   }
+
+  /* ── Topnav horizontal ────────────────────────────────────── */
+
+  /* Item de navegación en la barra horizontal (desktop) */
+  .topnav-item {
+    transition: background-color var(--duration-fast), color var(--duration-fast);
+  }
+
+  .topnav-item:hover {
+    background: var(--color-sidebar-item-hover);
+    color: var(--color-sidebar-fg-strong);
+  }
+
+  /* Estado activo (routerLinkActive) */
+  .topnav-item-active {
+    background: var(--color-sidebar-item-active-bg) !important;
+    color: var(--color-sidebar-item-active-fg) !important;
+    border-color: var(--color-sidebar-item-active-border) !important;
+  }
+
+  /* Botón "Salir" en el topnav */
+  .topnav-logout-btn {
+    transition: background-color var(--duration-fast), color var(--duration-fast);
+  }
+
+  .topnav-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--color-red-400);
+  }
 }

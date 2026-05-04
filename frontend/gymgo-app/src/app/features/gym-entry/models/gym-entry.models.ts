@@ -15,6 +15,7 @@ export interface GymEntryDto {
   membershipAssignmentId: string;
   entryDate:             string;   // ISO date "YYYY-MM-DD"
   enteredAtUtc:          string;   // ISO datetime
+  exitedAtUtc:           string | null;  // null = socio aún dentro del gimnasio
   method:                string;
   notes:                 string | null;
   createdAtUtc:          string;

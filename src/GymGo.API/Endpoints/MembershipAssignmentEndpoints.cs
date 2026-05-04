@@ -7,6 +7,7 @@ using GymGo.Application.MembershipAssignments.Commands.UnfreezeMembership;
 using GymGo.Application.MembershipAssignments.Queries.GetActiveAssignment;
 using GymGo.Application.MembershipAssignments.Queries.GetMemberAssignments;
 using GymGo.Application.MembershipAssignments.Queries.GetOverdueAssignments;
+using GymGo.Application.MembershipAssignments.Queries.SearchMembershipAssignments;
 using MediatR;
 
 namespace GymGo.API.Endpoints;
@@ -138,6 +139,24 @@ public static class MembershipAssignmentEndpoints
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
+            .ProducesProblem(401);
+
+        // ── Búsqueda de membresías por nombre o RUT del socio ────────────────
+        // GET /api/v1/assignments/search?q=Juan
+        app.MapGet("/api/v1/assignments/search",
+            async (string? q, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new SearchMembershipAssignmentsQuery(q ?? string.Empty), ct);
+                return Results.Ok(result);
+            })
+            .WithTags("MembershipAssignments")
+            .WithSummary("Buscar membresías por nombre o RUT del socio")
+            .WithDescription(
+                "Devuelve todas las asignaciones de membresía de los socios cuyo nombre o RUT " +
+                "coincida con el término de búsqueda. Mínimo 2 caracteres. " +
+                "Incluye asignaciones activas, vencidas y canceladas.")
+            .RequireAuthorization()
+            .Produces(200)
             .ProducesProblem(401);
 
         // ── Listado de morosos del tenant ────────────────────────────────────

@@ -10,6 +10,7 @@ public sealed record GymEntryDto(
     Guid MembershipAssignmentId,
     DateOnly EntryDate,
     DateTime EnteredAtUtc,
+    DateTime? ExitedAtUtc,
     string Method,
     string? Notes,
     DateTime CreatedAtUtc
