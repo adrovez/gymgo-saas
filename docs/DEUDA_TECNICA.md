@@ -6,17 +6,16 @@ Documento de referencia para funcionalidades planificadas, decisiones de diseño
 |---------|------------|-------------------------------------------------|
 | 1.0     | 2026-04-22 | Documento inicial tras Sprint 0-1 + módulos Members y MembershipPlans. |
 | 1.1     | 2026-04-22 | Ítem 6 resuelto: `POST /auth/login` con JWT. |
+| 1.2     | 2026-05-04 | Ítems 16-19, 24-25, 31-32, 35, 41 resueltos. Módulo WorkoutLogs completado. Fix ruta Rutinas en navbar. |
 
 ---
 
 ## Índice
 
-- [Módulo: Asignaciones de Membresía](#módulo-asignaciones-de-membresía)
 - [Módulo: Autenticación y Usuarios](#módulo-autenticación-y-usuarios)
 - [Módulo: Pagos](#módulo-pagos)
 - [Módulo: Clases y Horarios](#módulo-clases-y-horarios)
 - [Módulo: Instructores](#módulo-instructores)
-- [Módulo: Equipamiento](#módulo-equipamiento)
 - [Módulo: Notificaciones](#módulo-notificaciones)
 - [Infraestructura y Arquitectura](#infraestructura-y-arquitectura)
 - [Base de Datos](#base-de-datos)
@@ -24,25 +23,10 @@ Documento de referencia para funcionalidades planificadas, decisiones de diseño
 
 ---
 
-## Módulo: Asignaciones de Membresía
-
-> **Próximo a implementar.** Conecta `Members` con `MembershipPlans`.
-
-| # | Ítem | Prioridad | Sprint |
-|---|------|:---------:|:------:|
-| ~~1~~ | ~~Tabla `MembershipAssignments`~~| ~~Alta~~ | ✅ Resuelto 2026-04-22 |
-| ~~2~~ | ~~Endpoints de asignación~~ | ~~Alta~~ | ✅ Resuelto 2026-04-22 |
-| ~~3~~ | ~~Lógica de morosidad~~ | ~~Alta~~ | ✅ Resuelto 2026-04-22 (`MarkOverdue` + `RegisterPayment` reactiva socio) |
-| ~~4~~ | ~~Historial de membresías~~ | ~~Media~~ | ✅ Resuelto 2026-04-22 (`GetMemberAssignments`) |
-| ~~5~~ | ~~Soporte de congelamiento~~ | ~~Media~~ | ✅ Resuelto 2026-04-22 (`Freeze`/`Unfreeze` con extensión de `EndDate`) |
-
----
-
 ## Módulo: Autenticación y Usuarios
 
 | # | Ítem | Prioridad | Sprint |
 |---|------|:---------:|:------:|
-| ~~6~~ | ~~Implementar endpoints de Login (`POST /auth/login`) con generación de JWT.~~ | ~~Alta~~ | ✅ Resuelto 2026-04-22 (`LoginCommand` + `POST /api/v1/auth/login`, JWT con claims estándar) |
 | 7 | Endpoint de registro de socio desde app móvil (`POST /auth/register`) — sólo rol `Member`, requiere header `X-Tenant-Id`. | Alta | Sprint 4 |
 | 8 | Vinculación `Member ↔ User`: agregar columna nullable `UserId` en `Members` para asociar un socio con su cuenta de acceso a la app móvil. | Media | Sprint 4 |
 | 9 | Refresh tokens: actualmente el JWT no tiene mecanismo de renovación sin re-login. | Media | Sprint 4 |
@@ -66,11 +50,7 @@ Documento de referencia para funcionalidades planificadas, decisiones de diseño
 
 | # | Ítem | Prioridad | Sprint |
 |---|------|:---------:|:------:|
-| 16 | Tabla `Classes`: definición de clases dictadas en el gimnasio (nombre, instructor, capacidad máxima, sala). | Alta | Sprint 3 |
-| 17 | Tabla `ClassSchedules`: horario recurrente de cada clase (día de semana, hora inicio/fin). | Alta | Sprint 3 |
-| 18 | Tabla `ClassReservations`: reservas de socios a clases específicas. | Alta | Sprint 4 |
-| 19 | Validación de capacidad máxima al reservar una clase. | Alta | Sprint 4 |
-| 20 | Validación de que el socio tiene membresía vigente y con acceso al horario de la clase antes de permitir reserva. | Alta | Sprint 4 |
+| 20 | Validación de que el socio tiene membresía vigente **con acceso al tipo de clase** antes de permitir reserva (actualmente sólo valida `MemberStatus.Active`). | Alta | Sprint 4 |
 | 21 | Cancelación de reservas con política de tiempo mínimo de anticipación (configurable por tenant). | Media | Sprint 4 |
 
 ---
@@ -88,8 +68,6 @@ Documento de referencia para funcionalidades planificadas, decisiones de diseño
 
 | # | Ítem | Prioridad | Sprint |
 |---|------|:---------:|:------:|
-| 24 | Tabla `Equipment`: inventario de equipos del gimnasio (nombre, categoría, número de serie, estado). | Media | Sprint 5 |
-| 25 | Tabla `MaintenanceLogs`: registro de mantenciones por equipo (fecha, tipo, responsable, observaciones). | Media | Sprint 5 |
 | 26 | Alertas de mantenimiento preventivo por vencimiento de fecha programada. | Baja | Sprint 5 |
 
 ---
@@ -109,11 +87,8 @@ Documento de referencia para funcionalidades planificadas, decisiones de diseño
 
 | # | Ítem | Prioridad | Sprint |
 |---|------|:---------:|:------:|
-| 31 | CI/CD: pipeline de build + test automático en cada PR (GitHub Actions o Azure DevOps). Actualmente no configurado. | Alta | Sprint 0 (pendiente) |
-| 32 | Ambiente de staging: clonar configuración de `appsettings` para ambiente `Staging` separado de `Dev`. | Alta | Sprint 0 (pendiente) |
 | 33 | Publicación de dominio de eventos (`IDomainEvent`): la infraestructura de `AggregateRoot` acumula eventos pero no hay dispatcher implementado. Evaluar MediatR Notifications. | Media | Sprint 3 |
 | 34 | Rate limiting en endpoints públicos (registro, login). Actualmente sin protección contra abuso. | Media | Sprint 4 |
-| 35 | `CLAUDE.md`: documentar convenciones del proyecto para onboarding de nuevos desarrolladores. | Baja | Sprint 2 |
 
 ---
 
@@ -133,16 +108,15 @@ Documento de referencia para funcionalidades planificadas, decisiones de diseño
 | # | Ítem | Prioridad | Sprint |
 |---|------|:---------:|:------:|
 | 40 | Decisión pendiente: React Native vs PWA. Evaluar experiencia del equipo y tiempo disponible antes de Sprint 4. | Alta | Sprint 3 |
-| 41 | Congelar contrato OpenAPI (Swagger) antes de comenzar desarrollo móvil para evitar breaking changes. | Alta | Sprint 2 |
 | 42 | Pantalla de login del socio con autenticación JWT. | Alta | Sprint 4 |
 | 43 | Vista de membresía activa: plan vigente, días restantes, horario habilitado. | Alta | Sprint 4 |
-| 44 | Registro de rutinas y progreso físico (peso, medidas) del socio. | Media | Sprint 5 |
+| 44 | Registro de rutinas y progreso físico (peso, medidas) del socio desde app móvil. | Media | Sprint 5 |
 | 45 | Vista de reservas de clases desde la app. | Media | Sprint 5 |
 
 ---
 
 ## Cómo usar este documento
 
-- **Resolver un ítem**: eliminar la fila o moverla a una sección `## Resueltos` con la fecha y el PR/commit correspondiente.
+- **Resolver un ítem**: eliminar la fila y registrar el cambio en la tabla de versiones con fecha y descripción.
 - **Agregar un ítem**: incorporarlo en la sección correspondiente con número correlativo, prioridad (Alta / Media / Baja) y sprint estimado.
 - **Prioridades**: Alta = bloquea funcionalidad core / Media = importante pero no urgente / Baja = mejora o nice-to-have.

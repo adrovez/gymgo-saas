@@ -15,6 +15,7 @@ Documento de referencia de todas las tablas de la base `GymGoDb_Dev`. Cada vez q
 | 1.8     | 2026-04-27  | Módulo de reservas: tabla `ClassReservations`.       |
 | 1.9     | 2026-04-28  | Módulo de maquinaria: tabla `Equipment`.             |
 | 2.0     | 2026-04-28  | Módulo de mantención: tabla `MaintenanceRecords`.    |
+| 2.1     | 2026-05-04  | Módulo de rutinas: tablas `WorkoutLogs` y `WorkoutLogExercises`. |
 
 ---
 
@@ -54,6 +55,8 @@ Documento de referencia de todas las tablas de la base `GymGoDb_Dev`. Cada vez q
 | [`dbo.ClassReservations`](#dboclassreservations) | Reservas de socios a sesiones de clase | ✓ | — |
 | [`dbo.Equipment`](#dboequipment) | Catálogo de maquinaria del gimnasio | ✓ | ✓ |
 | [`dbo.MaintenanceRecords`](#dbomaintenancerecords) | Mantenciones preventivas y correctivas de maquinaria | ✓ | — |
+| [`dbo.WorkoutLogs`](#dboworkoutlogs) | Sesiones de entrenamiento registradas por un socio | ✓ | ✓ |
+| [`dbo.WorkoutLogExercises`](#dboworkoutlogexercises) | Ejercicios individuales dentro de una sesión de entrenamiento | — | — |
 
 ---
 
@@ -803,6 +806,120 @@ Documento de referencia de todas las tablas de la base `GymGoDb_Dev`. Cada vez q
 | `CK_MR_Type` | CHECK | `Type IN (0, 1)` |
 | `CK_MR_Status` | CHECK | `Status BETWEEN 0 AND 3` |
 | `CK_MR_ResponsibleType` | CHECK | `ResponsibleType IN (0, 1)` |
+
+---
+
+## `dbo.WorkoutLogs`
+
+**Propósito de negocio**: registra una sesión de entrenamiento de un socio en una fecha determinada. Es el agregado raíz del módulo de rutinas. Contiene los metadatos de la sesión (fecha, título, notas, estado) y actúa como contenedor de los ejercicios realizados (`WorkoutLogExercises`). Un socio no puede tener más de un registro en estado `Draft` por día.
+
+**Origen de datos**: creado desde el frontend (panel de gestión) o desde la app móvil (Sprint 5). Completado explícitamente por el operador o el socio; una vez completado no puede revertirse.
+
+**Script SQL**: `database/sql/01_schema/12_WorkoutLogs.sql`
+
+### Columnas
+
+| Columna            | Tipo SQL                 | Nulable | Default | Descripción |
+|--------------------|--------------------------|:-------:|---------|-------------|
+| `Id`               | `UNIQUEIDENTIFIER`       |    —    | app     | PK. GUID generado por la aplicación. |
+| `TenantId`         | `UNIQUEIDENTIFIER`       |    —    | —       | FK lógica → `dbo.Tenants.Id`. Tenant que posee el registro. |
+| `MemberId`         | `UNIQUEIDENTIFIER`       |    —    | —       | FK → `dbo.Members.Id`. Socio al que pertenece la sesión. |
+| `Date`             | `DATE`                   |    —    | —       | Fecha de la sesión (sin hora; se almacena como fecha local del gimnasio). |
+| `Title`            | `NVARCHAR(200)`          |    ✓    | NULL    | Título descriptivo opcional de la sesión (ej. "Piernas – lunes"). |
+| `Notes`            | `NVARCHAR(1000)`         |    ✓    | NULL    | Notas generales de la sesión. |
+| `Status`           | `INT`                    |    —    | `0`     | Estado del log. Ver valores válidos abajo. |
+| `IsDeleted`        | `BIT`                    |    —    | `0`     | Soft delete. `1` = eliminado lógicamente. |
+| `DeletedAtUtc`     | `DATETIME2(3)`           |    ✓    | NULL    | Timestamp UTC del soft delete. |
+| `DeletedBy`        | `NVARCHAR(200)`          |    ✓    | NULL    | Identidad que realizó el soft delete. |
+| `CreatedAtUtc`     | `DATETIME2(3)`           |    —    | —       | Timestamp UTC de creación. |
+| `CreatedBy`        | `NVARCHAR(200)`          |    ✓    | NULL    | Identidad que creó el registro. |
+| `ModifiedAtUtc`    | `DATETIME2(3)`           |    ✓    | NULL    | Timestamp UTC de última modificación. |
+| `ModifiedBy`       | `NVARCHAR(200)`          |    ✓    | NULL    | Identidad que realizó la última modificación. |
+
+### Índices y constraints
+
+| Nombre                        | Tipo          | Columnas                        | Notas |
+|-------------------------------|---------------|---------------------------------|-------|
+| `PK_WorkoutLogs`              | PK CLUSTERED  | `Id`                            | |
+| `IX_WorkoutLogs_Member_Date`  | NONCLUSTERED  | `TenantId`, `MemberId`, `Date`  | Consultas por socio y fecha; soporta la regla de unicidad Draft-por-día. |
+| `IX_WorkoutLogs_Tenant_Date`  | NONCLUSTERED  | `TenantId`, `Date`              | Consultas globales del tenant ordenadas por fecha. |
+| `FK_WorkoutLogs_Members`      | FK            | `MemberId` → `dbo.Members.Id`   | |
+| `CK_WL_Status`                | CHECK         | `Status IN (0, 1)`              | Solo valores 0 (Draft) y 1 (Completed). |
+
+### Relaciones
+
+| Relación     | Tabla destino            | Cardinalidad | Descripción |
+|--------------|--------------------------|:------------:|-------------|
+| Padre de     | `dbo.WorkoutLogExercises`| 1 → N        | Un log contiene cero o más ejercicios. Al eliminar el log físicamente se eliminan en cascada sus ejercicios (CASCADE DELETE). |
+| Pertenece a  | `dbo.Members`            | N → 1        | Cada log corresponde a un único socio. |
+
+### Valores válidos — `Status`
+
+| Valor | Nombre      | Descripción |
+|-------|-------------|-------------|
+| `0`   | `Draft`     | Sesión en curso o pendiente de completar. Se puede editar y agregar/eliminar ejercicios. Solo puede haber un Draft por socio por día. |
+| `1`   | `Completed` | Sesión finalizada. Requiere al menos un ejercicio para completarse. Transición irreversible: no se puede volver a Draft. |
+
+---
+
+## `dbo.WorkoutLogExercises`
+
+**Propósito de negocio**: almacena cada ejercicio individual dentro de una sesión de entrenamiento (`WorkoutLog`). Incluye los parámetros del ejercicio (series, repeticiones, peso, duración, distancia) y el grupo muscular involucrado. El orden de presentación se controla con `SortOrder`.
+
+**Origen de datos**: creado y modificado desde el detalle de un `WorkoutLog` en el frontend o la app móvil. Solo puede existir si existe el log padre y este está en estado `Draft`.
+
+**Script SQL**: `database/sql/01_schema/12_WorkoutLogs.sql` (misma migración que la tabla padre)
+
+### Columnas
+
+| Columna             | Tipo SQL           | Nulable | Default | Descripción |
+|---------------------|--------------------|:-------:|---------|-------------|
+| `Id`                | `UNIQUEIDENTIFIER` |    —    | app     | PK. GUID generado por la aplicación. |
+| `WorkoutLogId`      | `UNIQUEIDENTIFIER` |    —    | —       | FK → `dbo.WorkoutLogs.Id` (CASCADE DELETE). Log padre al que pertenece este ejercicio. |
+| `ExerciseName`      | `NVARCHAR(200)`    |    —    | —       | Nombre del ejercicio (ej. "Sentadilla con barra", "Cardio bicicleta"). |
+| `MuscleGroup`       | `INT`              |    —    | `0`     | Grupo muscular principal. Ver valores válidos abajo. |
+| `SortOrder`         | `INT`              |    —    | `0`     | Posición del ejercicio dentro del log. Permite reordenar la lista. |
+| `Sets`              | `INT`              |    ✓    | NULL    | Número de series realizadas. Aplica a ejercicios con series. |
+| `Reps`              | `INT`              |    ✓    | NULL    | Número de repeticiones por serie. |
+| `WeightKg`          | `DECIMAL(6, 2)`    |    ✓    | NULL    | Peso utilizado en kilogramos. Puede ser 0 para ejercicios con peso corporal. |
+| `DurationSeconds`   | `INT`              |    ✓    | NULL    | Duración en segundos. Aplica a ejercicios de tiempo (planchas, cardio, etc.). |
+| `DistanceMeters`    | `DECIMAL(8, 2)`    |    ✓    | NULL    | Distancia en metros. Aplica a cardio (carrera, ciclismo, natación). |
+| `Notes`             | `NVARCHAR(500)`    |    ✓    | NULL    | Notas específicas del ejercicio (observaciones, sensaciones, variantes). |
+
+> **Nota de diseño**: los campos `Sets`, `Reps`, `WeightKg`, `DurationSeconds` y `DistanceMeters` son todos opcionales para soportar distintos tipos de ejercicio sin forzar valores por defecto sin sentido. La validación de al menos un campo de carga está a nivel de UI/Application.
+
+### Índices y constraints
+
+| Nombre                                | Tipo         | Columnas                          | Notas |
+|---------------------------------------|--------------|-----------------------------------|-------|
+| `PK_WorkoutLogExercises`              | PK CLUSTERED | `Id`                              | |
+| `IX_WorkoutLogExercises_WorkoutLogId` | NONCLUSTERED | `WorkoutLogId`, `SortOrder`       | Recuperación eficiente de todos los ejercicios de un log, ordenados. |
+| `FK_WorkoutLogExercises_WorkoutLogs`  | FK           | `WorkoutLogId` → `dbo.WorkoutLogs.Id` CASCADE DELETE | Al eliminar un WorkoutLog se eliminan sus ejercicios. |
+| `CK_WLE_MuscleGroup`                  | CHECK        | `MuscleGroup BETWEEN 0 AND 10`    | Rango válido de enum MuscleGroup. |
+
+### Relaciones
+
+| Relación    | Tabla destino     | Cardinalidad | Descripción |
+|-------------|-------------------|:------------:|-------------|
+| Pertenece a | `dbo.WorkoutLogs` | N → 1        | Cada ejercicio pertenece a exactamente un log. La eliminación es en cascada. |
+
+> **Multi-tenancy**: esta tabla **no tiene `TenantId`**. El aislamiento es transitivo: el acceso se controla a través del `WorkoutLog` padre, que sí lleva `TenantId` y tiene `HasQueryFilter` en EF Core. Nunca consultar `WorkoutLogExercises` directamente sin pasar por su log padre.
+
+### Valores válidos — `MuscleGroup`
+
+| Valor | Nombre          | Descripción |
+|-------|-----------------|-------------|
+| `0`   | `NotSpecified`  | Sin grupo muscular definido. |
+| `1`   | `Chest`         | Pecho. |
+| `2`   | `Back`          | Espalda. |
+| `3`   | `Shoulders`     | Hombros. |
+| `4`   | `Biceps`        | Bíceps. |
+| `5`   | `Triceps`       | Tríceps. |
+| `6`   | `Legs`          | Piernas (cuádriceps, isquiotibiales, glúteos). |
+| `7`   | `Core`          | Core / abdomen. |
+| `8`   | `Glutes`        | Glúteos (foco específico). |
+| `9`   | `Cardio`        | Ejercicio cardiovascular. |
+| `10`  | `FullBody`      | Cuerpo completo. |
 
 ---
 

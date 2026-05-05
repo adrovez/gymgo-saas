@@ -1,0 +1,158 @@
+<div class="p-6 space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Rutinas de entrenamiento</h1>
+      <p class="page-description">Historial de sesiones y avances de ejercicios por socio</p>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="newLog()">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nueva sesión
+    </button>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Filtros -->
+  <div class="card p-4">
+    <div class="flex flex-wrap gap-3 items-end">
+
+      <!-- Socio -->
+      <div class="flex-1 min-w-56">
+        <label class="block text-xs font-medium mb-1" style="color: var(--color-muted-fg)">Socio</label>
+        <select class="input w-full"
+                [disabled]="loadingMembers()"
+                (change)="onMemberChange($any($event.target).value)"
+                aria-label="Seleccionar socio">
+          <option value="">
+            @if (loadingMembers()) { Cargando socios... } @else { Selecciona un socio }
+          </option>
+          @for (m of members(); track m.id) {
+            <option [value]="m.id">{{ m.fullName }} — {{ m.rut }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Desde -->
+      <div>
+        <label class="block text-xs font-medium mb-1" style="color: var(--color-muted-fg)">Desde</label>
+        <input type="date" class="input"
+               [value]="fromDate"
+               (change)="onFromDateChange($any($event.target).value)"
+               aria-label="Fecha desde"/>
+      </div>
+
+      <!-- Hasta -->
+      <div>
+        <label class="block text-xs font-medium mb-1" style="color: var(--color-muted-fg)">Hasta</label>
+        <input type="date" class="input"
+               [value]="toDate"
+               (change)="onToDateChange($any($event.target).value)"
+               aria-label="Fecha hasta"/>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Tabla / estados -->
+  <div class="card p-0 overflow-hidden">
+
+    @if (!selectedMemberId) {
+      <!-- Placeholder: aún no se seleccionó socio -->
+      <div class="p-12 flex flex-col items-center gap-3 text-center">
+        <svg class="w-10 h-10" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <p class="text-sm font-medium" style="color: var(--color-foreground)">Selecciona un socio</p>
+        <p class="text-sm" style="color: var(--color-muted-fg)">Elige un socio para ver su historial de rutinas.</p>
+      </div>
+
+    } @else if (loading()) {
+      <div class="p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+        <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+        <span class="text-sm">Cargando rutinas...</span>
+      </div>
+
+    } @else if (logs().length === 0) {
+      <div class="p-12 flex flex-col items-center gap-3 text-center">
+        <svg class="w-10 h-10" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <p class="text-sm font-medium" style="color: var(--color-foreground)">Sin sesiones registradas</p>
+        <p class="text-sm" style="color: var(--color-muted-fg)">{{ selectedMemberName }} aún no tiene rutinas en el período seleccionado.</p>
+        <button type="button" class="btn btn-primary btn-sm mt-2" (click)="newLog()">Nueva sesión</button>
+      </div>
+
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Título / Rutina</th>
+              <th class="cell-center">Ejercicios</th>
+              <th class="cell-center">Estado</th>
+              <th class="cell-actions">Ver</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of logs(); track log.id) {
+              <tr class="cursor-pointer" (click)="viewDetail(log)">
+
+                <!-- Fecha -->
+                <td style="white-space: nowrap; font-size: 0.8125rem; color: var(--color-muted-fg)">
+                  {{ formatDate(log.date) }}
+                </td>
+
+                <!-- Título -->
+                <td>
+                  @if (log.title) {
+                    <span class="font-medium">{{ log.title }}</span>
+                  } @else {
+                    <span style="color: var(--color-muted-fg); font-size: 0.8125rem">Sin título</span>
+                  }
+                </td>
+
+                <!-- Ejercicios -->
+                <td class="cell-center">
+                  <span class="font-medium">{{ log.exerciseCount }}</span>
+                </td>
+
+                <!-- Estado -->
+                <td class="cell-center">
+                  <span [class]="statusBadgeClass(log.status)">{{ log.statusName }}</span>
+                </td>
+
+                <!-- Ver -->
+                <td class="cell-actions">
+                  <button type="button" class="btn btn-ghost btn-sm" aria-label="Ver detalle">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </td>
+
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="px-4 py-3 text-sm" style="border-top: 1px solid var(--color-border); color: var(--color-muted-fg)">
+        {{ logs().length }} sesión(es) — {{ selectedMemberName }}
+      </div>
+    }
+
+  </div>
+</div>

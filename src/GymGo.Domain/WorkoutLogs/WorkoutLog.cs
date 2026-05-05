@@ -197,6 +197,30 @@ public sealed class WorkoutLog : AggregateRoot, IAuditable, ITenantScoped, ISoft
     }
 
     /// <summary>
+    /// Actualiza los datos de un ejercicio existente en la sesión (solo en Draft).
+    /// </summary>
+    public void UpdateExercise(
+        Guid exerciseId,
+        string exerciseName,
+        MuscleGroup muscleGroup,
+        int sortOrder,
+        int? sets,
+        int? reps,
+        decimal? weightKg,
+        int? durationSeconds,
+        decimal? distanceMeters,
+        string? notes)
+    {
+        EnsureNotCompleted("editar ejercicios de");
+
+        var exercise = _exercises.FirstOrDefault(e => e.Id == exerciseId)
+            ?? throw new NotFoundException("WorkoutLogExercise", exerciseId);
+
+        exercise.Update(exerciseName, muscleGroup, sortOrder, sets, reps,
+            weightKg, durationSeconds, distanceMeters, notes);
+    }
+
+    /// <summary>
     /// Elimina un ejercicio de la sesión (solo en Draft).
     /// </summary>
     public void RemoveExercise(Guid exerciseId)

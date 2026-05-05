@@ -38,25 +38,88 @@
 
   <!-- ── Nav items (desktop) ───────────────────────────────── -->
   <nav
-    class="hidden lg:flex items-center gap-0.5 flex-1 overflow-x-auto"
+    class="hidden lg:flex items-center gap-0.5 flex-1"
     aria-label="Navegación principal"
-    style="scrollbar-width: none"
   >
-    @for (item of visibleNavItems(); track item.route) {
-      <a
-        [routerLink]="item.route"
-        routerLinkActive="topnav-item-active"
-        [routerLinkActiveOptions]="{ exact: false }"
-        class="topnav-item flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
-               whitespace-nowrap border border-transparent"
-        style="color: var(--color-sidebar-fg); transition-duration: var(--duration-fast)"
-        [title]="item.label"
-      >
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="item.icon" />
-        </svg>
-        <span class="hidden xl:inline">{{ item.label }}</span>
-      </a>
+    @for (entry of navEntries; track entry.label) {
+
+      @if (entry.type === 'link') {
+        <!-- Ítem directo (Dashboard, Ingreso) -->
+        <a
+          [routerLink]="entry.route"
+          routerLinkActive="topnav-item-active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          class="topnav-item flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+                 whitespace-nowrap border border-transparent"
+          style="color: var(--color-sidebar-fg); transition-duration: var(--duration-fast)"
+          [title]="entry.label"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="entry.icon" />
+          </svg>
+          <span>{{ entry.label }}</span>
+        </a>
+      }
+
+      @if (entry.type === 'group') {
+        <!-- Grupo con dropdown -->
+        <div class="relative" style="position: relative">
+
+          <!-- Botón del grupo -->
+          <button
+            type="button"
+            class="topnav-group-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+                   whitespace-nowrap border border-transparent"
+            [class.topnav-item-active]="isGroupActive(entry)"
+            style="color: var(--color-sidebar-fg); transition-duration: var(--duration-fast)"
+            [attr.aria-expanded]="openGroup() === entry.label"
+            [attr.aria-haspopup]="'true'"
+            (click)="toggleGroup(entry.label)"
+          >
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="entry.icon" />
+            </svg>
+            <span>{{ entry.label }}</span>
+            <!-- Chevron -->
+            <svg
+              class="w-3 h-3 shrink-0 ml-0.5"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              aria-hidden="true"
+              [style.transform]="openGroup() === entry.label ? 'rotate(180deg)' : 'rotate(0deg)'"
+              [style.transition]="'transform var(--duration-fast)'"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- Panel dropdown -->
+          @if (openGroup() === entry.label) {
+            <div
+              class="topnav-dropdown"
+              role="menu"
+              [attr.aria-label]="entry.label"
+            >
+              @for (item of entry.items; track item.route) {
+                <a
+                  [routerLink]="item.route"
+                  routerLinkActive="topnav-dropdown-item-active"
+                  [routerLinkActiveOptions]="{ exact: false }"
+                  class="topnav-dropdown-item flex items-center gap-2.5 px-3 py-2 text-sm"
+                  role="menuitem"
+                  (click)="openGroup.set(null)"
+                >
+                  <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="item.icon" />
+                  </svg>
+                  <span>{{ item.label }}</span>
+                </a>
+              }
+            </div>
+          }
+
+        </div>
+      }
+
     }
   </nav>
 
@@ -127,12 +190,10 @@
       aria-controls="mobile-nav"
     >
       @if (mobileMenuOpen()) {
-        <!-- Icono X -->
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       } @else {
-        <!-- Icono hamburgesa -->
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
@@ -168,33 +229,68 @@
     "
     aria-label="Menú de navegación móvil"
   >
-    <!-- Items -->
     <div class="px-3 py-3 space-y-0.5">
-      @for (item of visibleNavItems(); track item.route) {
-        <a
-          [routerLink]="item.route"
-          routerLinkActive="sidebar-nav-active"
-          [routerLinkActiveOptions]="{ exact: false }"
-          (click)="closeMobileMenu()"
-          class="sidebar-nav-item flex items-center gap-3 px-3 rounded-lg text-sm font-medium
-                 border border-transparent"
-          style="
-            min-height: var(--touch-target, 44px);
-            color: var(--color-sidebar-fg);
-          "
-        >
-          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="item.icon" />
-          </svg>
-          <span>{{ item.label }}</span>
-        </a>
+
+      @for (entry of navEntries; track entry.label) {
+
+        @if (entry.type === 'link') {
+          <!-- Ítem directo -->
+          <a
+            [routerLink]="entry.route"
+            routerLinkActive="sidebar-nav-active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            (click)="closeMobileMenu()"
+            class="sidebar-nav-item flex items-center gap-3 px-3 rounded-lg text-sm font-medium
+                   border border-transparent"
+            style="min-height: var(--touch-target, 44px); color: var(--color-sidebar-fg)"
+          >
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="entry.icon" />
+            </svg>
+            <span>{{ entry.label }}</span>
+          </a>
+        }
+
+        @if (entry.type === 'group') {
+          <!-- Encabezado de grupo (no clickeable, siempre expandido en mobile) -->
+          <div
+            class="flex items-center gap-2 px-3 pt-3 pb-1"
+            style="color: var(--color-sidebar-fg)"
+          >
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="entry.icon" />
+            </svg>
+            <span class="text-xs font-semibold uppercase tracking-wider" style="color: var(--color-sidebar-fg)">
+              {{ entry.label }}
+            </span>
+          </div>
+
+          <!-- Subitems del grupo -->
+          @for (item of entry.items; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="sidebar-nav-active"
+              [routerLinkActiveOptions]="{ exact: false }"
+              (click)="closeMobileMenu()"
+              class="sidebar-nav-item flex items-center gap-3 pl-8 pr-3 rounded-lg text-sm font-medium
+                     border border-transparent"
+              style="min-height: var(--touch-target, 44px); color: var(--color-sidebar-fg)"
+            >
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="item.icon" />
+              </svg>
+              <span>{{ item.label }}</span>
+            </a>
+          }
+        }
+
       }
+
     </div>
 
     <!-- Usuario + cerrar sesión -->
     @if (session(); as s) {
       <div class="px-3 py-3" style="border-top: 1px solid var(--color-sidebar-border)">
-        <!-- Info usuario -->
         <div class="flex items-center gap-3 px-3 py-2 mb-1 rounded-lg">
           <div
             class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm shrink-0"
@@ -209,16 +305,12 @@
           </div>
         </div>
 
-        <!-- Botón cerrar sesión -->
         <button
           type="button"
           (click)="logout()"
           class="w-full flex items-center gap-3 px-3 rounded-lg text-sm font-medium
                  border border-transparent sidebar-logout-btn"
-          style="
-            min-height: var(--touch-target, 44px);
-            color: var(--color-sidebar-fg);
-          "
+          style="min-height: var(--touch-target, 44px); color: var(--color-sidebar-fg)"
           aria-label="Cerrar sesión"
         >
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

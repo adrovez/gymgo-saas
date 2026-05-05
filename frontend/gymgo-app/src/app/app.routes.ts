@@ -178,6 +178,28 @@ export const routes: Routes = [
             (m) => m.ClassEditComponent,
           ),
       },
+      // ── Rutinas de entrenamiento ───────────────────────────────────────
+      {
+        path: 'workout-logs',
+        loadComponent: () =>
+          import('./features/workout-logs/workout-logs-list/workout-logs-list').then(
+            (m) => m.WorkoutLogsListComponent,
+          ),
+      },
+      {
+        path: 'workout-logs/new',
+        loadComponent: () =>
+          import('./features/workout-logs/workout-log-create/workout-log-create').then(
+            (m) => m.WorkoutLogCreateComponent,
+          ),
+      },
+      {
+        path: 'workout-logs/:id',
+        loadComponent: () =>
+          import('./features/workout-logs/workout-log-detail/workout-log-detail').then(
+            (m) => m.WorkoutLogDetailComponent,
+          ),
+      },
       {
         path: '',
         redirectTo: 'dashboard',

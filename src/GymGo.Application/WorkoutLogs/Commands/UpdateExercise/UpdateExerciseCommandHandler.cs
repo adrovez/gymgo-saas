@@ -21,12 +21,9 @@ public sealed class UpdateExerciseCommandHandler : IRequestHandler<UpdateExercis
             .FirstOrDefaultAsync(w => w.Id == request.WorkoutLogId, cancellationToken)
             ?? throw new NotFoundException("WorkoutLog", request.WorkoutLogId);
 
-        var exercise = log.Exercises.FirstOrDefault(e => e.Id == request.ExerciseId)
-            ?? throw new NotFoundException("WorkoutLogExercise", request.ExerciseId);
-
-        // La validación de que el log no esté Completed la hace el método Update de la entidad
-        // a través de EnsureNotCompleted en WorkoutLog — aquí llamamos directamente al ejercicio.
-        exercise.Update(
+        // Delegamos al aggregate para que aplique EnsureNotCompleted antes de modificar
+        log.UpdateExercise(
+            exerciseId:      request.ExerciseId,
             exerciseName:    request.ExerciseName,
             muscleGroup:     request.MuscleGroup,
             sortOrder:       request.SortOrder,

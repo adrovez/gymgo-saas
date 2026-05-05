@@ -1,0 +1,383 @@
+<div class="p-6 space-y-6">
+
+  <!-- Loading inicial -->
+  @if (loading()) {
+    <div class="p-12 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+      <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+      <span class="text-sm">Cargando sesión...</span>
+    </div>
+  }
+
+  <!-- Error carga -->
+  @if (error() && !log()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  @if (log(); as log) {
+
+    <!-- ── Cabecera ──────────────────────────────────────────────────────── -->
+    <div class="page-header">
+      <div class="flex items-start gap-4">
+        <a routerLink="/app/workout-logs" class="btn btn-ghost btn-sm mt-0.5" aria-label="Volver">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <h1 class="page-title">
+              @if (log.title) { {{ log.title }} } @else { Sesión del {{ formatDate(log.date) }} }
+            </h1>
+            @if (log.status === WorkoutLogStatus.Completed) {
+              <span class="badge badge-active">Completada</span>
+            } @else {
+              <span class="badge badge-pending">En curso</span>
+            }
+          </div>
+          <p class="page-description">{{ formatDate(log.date) }} · {{ log.exercises.length }} ejercicio(s)</p>
+        </div>
+      </div>
+
+      <!-- Acciones del log -->
+      @if (isDraft) {
+        <div class="flex gap-2">
+          <button type="button" class="btn btn-outline btn-sm"
+                  [disabled]="saving()"
+                  (click)="onComplete()"
+                  title="Marcar sesión como completada">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Completar
+          </button>
+          <button type="button" class="btn btn-danger btn-sm"
+                  [disabled]="saving()"
+                  (click)="onDelete()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Eliminar
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- ── Info del log ──────────────────────────────────────────────────── -->
+    @if (log.notes) {
+      <div class="card p-4">
+        <p class="text-sm" style="color: var(--color-muted-fg); white-space: pre-wrap">{{ log.notes }}</p>
+      </div>
+    }
+
+    <!-- ── Error de ejercicio ────────────────────────────────────────────── -->
+    @if (exerciseError()) {
+      <div class="alert alert-error" role="alert">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ exerciseError() }}</span>
+      </div>
+    }
+
+    <!-- ── Ejercicios ─────────────────────────────────────────────────────── -->
+    <div class="space-y-3">
+
+      <!-- Título sección + botón agregar -->
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold" style="color: var(--color-foreground)">
+          Ejercicios
+          <span class="font-normal ml-1" style="color: var(--color-muted-fg)">({{ log.exercises.length }})</span>
+        </h2>
+        @if (isDraft) {
+          <button type="button" class="btn btn-primary btn-sm" (click)="toggleAddForm()">
+            @if (showAddForm()) {
+              Cancelar
+            } @else {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Agregar ejercicio
+            }
+          </button>
+        }
+      </div>
+
+      <!-- ── Formulario agregar ejercicio ───────────────────────────────── -->
+      @if (showAddForm()) {
+        <div class="card p-5 space-y-4" style="border: 2px dashed var(--color-primary)">
+          <h3 class="text-sm font-semibold" style="color: var(--color-foreground)">Nuevo ejercicio</h3>
+          <form [formGroup]="addForm" (ngSubmit)="onAddExercise()" novalidate>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+              <!-- Nombre ejercicio -->
+              <div class="sm:col-span-2">
+                <label class="form-label" for="add-name">Nombre del ejercicio <span class="text-red-500">*</span></label>
+                <input id="add-name" type="text" formControlName="exerciseName"
+                       placeholder="Ej: Press de banca plano, Sentadilla, Plancha…"
+                       class="input w-full" [class.input-error]="isAddInvalid('exerciseName')" maxlength="200"/>
+                @if (isAddInvalid('exerciseName')) {
+                  <p class="form-error">El nombre es obligatorio.</p>
+                }
+              </div>
+
+              <!-- Grupo muscular -->
+              <div>
+                <label class="form-label" for="add-muscle">Grupo muscular</label>
+                <select id="add-muscle" formControlName="muscleGroup" class="input w-full">
+                  @for (opt of muscleGroupOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Series -->
+              <div>
+                <label class="form-label" for="add-sets">Series</label>
+                <input id="add-sets" type="number" formControlName="sets" min="1"
+                       placeholder="Ej: 4" class="input w-full"/>
+              </div>
+
+              <!-- Repeticiones -->
+              <div>
+                <label class="form-label" for="add-reps">Repeticiones</label>
+                <input id="add-reps" type="number" formControlName="reps" min="1"
+                       placeholder="Ej: 10" class="input w-full"/>
+              </div>
+
+              <!-- Peso (kg) -->
+              <div>
+                <label class="form-label" for="add-weight">Peso (kg)</label>
+                <input id="add-weight" type="number" formControlName="weightKg" min="0" step="0.5"
+                       placeholder="Ej: 80" class="input w-full"/>
+              </div>
+
+              <!-- Duración (seg) -->
+              <div>
+                <label class="form-label" for="add-dur">Duración (segundos)</label>
+                <input id="add-dur" type="number" formControlName="durationSeconds" min="1"
+                       placeholder="Ej: 60" class="input w-full"/>
+              </div>
+
+              <!-- Distancia (m) -->
+              <div>
+                <label class="form-label" for="add-dist">Distancia (metros)</label>
+                <input id="add-dist" type="number" formControlName="distanceMeters" min="0" step="1"
+                       placeholder="Ej: 1000" class="input w-full"/>
+              </div>
+
+              <!-- Notas -->
+              <div class="sm:col-span-2">
+                <label class="form-label" for="add-notes">Notas</label>
+                <input id="add-notes" type="text" formControlName="notes"
+                       placeholder="Ej: con pausa en el fondo, ROM completo…"
+                       class="input w-full" maxlength="500"/>
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-2 mt-4">
+              <button type="button" class="btn btn-ghost btn-sm" (click)="toggleAddForm()">Cancelar</button>
+              <button type="submit" class="btn btn-primary btn-sm" [disabled]="savingExercise()">
+                @if (savingExercise()) {
+                  <span class="spinner spinner-sm" style="border-top-color:white;border-color:rgba(255,255,255,0.3)"></span>
+                  Guardando…
+                } @else {
+                  Agregar
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- ── Sin ejercicios ─────────────────────────────────────────────── -->
+      @if (log.exercises.length === 0 && !showAddForm()) {
+        <div class="card p-10 flex flex-col items-center gap-3 text-center">
+          <svg class="w-9 h-9" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+          </svg>
+          <p class="text-sm font-medium" style="color: var(--color-foreground)">Sin ejercicios aún</p>
+          @if (isDraft) {
+            <p class="text-sm" style="color: var(--color-muted-fg)">Agrega los ejercicios realizados en esta sesión.</p>
+            <button type="button" class="btn btn-primary btn-sm mt-1" (click)="toggleAddForm()">Agregar primer ejercicio</button>
+          } @else {
+            <p class="text-sm" style="color: var(--color-muted-fg)">Esta sesión fue completada sin ejercicios registrados.</p>
+          }
+        </div>
+      }
+
+      <!-- ── Cards de ejercicios ────────────────────────────────────────── -->
+      @for (exercise of log.exercises; track exercise.id; let i = $index) {
+
+        <!-- Modo edición -->
+        @if (editingId() === exercise.id) {
+          <div class="card p-5 space-y-4" style="border: 2px solid var(--color-primary)">
+            <h3 class="text-sm font-semibold" style="color: var(--color-foreground)">Editando: {{ exercise.exerciseName }}</h3>
+            <form [formGroup]="editForm" (ngSubmit)="onUpdateExercise(exercise.id)" novalidate>
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                <div class="sm:col-span-2">
+                  <label class="form-label">Nombre del ejercicio <span class="text-red-500">*</span></label>
+                  <input type="text" formControlName="exerciseName"
+                         class="input w-full" [class.input-error]="isEditInvalid('exerciseName')" maxlength="200"/>
+                  @if (isEditInvalid('exerciseName')) { <p class="form-error">El nombre es obligatorio.</p> }
+                </div>
+
+                <div>
+                  <label class="form-label">Grupo muscular</label>
+                  <select formControlName="muscleGroup" class="input w-full">
+                    @for (opt of muscleGroupOptions; track opt.value) {
+                      <option [value]="opt.value">{{ opt.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div>
+                  <label class="form-label">Orden</label>
+                  <input type="number" formControlName="sortOrder" min="0" class="input w-full"/>
+                </div>
+
+                <div>
+                  <label class="form-label">Series</label>
+                  <input type="number" formControlName="sets" min="1" class="input w-full"/>
+                </div>
+
+                <div>
+                  <label class="form-label">Repeticiones</label>
+                  <input type="number" formControlName="reps" min="1" class="input w-full"/>
+                </div>
+
+                <div>
+                  <label class="form-label">Peso (kg)</label>
+                  <input type="number" formControlName="weightKg" min="0" step="0.5" class="input w-full"/>
+                </div>
+
+                <div>
+                  <label class="form-label">Duración (seg)</label>
+                  <input type="number" formControlName="durationSeconds" min="1" class="input w-full"/>
+                </div>
+
+                <div>
+                  <label class="form-label">Distancia (m)</label>
+                  <input type="number" formControlName="distanceMeters" min="0" step="1" class="input w-full"/>
+                </div>
+
+                <div class="sm:col-span-2">
+                  <label class="form-label">Notas</label>
+                  <input type="text" formControlName="notes" class="input w-full" maxlength="500"/>
+                </div>
+
+              </div>
+
+              <div class="flex justify-end gap-2 mt-4">
+                <button type="button" class="btn btn-ghost btn-sm" (click)="cancelEdit()">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm" [disabled]="savingExercise()">
+                  @if (savingExercise()) { Guardando… } @else { Guardar cambios }
+                </button>
+              </div>
+            </form>
+          </div>
+
+        } @else {
+          <!-- Modo lectura — exercise card -->
+          <div class="card p-4" style="transition: box-shadow .15s">
+            <div class="flex items-start gap-3">
+
+              <!-- Número de orden -->
+              <span class="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                    style="background: var(--color-muted); color: var(--color-muted-fg)">
+                {{ i + 1 }}
+              </span>
+
+              <!-- Contenido -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="font-semibold text-sm" style="color: var(--color-foreground)">{{ exercise.exerciseName }}</p>
+                  <span [class]="muscleGroupBadgeClass(exercise.muscleGroup)">{{ exercise.muscleGroupName }}</span>
+                </div>
+
+                <!-- Métricas chip-row -->
+                <div class="mt-2 flex flex-wrap gap-2">
+                  @if (exercise.sets) {
+                    <span class="metric-chip">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+                      </svg>
+                      @if (exercise.reps) { {{ exercise.sets }} × {{ exercise.reps }} rep } @else { {{ exercise.sets }} series }
+                    </span>
+                  }
+                  @if (exercise.weightKg != null) {
+                    <span class="metric-chip">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h4l3-6 4 12 3-6h4"/>
+                      </svg>
+                      {{ exercise.weightKg | number:'1.0-2' }} kg
+                    </span>
+                  }
+                  @if (exercise.durationSeconds != null) {
+                    <span class="metric-chip">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      {{ exercise.durationSeconds }}s
+                    </span>
+                  }
+                  @if (exercise.distanceMeters != null) {
+                    <span class="metric-chip">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      </svg>
+                      {{ exercise.distanceMeters | number:'1.0-0' }} m
+                    </span>
+                  }
+                  @if (!exercise.sets && exercise.weightKg == null && exercise.durationSeconds == null && exercise.distanceMeters == null) {
+                    <span class="text-xs" style="color: var(--color-muted-fg)">Sin métricas registradas</span>
+                  }
+                </div>
+
+                @if (exercise.notes) {
+                  <p class="mt-2 text-xs" style="color: var(--color-muted-fg)">📝 {{ exercise.notes }}</p>
+                }
+              </div>
+
+              <!-- Acciones (solo en Draft) -->
+              @if (isDraft) {
+                <div class="flex gap-1 shrink-0">
+                  <button type="button" class="btn btn-ghost btn-sm"
+                          (click)="startEdit(exercise)"
+                          title="Editar ejercicio" aria-label="Editar">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button type="button" class="btn btn-ghost btn-sm"
+                          style="color: var(--color-danger)"
+                          (click)="onRemoveExercise(exercise)"
+                          title="Eliminar ejercicio" aria-label="Eliminar">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              }
+
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- ── Footer info ────────────────────────────────────────────────────── -->
+    <div class="text-xs pt-2" style="color: var(--color-muted-fg)">
+      Creada el {{ log.createdAtUtc | slice:0:10 | replace:'T':' ' }}
+      @if (log.modifiedAtUtc) { · Modificada {{ log.modifiedAtUtc | slice:0:10 }} }
+    </div>
+
+  }
+
+</div>
