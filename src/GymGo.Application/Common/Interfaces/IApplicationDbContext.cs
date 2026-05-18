@@ -32,6 +32,9 @@ public interface IApplicationDbContext
     DbSet<ClassReservation> ClassReservations { get; }
     DbSet<GymGo.Domain.Equipments.Equipment> Equipment { get; }
     DbSet<MaintenanceRecord> MaintenanceRecords { get; }
+    DbSet<WorkoutPlan> WorkoutPlans { get; }
+    DbSet<WorkoutPlanDay> WorkoutPlanDays { get; }
+    DbSet<WorkoutPlanExercise> WorkoutPlanExercises { get; }
     DbSet<WorkoutLog> WorkoutLogs { get; }
     DbSet<WorkoutLogExercise> WorkoutLogExercises { get; }
 

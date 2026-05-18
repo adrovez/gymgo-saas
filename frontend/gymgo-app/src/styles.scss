@@ -541,6 +541,138 @@
     border-color: var(--color-sidebar-item-active-border) !important;
   }
 
+  /* ── Spinner small ─────────────────────────────────────────── */
+  .spinner-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  /* ── Badge variants ─────────────────────────────────────────── */
+  .badge-pending {
+    background: var(--color-warning-subtle);
+    color: var(--color-warning-fg);
+    border-color: var(--color-warning-border);
+  }
+
+  .badge-chest     { background: #fce7f3; color: #be185d; border-color: #fbcfe8; }
+  .badge-back      { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+  .badge-shoulders { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+  .badge-arms      { background: #ede9fe; color: #6d28d9; border-color: #ddd6fe; }
+  .badge-legs      { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+  .badge-core      { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+  .badge-cardio    { background: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+  .badge-fullbody  { background: #e0f2fe; color: #0c4a6e; border-color: #bae6fd; }
+
+  /* ── Metric chip ────────────────────────────────────────────── */
+  .metric-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    background: var(--color-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    font-size: 0.72rem;
+    color: var(--color-muted-fg);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ── Form helpers ───────────────────────────────────────────── */
+  .form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-foreground);
+    margin-bottom: 0.375rem;
+  }
+
+  .form-error {
+    font-size: 0.75rem;
+    color: var(--color-error);
+    margin-top: 0.25rem;
+  }
+
+  /* ── Button extra variants ──────────────────────────────────── */
+  .btn-danger {
+    background: var(--color-error);
+    color: white;
+    border-color: var(--color-error);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: var(--color-red-700);
+    border-color: var(--color-red-700);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--color-foreground);
+    border-color: var(--color-border-strong);
+  }
+  .btn-outline:hover:not(:disabled) {
+    background: var(--color-subtle);
+  }
+
+  /* ── Workout-log: exercise type tabs ────────────────────────── */
+  .wl-type-tabs {
+    display: flex;
+    background: var(--color-subtle);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .wl-type-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.375rem;
+    border: none;
+    background: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-muted-fg);
+    cursor: pointer;
+    transition: all var(--duration-fast);
+    white-space: nowrap;
+  }
+
+  .wl-type-tab.active {
+    background: white;
+    color: var(--color-primary);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .wl-type-tab svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+  /* ── Workout-log: exercise card open state ──────────────────── */
+  .wl-ex-open {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), var(--card-shadow) !important;
+  }
+
+  /* ── Workout-log: icon action button ────────────────────────── */
+  .wl-icon-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-muted-fg);
+    transition: background var(--duration-fast), color var(--duration-fast);
+    flex-shrink: 0;
+  }
+  .wl-icon-btn:hover              { background: var(--color-subtle); color: var(--color-foreground); }
+  .wl-icon-btn.danger:hover       { background: var(--color-error-subtle); color: var(--color-error); }
+  .wl-icon-btn svg                { width: 14px; height: 14px; }
+
   .sidebar-logout-btn {
     transition: background-color var(--duration-fast), color var(--duration-fast);
   }

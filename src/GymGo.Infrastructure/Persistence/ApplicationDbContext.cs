@@ -37,6 +37,9 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<ClassReservation> ClassReservations => Set<ClassReservation>();
     public DbSet<Equipment> Equipment => Set<Equipment>();
     public DbSet<MaintenanceRecord> MaintenanceRecords => Set<MaintenanceRecord>();
+    public DbSet<WorkoutPlan> WorkoutPlans => Set<WorkoutPlan>();
+    public DbSet<WorkoutPlanDay> WorkoutPlanDays => Set<WorkoutPlanDay>();
+    public DbSet<WorkoutPlanExercise> WorkoutPlanExercises => Set<WorkoutPlanExercise>();
     public DbSet<WorkoutLog> WorkoutLogs => Set<WorkoutLog>();
     public DbSet<WorkoutLogExercise> WorkoutLogExercises => Set<WorkoutLogExercise>();
 
@@ -114,12 +117,17 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<MaintenanceRecord>().HasQueryFilter(m =>
             !CurrentHasTenant || m.TenantId == CurrentTenantIdOrEmpty);
 
+        // WorkoutPlans: ITenantScoped + ISoftDeletable.
+        modelBuilder.Entity<WorkoutPlan>().HasQueryFilter(p =>
+            (!CurrentHasTenant || p.TenantId == CurrentTenantIdOrEmpty)
+            && !p.IsDeleted);
+
         // WorkoutLogs: ITenantScoped + ISoftDeletable.
         modelBuilder.Entity<WorkoutLog>().HasQueryFilter(w =>
             (!CurrentHasTenant || w.TenantId == CurrentTenantIdOrEmpty)
             && !w.IsDeleted);
 
-        // WorkoutLogExercises: sin QueryFilter propio — el aislamiento es transitivo
-        // a través del WorkoutLog (cascade). EF carga ejercicios solo a través del log.
+        // WorkoutPlanDays/Exercises y WorkoutLogExercises: sin QueryFilter propio —
+        // el aislamiento es transitivo a través del WorkoutPlan/WorkoutLog (cascade).
     }
 }

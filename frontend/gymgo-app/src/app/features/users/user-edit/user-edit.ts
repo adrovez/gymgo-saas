@@ -76,7 +76,7 @@ export class UserEditComponent implements OnInit {
 
     const { fullName, role, isActive } = this.form.getRawValue();
 
-    this.usersService.updateUser(this.userId, { fullName, role, isActive }).subscribe({
+    this.usersService.updateUser(this.userId, { fullName, role: Number(role) as UserRole, isActive }).subscribe({
       next: () => {
         this.loading.set(false);
         this.dialog.toast('Usuario actualizado correctamente.', 'success');

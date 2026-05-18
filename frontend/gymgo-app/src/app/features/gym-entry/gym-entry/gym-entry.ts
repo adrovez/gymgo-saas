@@ -52,8 +52,6 @@ export class GymEntryComponent implements OnInit {
   readonly selectedMethod = signal<GymEntryMethod>(GymEntryMethod.Manual);
   readonly notes          = signal('');
   readonly registering    = signal(false);
-  readonly lastError      = signal<string | null>(null);
-  readonly lastSuccess    = signal<string | null>(null);
 
   // ── Log del día ────────────────────────────────────────────────────────
   readonly todayEntries   = signal<GymEntryDto[]>([]);
@@ -78,7 +76,7 @@ export class GymEntryComponent implements OnInit {
   readonly alreadyEnteredToday = computed(() => {
     const member = this.selectedMember();
     if (!member) return false;
-    return this.todayEntries().some(e => e.memberId === member.id);
+    return this.todayEntries().some(e => e.memberId.toLowerCase() === member.id.toLowerCase());
   });
 
   readonly canRegister = computed(() =>
@@ -90,7 +88,6 @@ export class GymEntryComponent implements OnInit {
   );
 
   private readonly searchSubject = new Subject<string>();
-  private clearTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.searchSubject
@@ -142,9 +139,14 @@ export class GymEntryComponent implements OnInit {
     this.selectedMember.set(member);
     this.showDropdown.set(false);
     this.searchQuery.set(member.fullName);
-    this.lastError.set(null);
-    this.lastSuccess.set(null);
-    this.cancelClearTimer();
+
+    const alreadyIn = this.todayEntries().some(
+      e => e.memberId.toLowerCase() === member.id.toLowerCase()
+    );
+    if (alreadyIn) {
+      this.dialog.toast('Este socio ya registró su ingreso hoy', 'warning');
+    }
+
     this.loadActiveAssignment(member.id);
   }
 
@@ -153,22 +155,12 @@ export class GymEntryComponent implements OnInit {
   }
 
   clearSelection(): void {
-    this.cancelClearTimer();
     this.selectedMember.set(null);
     this.activeAssignment.set(null);
     this.searchQuery.set('');
     this.searchResults.set([]);
-    this.lastError.set(null);
-    this.lastSuccess.set(null);
     this.notes.set('');
     this.selectedMethod.set(GymEntryMethod.Manual);
-  }
-
-  private cancelClearTimer(): void {
-    if (this.clearTimer !== null) {
-      clearTimeout(this.clearTimer);
-      this.clearTimer = null;
-    }
   }
 
   // ── Membresía activa ──────────────────────────────────────────────────
@@ -189,8 +181,6 @@ export class GymEntryComponent implements OnInit {
     if (!member) return;
 
     this.registering.set(true);
-    this.lastError.set(null);
-    this.lastSuccess.set(null);
 
     this.entryService
       .registerEntry({
@@ -201,8 +191,6 @@ export class GymEntryComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.registering.set(false);
-          this.lastSuccess.set(`¡Bienvenido/a, ${member.fullName}!`);
-          this.dialog.toast(`✓ Ingreso registrado — ${member.fullName}`, 'success');
 
           const nowIso = new Date().toISOString();
           const newEntry: GymEntryDto = {
@@ -221,14 +209,16 @@ export class GymEntryComponent implements OnInit {
           };
           this.todayEntries.update((list) => [newEntry, ...list]);
 
-          // ── Mejora 3: auto-limpiar el formulario después de 2.5s ─────────
-          this.clearTimer = setTimeout(() => this.clearSelection(), 2500);
+          // Limpiar formulario antes de mostrar el diálogo para evitar
+          // que alreadyEnteredToday quede visible junto al mensaje de éxito.
+          this.clearSelection();
+          this.dialog.success('¡Ingreso registrado!', `¡Bienvenido/a, ${member.fullName}!`);
         },
         error: (err) => {
           this.registering.set(false);
           const detail: string =
             err?.error?.detail ?? 'No se pudo registrar el ingreso. Intenta nuevamente.';
-          this.lastError.set(detail);
+          this.dialog.error('Error al registrar ingreso', detail);
         },
       });
   }

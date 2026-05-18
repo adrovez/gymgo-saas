@@ -12,36 +12,30 @@ public sealed class WorkoutLogExerciseConfiguration : IEntityTypeConfiguration<W
 
         builder.HasKey(e => e.Id);
 
-        // ── Relación con la sesión ─────────────────────────────────────
-        // La FK ya está configurada en WorkoutLogConfiguration (HasMany/WithOne).
+        // FK al log — configurada también en WorkoutLogConfiguration (HasMany/WithOne)
         builder.Property(e => e.WorkoutLogId).IsRequired();
 
-        // ── Ejercicio ──────────────────────────────────────────────────
-        builder.Property(e => e.ExerciseName)
-            .IsRequired()
-            .HasMaxLength(200);
+        // FK opcional al ejercicio planificado
+        builder.Property(e => e.WorkoutPlanExerciseId);
+
+        builder.HasOne<WorkoutPlanExercise>()
+            .WithMany()
+            .HasForeignKey(e => e.WorkoutPlanExerciseId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(e => e.ExerciseName).IsRequired().HasMaxLength(200);
 
         builder.Property(e => e.MuscleGroup)
             .IsRequired()
-            .HasConversion<int>()
-            .HasDefaultValue(MuscleGroup.NotSpecified);
+            .HasConversion<int>();
 
-        builder.Property(e => e.SortOrder)
-            .IsRequired()
-            .HasDefaultValue(0);
+        builder.Property(e => e.SortOrder).IsRequired();
+        builder.Property(e => e.IsExtra).IsRequired().HasDefaultValue(false);
 
-        // ── Métricas ───────────────────────────────────────────────────
-        builder.Property(e => e.WeightKg)
-            .HasColumnType("decimal(6,2)");
+        builder.Property(e => e.ActualWeightKg).HasColumnType("decimal(6,2)");
+        builder.Property(e => e.Notes).HasMaxLength(500);
 
-        builder.Property(e => e.DistanceMeters)
-            .HasColumnType("decimal(8,2)");
-
-        // ── Notas ──────────────────────────────────────────────────────
-        builder.Property(e => e.Notes)
-            .HasMaxLength(500);
-
-        // ── Índice para cargar ejercicios ordenados por sesión ─────────
         builder.HasIndex(e => new { e.WorkoutLogId, e.SortOrder })
             .HasDatabaseName("IX_WorkoutLogExercises_WorkoutLogId");
     }

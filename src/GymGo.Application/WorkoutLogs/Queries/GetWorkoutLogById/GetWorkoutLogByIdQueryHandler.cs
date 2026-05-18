@@ -1,5 +1,6 @@
 using GymGo.Application.Common.Interfaces;
 using GymGo.Application.WorkoutLogs.DTOs;
+using GymGo.Application.WorkoutPlans.DTOs;
 using GymGo.Domain.Exceptions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,7 @@ public sealed class GetWorkoutLogByIdQueryHandler : IRequestHandler<GetWorkoutLo
 {
     private readonly IApplicationDbContext _context;
 
-    public GetWorkoutLogByIdQueryHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
+    public GetWorkoutLogByIdQueryHandler(IApplicationDbContext context) => _context = context;
 
     public async Task<WorkoutLogDto> Handle(
         GetWorkoutLogByIdQuery request,
@@ -24,6 +22,11 @@ public sealed class GetWorkoutLogByIdQueryHandler : IRequestHandler<GetWorkoutLo
             .FirstOrDefaultAsync(w => w.Id == request.Id, cancellationToken)
             ?? throw new NotFoundException("WorkoutLog", request.Id);
 
-        return log.ToDto();
+        var day = await _context.WorkoutPlanDays
+            .FirstOrDefaultAsync(d => d.Id == log.WorkoutPlanDayId, cancellationToken);
+
+        var dayName = day is not null ? day.DayOfWeek.ToSpanish() : string.Empty;
+
+        return log.ToDto(dayName);
     }
 }

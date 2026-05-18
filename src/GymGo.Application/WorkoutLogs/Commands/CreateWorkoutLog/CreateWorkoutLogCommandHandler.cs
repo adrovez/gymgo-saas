@@ -22,36 +22,32 @@ public sealed class CreateWorkoutLogCommandHandler : IRequestHandler<CreateWorko
         var tenantId = _currentTenant.TenantId
             ?? throw new UnauthorizedAccessException("No se pudo determinar el tenant actual.");
 
-        // ── 1. Verificar que el socio existe y pertenece al tenant ────────────
-        var memberExists = await _context.Members
-            .AnyAsync(m => m.Id == request.MemberId, cancellationToken);
+        // Verificar que el plan existe, está activo y pertenece al socio
+        var plan = await _context.WorkoutPlans
+            .FirstOrDefaultAsync(p =>
+                p.Id       == request.WorkoutPlanId
+                && p.MemberId == request.MemberId
+                && p.Status   == WorkoutPlanStatus.Active,
+                cancellationToken)
+            ?? throw new NotFoundException("WorkoutPlan", request.WorkoutPlanId);
 
-        if (!memberExists)
-            throw new NotFoundException("Member", request.MemberId);
-
-        // ── 2. Verificar que no exista ya un log Draft para el mismo día ──────
-        var sessionDate = request.Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
-
-        var existingDraft = await _context.WorkoutLogs
-            .AnyAsync(w =>
-                w.MemberId == request.MemberId
-                && w.Date   == sessionDate
-                && w.Status == WorkoutLogStatus.Draft,
+        // Verificar que el día pertenece al plan
+        var dayExists = await _context.WorkoutPlanDays
+            .AnyAsync(d =>
+                d.Id            == request.WorkoutPlanDayId
+                && d.WorkoutPlanId == request.WorkoutPlanId,
                 cancellationToken);
 
-        if (existingDraft)
-            throw new BusinessRuleViolationException(
-                "WORKOUTLOG_DRAFT_ALREADY_EXISTS",
-                $"El socio ya tiene una sesión de entrenamiento en curso para el {sessionDate:dd/MM/yyyy}. " +
-                "Completa o elimina la sesión existente antes de crear una nueva para ese día.");
+        if (!dayExists)
+            throw new NotFoundException("WorkoutPlanDay", request.WorkoutPlanDayId);
 
-        // ── 3. Crear el log ───────────────────────────────────────────────────
         var log = WorkoutLog.Create(
-            tenantId: tenantId,
-            memberId: request.MemberId,
-            date:     request.Date,
-            title:    request.Title,
-            notes:    request.Notes);
+            tenantId:         tenantId,
+            memberId:         request.MemberId,
+            workoutPlanId:    request.WorkoutPlanId,
+            workoutPlanDayId: request.WorkoutPlanDayId,
+            date:             request.Date,
+            notes:            request.Notes);
 
         _context.WorkoutLogs.Add(log);
         await _context.SaveChangesAsync(cancellationToken);

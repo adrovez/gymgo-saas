@@ -1,9 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { MaintenanceService } from '../services/maintenance.service';
 import { EquipmentService } from '../services/equipment.service';
+import { UsersService } from '../../users/services/users.service';
 import { DialogService } from '../../../core/services/dialog.service';
+import { UserRole } from '../../../core/models/auth.models';
+import { User } from '../../users/models/user.models';
 import {
   EquipmentSummaryDto,
   MaintenanceType,
@@ -23,11 +27,13 @@ export class MaintenanceFormComponent implements OnInit {
   private readonly router             = inject(Router);
   private readonly maintenanceService = inject(MaintenanceService);
   private readonly equipmentService   = inject(EquipmentService);
+  private readonly usersService       = inject(UsersService);
   private readonly dialog             = inject(DialogService);
 
   readonly loading           = signal(false);
   readonly error             = signal<string | null>(null);
   readonly equipment         = signal<EquipmentSummaryDto[]>([]);
+  readonly staffList         = signal<User[]>([]);
   readonly typeOptions       = MAINTENANCE_TYPE_OPTIONS;
   readonly responsibleOptions = RESPONSIBLE_TYPE_OPTIONS;
   readonly ResponsibleType   = ResponsibleType;
@@ -50,6 +56,14 @@ export class MaintenanceFormComponent implements OnInit {
   ngOnInit(): void {
     this.equipmentService.getEquipment(true).subscribe({
       next: (items) => this.equipment.set(items),
+    });
+
+    forkJoin([
+      this.usersService.getUsers({ role: UserRole.GymStaff }),
+      this.usersService.getUsers({ role: UserRole.Instructor }),
+    ]).subscribe({
+      next: ([staff, instructors]) =>
+        this.staffList.set([...staff.items, ...instructors.items]),
     });
   }
 

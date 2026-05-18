@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MemberService } from '../../members/services/member.service';
 import { MemberSummaryDto } from '../../members/models/member.models';
 import { WorkoutLogService } from '../services/workout-log.service';
@@ -12,7 +12,7 @@ import {
 @Component({
   selector: 'app-workout-logs-list',
   standalone: true,
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './workout-logs-list.html',
 })
 export class WorkoutLogsListComponent implements OnInit {

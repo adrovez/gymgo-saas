@@ -1,10 +1,10 @@
-<div class="p-6 max-w-xl mx-auto space-y-6">
+<div class="p-6 max-w-lg mx-auto space-y-6">
 
   <!-- Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">Nueva sesión de entrenamiento</h1>
-      <p class="page-description">Registra una sesión para el socio y luego agrega los ejercicios realizados.</p>
+      <h1 class="page-title">Nueva sesión</h1>
+      <p class="page-description">Selecciona el socio y la fecha para comenzar.</p>
     </div>
     <a routerLink="/app/workout-logs" class="btn btn-ghost btn-sm">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -24,68 +24,63 @@
     </div>
   }
 
-  <!-- Formulario -->
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card p-6 space-y-5" novalidate>
 
     <!-- Socio -->
     <div>
-      <label class="form-label" for="memberId">Socio <span class="text-red-500">*</span></label>
+      <label class="form-label" for="memberId">
+        Socio <span style="color: var(--color-error)">*</span>
+      </label>
       <select id="memberId" formControlName="memberId" class="input w-full"
               [class.input-error]="isInvalid('memberId')">
         <option value="">
-          @if (loadingMembers()) { Cargando socios... } @else { Selecciona un socio }
+          @if (loadingMembers()) { Cargando socios… } @else { — Selecciona un socio — }
         </option>
         @for (m of members(); track m.id) {
           <option [value]="m.id">{{ m.fullName }} — {{ m.rut }}</option>
         }
       </select>
       @if (hasError('memberId', 'required')) {
-        <p class="form-error">El socio es obligatorio.</p>
+        <p class="form-error">Selecciona un socio.</p>
       }
     </div>
 
-    <!-- Fecha -->
-    <div>
-      <label class="form-label" for="date">Fecha de la sesión <span class="text-red-500">*</span></label>
-      <input id="date" type="date" formControlName="date" class="input w-full"
-             [class.input-error]="isInvalid('date')"/>
-      @if (hasError('date', 'required')) {
-        <p class="form-error">La fecha es obligatoria.</p>
-      }
-    </div>
+    <!-- Fecha + Título en grid -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div>
+        <label class="form-label" for="date">
+          Fecha <span style="color: var(--color-error)">*</span>
+        </label>
+        <input id="date" type="date" formControlName="date" class="input w-full"
+               [class.input-error]="isInvalid('date')"/>
+        @if (hasError('date', 'required')) {
+          <p class="form-error">La fecha es obligatoria.</p>
+        }
+      </div>
 
-    <!-- Título (opcional) -->
-    <div>
-      <label class="form-label" for="title">
-        Título de la rutina
-        <span class="text-xs font-normal" style="color: var(--color-muted-fg)">(opcional)</span>
-      </label>
-      <input id="title" type="text" formControlName="title"
-             placeholder="Ej: Día A – Push, Full Body Semana 3…"
-             class="input w-full" maxlength="200"/>
-      <p class="text-xs mt-1" style="color: var(--color-muted-fg)">Máx. 200 caracteres</p>
-    </div>
-
-    <!-- Notas (opcional) -->
-    <div>
-      <label class="form-label" for="notes">
-        Observaciones
-        <span class="text-xs font-normal" style="color: var(--color-muted-fg)">(opcional)</span>
-      </label>
-      <textarea id="notes" formControlName="notes" rows="3"
-                placeholder="Sensaciones, energía del día, lesiones, etc."
-                class="input w-full resize-none" maxlength="1000"></textarea>
+      <div>
+        <label class="form-label" for="title">
+          Título
+          <span class="text-xs font-normal" style="color: var(--color-muted-fg)">(opcional)</span>
+        </label>
+        <input id="title" type="text" formControlName="title"
+               placeholder="Ej: Push A, Full Body semana 3…"
+               class="input w-full" maxlength="200"/>
+      </div>
     </div>
 
     <!-- Acciones -->
-    <div class="flex justify-end gap-3 pt-2">
+    <div class="flex justify-end gap-3 pt-2" style="border-top: 1px solid var(--color-border)">
       <a routerLink="/app/workout-logs" class="btn btn-ghost">Cancelar</a>
       <button type="submit" class="btn btn-primary" [disabled]="loading()">
         @if (loading()) {
           <span class="spinner spinner-sm" style="border-top-color: white; border-color: rgba(255,255,255,0.3)"></span>
-          Guardando…
+          Creando…
         } @else {
-          Crear sesión y agregar ejercicios
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Crear sesión
         }
       </button>
     </div>

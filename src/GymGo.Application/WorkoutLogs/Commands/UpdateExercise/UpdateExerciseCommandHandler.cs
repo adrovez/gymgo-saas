@@ -9,10 +9,7 @@ public sealed class UpdateExerciseCommandHandler : IRequestHandler<UpdateExercis
 {
     private readonly IApplicationDbContext _context;
 
-    public UpdateExerciseCommandHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
+    public UpdateExerciseCommandHandler(IApplicationDbContext context) => _context = context;
 
     public async Task Handle(UpdateExerciseCommand request, CancellationToken cancellationToken)
     {
@@ -21,18 +18,17 @@ public sealed class UpdateExerciseCommandHandler : IRequestHandler<UpdateExercis
             .FirstOrDefaultAsync(w => w.Id == request.WorkoutLogId, cancellationToken)
             ?? throw new NotFoundException("WorkoutLog", request.WorkoutLogId);
 
-        // Delegamos al aggregate para que aplique EnsureNotCompleted antes de modificar
         log.UpdateExercise(
-            exerciseId:      request.ExerciseId,
-            exerciseName:    request.ExerciseName,
-            muscleGroup:     request.MuscleGroup,
-            sortOrder:       request.SortOrder,
-            sets:            request.Sets,
-            reps:            request.Reps,
-            weightKg:        request.WeightKg,
-            durationSeconds: request.DurationSeconds,
-            distanceMeters:  request.DistanceMeters,
-            notes:           request.Notes);
+            exerciseId:            request.ExerciseId,
+            exerciseName:          request.ExerciseName,
+            muscleGroup:           request.MuscleGroup,
+            sortOrder:             request.SortOrder,
+            actualSets:            request.ActualSets,
+            actualReps:            request.ActualReps,
+            actualWeightKg:        request.ActualWeightKg,
+            actualDurationMinutes: request.ActualDurationMinutes,
+            actualDistanceMeters:  request.ActualDistanceMeters,
+            notes:                 request.Notes);
 
         await _context.SaveChangesAsync(cancellationToken);
     }

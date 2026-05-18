@@ -88,6 +88,7 @@ try
     app.MapEquipmentEndpoints();
     app.MapMaintenanceEndpoints();
     app.MapUserEndpoints();
+    app.MapWorkoutPlanEndpoints();
     app.MapWorkoutLogEndpoints();
     app.MapControllers();
 

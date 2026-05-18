@@ -40,7 +40,7 @@ export class UserCreateComponent {
 
     const { fullName, email, password, role } = this.form.getRawValue();
 
-    this.usersService.createUser({ fullName, email, password, role }).subscribe({
+    this.usersService.createUser({ fullName, email, password, role: Number(role) as UserRole }).subscribe({
       next: () => {
         this.dialog.toast('Usuario creado correctamente.', 'success');
         this.router.navigate(['/app/users']);

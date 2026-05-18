@@ -1,76 +1,62 @@
+using GymGo.Application.WorkoutPlans.DTOs;
 using GymGo.Domain.WorkoutLogs;
 
 namespace GymGo.Application.WorkoutLogs.DTOs;
 
-/// <summary>
-/// Extensiones de mapeo de entidades de dominio a DTOs de WorkoutLogs.
-/// </summary>
 public static class WorkoutLogMappings
 {
-    public static WorkoutLogExerciseDto ToDto(this WorkoutLogExercise exercise) =>
+    public static WorkoutLogExerciseDto ToDto(this WorkoutLogExercise e) =>
         new(
-            Id:              exercise.Id,
-            WorkoutLogId:    exercise.WorkoutLogId,
-            ExerciseName:    exercise.ExerciseName,
-            MuscleGroup:     exercise.MuscleGroup,
-            MuscleGroupName: exercise.MuscleGroup.ToSpanish(),
-            SortOrder:       exercise.SortOrder,
-            Sets:            exercise.Sets,
-            Reps:            exercise.Reps,
-            WeightKg:        exercise.WeightKg,
-            DurationSeconds: exercise.DurationSeconds,
-            DistanceMeters:  exercise.DistanceMeters,
-            Notes:           exercise.Notes
+            Id:                   e.Id,
+            WorkoutLogId:         e.WorkoutLogId,
+            WorkoutPlanExerciseId: e.WorkoutPlanExerciseId,
+            ExerciseName:         e.ExerciseName,
+            MuscleGroup:          e.MuscleGroup,
+            MuscleGroupName:      e.MuscleGroup.ToSpanish(),
+            SortOrder:            e.SortOrder,
+            IsExtra:              e.IsExtra,
+            ActualSets:           e.ActualSets,
+            ActualReps:           e.ActualReps,
+            ActualWeightKg:       e.ActualWeightKg,
+            ActualDurationMinutes: e.ActualDurationMinutes,
+            ActualDistanceMeters: e.ActualDistanceMeters,
+            Notes:                e.Notes
         );
 
-    public static WorkoutLogDto ToDto(this WorkoutLog log) =>
+    public static WorkoutLogDto ToDto(this WorkoutLog log, string dayOfWeekName) =>
         new(
-            Id:           log.Id,
-            MemberId:     log.MemberId,
-            Date:         log.Date,
-            Title:        log.Title,
-            Notes:        log.Notes,
-            Status:       log.Status,
-            StatusName:   log.Status.ToSpanish(),
-            Exercises:    log.Exercises.Select(e => e.ToDto()).ToList(),
-            CreatedAtUtc: log.CreatedAtUtc,
-            ModifiedAtUtc: log.ModifiedAtUtc
+            Id:               log.Id,
+            MemberId:         log.MemberId,
+            WorkoutPlanId:    log.WorkoutPlanId,
+            WorkoutPlanDayId: log.WorkoutPlanDayId,
+            DayOfWeekName:    dayOfWeekName,
+            Date:             log.Date,
+            Notes:            log.Notes,
+            Status:           log.Status,
+            StatusName:       log.Status.ToSpanish(),
+            Exercises:        log.Exercises.OrderBy(e => e.SortOrder).Select(e => e.ToDto()).ToList(),
+            CreatedAtUtc:     log.CreatedAtUtc,
+            ModifiedAtUtc:    log.ModifiedAtUtc
         );
 
-    public static WorkoutLogSummaryDto ToSummaryDto(this WorkoutLog log) =>
+    public static WorkoutLogSummaryDto ToSummaryDto(this WorkoutLog log, string dayOfWeekName) =>
         new(
-            Id:            log.Id,
-            MemberId:      log.MemberId,
-            Date:          log.Date,
-            Title:         log.Title,
-            Status:        log.Status,
-            StatusName:    log.Status.ToSpanish(),
-            ExerciseCount: log.Exercises.Count,
-            CreatedAtUtc:  log.CreatedAtUtc
+            Id:               log.Id,
+            MemberId:         log.MemberId,
+            WorkoutPlanId:    log.WorkoutPlanId,
+            WorkoutPlanDayId: log.WorkoutPlanDayId,
+            DayOfWeekName:    dayOfWeekName,
+            Date:             log.Date,
+            Status:           log.Status,
+            StatusName:       log.Status.ToSpanish(),
+            ExerciseCount:    log.Exercises.Count,
+            CreatedAtUtc:     log.CreatedAtUtc
         );
-
-    // ── Helpers de traducción ─────────────────────────────────────────────
 
     private static string ToSpanish(this WorkoutLogStatus status) => status switch
     {
-        WorkoutLogStatus.Draft      => "En curso",
-        WorkoutLogStatus.Completed  => "Completada",
-        _                           => status.ToString()
-    };
-
-    private static string ToSpanish(this MuscleGroup group) => group switch
-    {
-        MuscleGroup.NotSpecified => "Sin especificar",
-        MuscleGroup.Chest        => "Pecho",
-        MuscleGroup.Back         => "Espalda",
-        MuscleGroup.Shoulders    => "Hombros",
-        MuscleGroup.Biceps       => "Bíceps",
-        MuscleGroup.Triceps      => "Tríceps",
-        MuscleGroup.Legs         => "Piernas",
-        MuscleGroup.Core         => "Core / Abdomen",
-        MuscleGroup.Glutes       => "Glúteos",
-        MuscleGroup.Cardio       => "Cardio",
-        MuscleGroup.FullBody     => "Cuerpo completo",
-        _                        => group.ToString()
+        WorkoutLogStatus.Draft     => "En curso",
+        WorkoutLogStatus.Completed => "Completada",
+        _                          => status.ToString()
     };
 }

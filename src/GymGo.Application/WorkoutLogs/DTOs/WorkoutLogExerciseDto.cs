@@ -2,20 +2,19 @@ using GymGo.Domain.WorkoutLogs;
 
 namespace GymGo.Application.WorkoutLogs.DTOs;
 
-/// <summary>
-/// Representación de un ejercicio dentro de una sesión de entrenamiento.
-/// </summary>
 public sealed record WorkoutLogExerciseDto(
     Guid Id,
     Guid WorkoutLogId,
+    Guid? WorkoutPlanExerciseId,
     string ExerciseName,
     MuscleGroup MuscleGroup,
     string MuscleGroupName,
     int SortOrder,
-    int? Sets,
-    int? Reps,
-    decimal? WeightKg,
-    int? DurationSeconds,
-    decimal? DistanceMeters,
+    bool IsExtra,
+    int? ActualSets,
+    int? ActualReps,
+    decimal? ActualWeightKg,
+    int? ActualDurationMinutes,
+    int? ActualDistanceMeters,
     string? Notes
 );

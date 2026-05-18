@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GymGo – Propuesta UX: Módulo Rutinas v2</title>
+  <style>
+    :root {
+      --primary:        #6366f1;
+      --primary-hover:  #4f46e5;
+      --primary-subtle: #eef2ff;
+      --primary-muted:  #a5b4fc;
+      --fg:             #111827;
+      --muted-fg:       #6b7280;
+      --muted-bg:       #f9fafb;
+      --card-bg:        #ffffff;
+      --border:         #e5e7eb;
+      --success:        #16a34a;
+      --success-subtle: #dcfce7;
+      --warning:        #d97706;
+      --warning-subtle: #fef3c7;
+      --error:          #ef4444;
+      --error-subtle:   #fef2f2;
+      --shadow-sm:      0 1px 3px rgba(0,0,0,.07);
+      --shadow-md:      0 4px 12px rgba(0,0,0,.10);
+      --r:              8px;
+      --r-sm:           5px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      color: var(--fg);
+      padding: 1.5rem 1rem 4rem;
+    }
+
+    /* ── Layouts ── */
+    .doc-title {
+      max-width: 960px;
+      margin: 0 auto 2rem;
+      text-align: center;
+    }
+    .doc-title h1 { font-size: 1.375rem; font-weight: 800; color: var(--primary); margin-bottom: .35rem; }
+    .doc-title p  { font-size: .85rem; color: var(--muted-fg); }
+
+    .screens-grid {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .screen-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+    .screen-label {
+      font-size: .68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .screen-label span {
+      background: var(--primary-subtle);
+      border-radius: 20px;
+      padding: .2rem .6rem;
+    }
+    .screen-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--primary-muted);
+      opacity: .4;
+    }
+
+    /* Phone frame */
+    .phone {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Shared components ── */
+    .topbar {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: .7rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+    }
+    .topbar-back {
+      width: 28px; height: 28px;
+      border-radius: var(--r-sm);
+      background: var(--muted-bg);
+      border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted-fg);
+      flex-shrink: 0;
+    }
+    .topbar-back svg { width: 14px; height: 14px; }
+    .topbar-title { font-size: .875rem; font-weight: 700; flex: 1; }
+    .topbar-sub   { font-size: .7rem; color: var(--muted-fg); margin-top: .1rem; }
+
+    .body-scroll { padding: .875rem; overflow-y: auto; display: flex; flex-direction: column; gap: .625rem; }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      font-size: .68rem;
+      font-weight: 700;
+      padding: .2rem .55rem;
+      border-radius: 20px;
+    }
+    .chip svg { width: 9px; height: 9px; }
+    .chip-active  { background: var(--success-subtle); color: var(--success); }
+    .chip-draft   { background: var(--warning-subtle); color: var(--warning); }
+    .chip-done    { background: #e0e7ff; color: #3730a3; }
+    .chip-extra   { background: #fce7f3; color: #be185d; }
+
+    .badge-day {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      font-size: .62rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .bd-lun { background: #ede9fe; color: #6d28d9; }
+    .bd-mar { background: #dbeafe; color: #1d4ed8; }
+    .bd-mie { background: #fce7f3; color: #be185d; }
+    .bd-jue { background: #d1fae5; color: #065f46; }
+    .bd-vie { background: #fef3c7; color: #92400e; }
+    .bd-sab { background: #ffedd5; color: #9a3412; }
+    .bd-dom { background: #fee2e2; color: #991b1b; }
+
+    .muscle-badge {
+      font-size: .6rem;
+      font-weight: 700;
+      padding: .1rem .4rem;
+      border-radius: 20px;
+    }
+    .mb-shoulders{ background: #fef3c7; color: #92400e; }
+    .mb-cardio   { background: #ffedd5; color: #9a3412; }
+    .mb-core     { background: #fee2e2; color: #991b1b; }
+    .mb-legs     { background: #d1fae5; color: #065f46; }
+    .mb-chest    { background: #fce7f3; color: #be185d; }
+    .mb-back     { background: #dbeafe; color: #1d4ed8; }
+    .mb-arms     { background: #ede9fe; color: #6d28d9; }
+    .mb-general  { background: #f3f4f6; color: #374151; }
+
+    .metric-chip {
+      font-size: .67rem;
+      color: var(--muted-fg);
+      display: inline-flex;
+      align-items: center;
+      gap: .2rem;
+    }
+    .metric-chip svg { width: 9px; height: 9px; }
+
+    .section-label {
+      font-size: .65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted-fg);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .3rem;
+      padding: .4rem .875rem;
+      border-radius: var(--r-sm);
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .12s;
+    }
+    .btn svg { width: 13px; height: 13px; }
+    .btn-primary   { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline   { background: #fff; border: 1px solid var(--border); color: var(--fg); }
+    .btn-outline:hover { background: var(--muted-bg); }
+    .btn-success   { background: var(--success); color: #fff; }
+    .btn-ghost     { background: none; color: var(--muted-fg); }
+    .btn-ghost:hover { background: var(--muted-bg); color: var(--fg); }
+    .btn-sm        { padding: .275rem .65rem; font-size: .72rem; }
+    .btn-xs        { padding: .2rem .5rem; font-size: .68rem; }
+
+    .icon-btn {
+      width: 26px; height: 26px;
+      border: none; background: none;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted-fg);
+      transition: background .12s, color .12s;
+    }
+    .icon-btn:hover { background: var(--muted-bg); color: var(--fg); }
+    .icon-btn svg { width: 13px; height: 13px; }
+
+    .sticky-footer {
+      background: #fff;
+      border-top: 1px solid var(--border);
+      padding: .625rem .875rem;
+      display: flex;
+      gap: .5rem;
+    }
+    .sticky-footer .btn { flex: 1; }
+
+    /* ── PANTALLA 1 — Lista de Rutinas ── */
+    .member-header {
+      padding: .875rem 1rem;
+      background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+      border-bottom: 1px solid var(--primary-subtle);
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: .875rem;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .member-info-name  { font-size: .9rem; font-weight: 700; }
+    .member-info-rut   { font-size: .7rem; color: var(--muted-fg); }
+
+    .plan-card-inner {
+      padding: .75rem 1rem;
+    }
+    .plan-card-inner .plan-obj {
+      font-size: .8125rem;
+      font-weight: 700;
+      margin-bottom: .375rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .plan-card-inner .plan-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .3rem;
+      align-items: center;
+      margin-bottom: .5rem;
+    }
+    .plan-card-inner .plan-days {
+      display: flex;
+      gap: .25rem;
+      flex-wrap: wrap;
+      margin-bottom: .625rem;
+    }
+    .plan-card-inner .plan-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .plan-card-inner .plan-measures {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .measure-item {
+      font-size: .68rem;
+      color: var(--muted-fg);
+      display: flex;
+      align-items: center;
+      gap: .2rem;
+    }
+    .measure-item strong { color: var(--fg); font-weight: 700; }
+    .measure-item svg { width: 10px; height: 10px; }
+
+    .plan-card-active { border-left: 3px solid var(--success); }
+    .plan-card-old    { border-left: 3px solid var(--border); opacity: .7; }
+
+    /* ── PANTALLA 2 — Detalle Rutina ── */
+    .plan-detail-header {
+      padding: .875rem 1rem;
+      background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+      border-bottom: 1px solid var(--primary-subtle);
+    }
+    .plan-detail-obj {
+      font-size: .95rem;
+      font-weight: 800;
+      margin-bottom: .35rem;
+    }
+    .plan-detail-period {
+      font-size: .73rem;
+      color: var(--muted-fg);
+      margin-bottom: .5rem;
+    }
+    .measures-row {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+    .measure-pill {
+      background: rgba(255,255,255,.7);
+      border: 1px solid var(--primary-subtle);
+      border-radius: 20px;
+      padding: .2rem .65rem;
+      font-size: .7rem;
+      color: var(--muted-fg);
+    }
+    .measure-pill strong { color: var(--primary); font-weight: 700; }
+
+    .day-block {
+      border-bottom: 1px solid var(--border);
+    }
+    .day-block:last-child { border-bottom: none; }
+    .day-header {
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+      padding: .625rem .875rem;
+      cursor: pointer;
+      background: var(--muted-bg);
+    }
+    .day-title   { font-size: .8rem; font-weight: 700; flex: 1; }
+    .day-count   { font-size: .68rem; color: var(--muted-fg); }
+    .day-chevron { color: var(--border); }
+    .day-chevron svg { width: 13px; height: 13px; }
+
+    .day-exercises { padding: .5rem .875rem .625rem; display: flex; flex-direction: column; gap: .375rem; }
+
+    .plan-ex-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .4rem .5rem;
+      background: var(--muted-bg);
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+    }
+    .plan-ex-num {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--primary-subtle);
+      color: var(--primary);
+      font-size: .6rem;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .plan-ex-body { flex: 1; min-width: 0; }
+    .plan-ex-name { font-size: .75rem; font-weight: 600; }
+    .plan-ex-metrics { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .15rem; }
+
+    /* ── PANTALLA 3 — Registrar Avances ── */
+    .log-session-header {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: .75rem 1rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .log-session-day {
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+      margin-bottom: .375rem;
+    }
+    .log-session-day .day-label { font-size: .875rem; font-weight: 800; }
+    .log-session-meta { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+
+    .log-ex-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .log-ex-card.open {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    }
+    .log-ex-header {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .5rem .75rem;
+      cursor: pointer;
+    }
+    .log-ex-name  { flex: 1; font-size: .8rem; font-weight: 600; }
+    .log-ex-check {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .check-done { background: var(--success-subtle); color: var(--success); }
+    .check-done svg { width: 11px; height: 11px; }
+    .check-pending {
+      border: 2px solid var(--border);
+      background: #fff;
+    }
+
+    .planned-tag {
+      font-size: .62rem;
+      color: var(--muted-fg);
+      background: var(--muted-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .1rem .35rem;
+      white-space: nowrap;
+    }
+
+    .log-ex-form {
+      display: none;
+      padding: .5rem .75rem .75rem;
+      border-top: 1px solid var(--border);
+    }
+    .log-ex-card.open .log-ex-form { display: block; }
+
+    .planned-hint {
+      background: var(--primary-subtle);
+      border: 1px solid var(--primary-muted);
+      border-radius: var(--r-sm);
+      padding: .35rem .625rem;
+      font-size: .68rem;
+      color: #4338ca;
+      margin-bottom: .5rem;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .planned-hint svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+    .frow { display: grid; gap: .4rem; margin-bottom: .4rem; }
+    .frow.c2 { grid-template-columns: 1fr 1fr; }
+    .frow.c3 { grid-template-columns: 1fr 1fr 1fr; }
+    .fg { display: flex; flex-direction: column; gap: .2rem; }
+    .flabel { font-size: .63rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted-fg); }
+    .finput {
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: .3rem .45rem;
+      font-size: .78rem;
+      color: var(--fg);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+      background: #fff;
+      width: 100%;
+    }
+    .finput:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+    .finput.has-value { border-color: var(--success); background: #f0fdf4; }
+
+    .form-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: .35rem;
+      margin-top: .5rem;
+      padding-top: .4rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .add-extra-btn {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--r);
+      padding: .6rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--muted-fg);
+      cursor: pointer;
+      background: none;
+      width: 100%;
+      transition: all .15s;
+    }
+    .add-extra-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-subtle); }
+    .add-extra-btn svg { width: 15px; height: 15px; }
+
+    /* ── Diagrama de modelo ── */
+    .model-section {
+      max-width: 960px;
+      margin: 2rem auto 0;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .model-title {
+      font-size: .875rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .model-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .model-col-title {
+      font-size: .7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      padding: .25rem .6rem;
+      border-radius: var(--r-sm);
+      margin-bottom: .625rem;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .col-plan { background: var(--primary-subtle); color: var(--primary); }
+    .col-log  { background: var(--success-subtle); color: var(--success); }
+    .model-table { font-size: .75rem; width: 100%; border-collapse: collapse; }
+    .model-table th { text-align: left; font-size: .63rem; color: var(--muted-fg); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: .25rem .4rem; border-bottom: 1px solid var(--border); }
+    .model-table td { padding: .3rem .4rem; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+    .model-table tr:last-child td { border-bottom: none; }
+    .model-table td:first-child { font-weight: 600; color: var(--primary); white-space: nowrap; }
+    .field-type { font-size: .65rem; color: var(--muted-fg); font-style: italic; }
+    .field-note { font-size: .68rem; color: var(--muted-fg); }
+
+    @media (max-width: 600px) {
+      .screens-grid { grid-template-columns: 1fr; }
+      .model-grid   { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Título ── -->
+<div class="doc-title">
+  <h1>GymGo · Módulo Rutinas v2 — Propuesta UX</h1>
+  <p>Tres pantallas del flujo: lista de rutinas → detalle del plan → registrar avances de una sesión</p>
+</div>
+
+<!-- ── Las 3 pantallas ── -->
+<div class="screens-grid">
+
+  <!-- ════════════════════════════════════════════════
+       PANTALLA 1 — Lista de rutinas del socio
+       ════════════════════════════════════════════════ -->
+  <div class="screen-wrap">
+    <div class="screen-label"><span>Pantalla 1</span> Rutinas del socio</div>
+    <div class="phone">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <button class="topbar-back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div>
+          <div class="topbar-title">Rutinas</div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nueva
+        </button>
+      </div>
+
+      <!-- Cabecera del socio -->
+      <div class="member-header">
+        <div class="avatar">JP</div>
+        <div>
+          <div class="member-info-name">Juan Pérez</div>
+          <div class="member-info-rut">12.345.678-9</div>
+        </div>
+      </div>
+
+      <div class="body-scroll">
+
+        <!-- Rutina activa -->
+        <div class="section-label">Activa</div>
+        <div class="card plan-card-active">
+          <div class="plan-card-inner">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem">
+              <div class="plan-obj">Ganancia muscular y pérdida de grasa</div>
+              <div class="chip chip-active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Activa
+              </div>
+            </div>
+            <div class="plan-meta">
+              <span class="metric-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>01/05 – 31/07/2026</span>
+            </div>
+            <div class="plan-measures">
+              <span class="measure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z"/></svg><strong>78 kg</strong></span>
+              <span class="measure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><strong>175 cm</strong></span>
+              <span class="measure-item">%grasa <strong>18%</strong></span>
+            </div>
+            <div class="plan-days" style="margin-top:.5rem">
+              <span class="badge-day bd-lun">L</span>
+              <span class="badge-day bd-mar">M</span>
+              <span class="badge-day bd-jue">J</span>
+              <span class="badge-day bd-vie">V</span>
+              <span class="badge-day bd-sab">S</span>
+            </div>
+            <div class="plan-footer">
+              <span class="metric-chip">5 días · 12 ejercicios</span>
+              <button class="btn btn-outline btn-sm">Ver detalle →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historial -->
+        <div class="section-label" style="margin-top:.25rem">Historial</div>
+        <div class="card plan-card-old">
+          <div class="plan-card-inner">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem">
+              <div class="plan-obj">Preparación verano</div>
+              <div class="chip chip-done">Completada</div>
+            </div>
+            <div class="plan-meta">
+              <span class="metric-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>01/01 – 30/04/2026</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="metric-chip">4 días · 10 ejercicios</span>
+              <button class="btn btn-ghost btn-xs">Ver →</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /body-scroll -->
+    </div><!-- /phone -->
+  </div><!-- /screen 1 -->
+
+
+  <!-- ════════════════════════════════════════════════
+       PANTALLA 2 — Detalle de la Rutina (WorkoutPlan)
+       ════════════════════════════════════════════════ -->
+  <div class="screen-wrap">
+    <div class="screen-label"><span>Pantalla 2</span> Detalle de rutina</div>
+    <div class="phone">
+
+      <div class="topbar">
+        <button class="topbar-back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div>
+          <div class="topbar-title">Detalle de rutina</div>
+          <div class="topbar-sub">Juan Pérez</div>
+        </div>
+        <button class="icon-btn" style="margin-left:auto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+
+      <!-- Cabecera del plan -->
+      <div class="plan-detail-header">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem">
+          <div class="chip chip-active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Activa
+          </div>
+        </div>
+        <div class="plan-detail-obj">Ganancia muscular y pérdida de grasa</div>
+        <div class="plan-detail-period">01 mayo – 31 julio 2026 · 91 días</div>
+        <div class="measures-row">
+          <span class="measure-pill">Peso <strong>78 kg</strong></span>
+          <span class="measure-pill">Estatura <strong>175 cm</strong></span>
+          <span class="measure-pill">%Grasa <strong>18%</strong></span>
+        </div>
+      </div>
+
+      <div class="body-scroll" style="padding:0">
+
+        <!-- Días de la rutina -->
+        <!-- Día: Lunes -->
+        <div class="day-block">
+          <div class="day-header">
+            <div class="badge-day bd-lun">L</div>
+            <div class="day-title">Lunes — Hombros / Core</div>
+            <div class="day-count">3 ejercicios</div>
+            <div class="day-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+          <div class="day-exercises">
+            <div class="plan-ex-row">
+              <div class="plan-ex-num">1</div>
+              <div class="plan-ex-body">
+                <div class="plan-ex-name">Hombro Mancuerna</div>
+                <div class="plan-ex-metrics">
+                  <span class="muscle-badge mb-shoulders">Hombros</span>
+                  <span class="metric-chip">3×10</span>
+                  <span class="metric-chip">20 kg</span>
+                </div>
+              </div>
+              <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+            <div class="plan-ex-row">
+              <div class="plan-ex-num">2</div>
+              <div class="plan-ex-body">
+                <div class="plan-ex-name">Trotar</div>
+                <div class="plan-ex-metrics">
+                  <span class="muscle-badge mb-cardio">Cardio</span>
+                  <span class="metric-chip">20 min</span>
+                </div>
+              </div>
+              <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+            <div class="plan-ex-row">
+              <div class="plan-ex-num">3</div>
+              <div class="plan-ex-body">
+                <div class="plan-ex-name">Abdominales</div>
+                <div class="plan-ex-metrics">
+                  <span class="muscle-badge mb-core">Core</span>
+                  <span class="metric-chip">3×20</span>
+                </div>
+              </div>
+              <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+            <button class="add-extra-btn" style="margin-top:.25rem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Agregar ejercicio
+            </button>
+          </div>
+        </div>
+
+        <!-- Día: Martes (colapsado) -->
+        <div class="day-block">
+          <div class="day-header">
+            <div class="badge-day bd-mar">M</div>
+            <div class="day-title">Martes — Piernas</div>
+            <div class="day-count">4 ejercicios</div>
+            <div class="day-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+        </div>
+
+        <!-- Día: Jueves (colapsado) -->
+        <div class="day-block">
+          <div class="day-header">
+            <div class="badge-day bd-jue">J</div>
+            <div class="day-title">Jueves — Pecho / Espalda</div>
+            <div class="day-count">3 ejercicios</div>
+            <div class="day-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+        </div>
+
+        <!-- Agregar día -->
+        <div style="padding:.625rem .875rem">
+          <button class="add-extra-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar día de semana
+          </button>
+        </div>
+
+      </div><!-- /body-scroll -->
+
+      <!-- Footer fijo -->
+      <div class="sticky-footer">
+        <button class="btn btn-outline btn-sm">Cancelar rutina</button>
+        <button class="btn btn-primary btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          Registrar sesión
+        </button>
+      </div>
+    </div><!-- /phone -->
+  </div><!-- /screen 2 -->
+
+
+  <!-- ════════════════════════════════════════════════
+       PANTALLA 3 — Registrar avances (WorkoutLog)
+       ════════════════════════════════════════════════ -->
+  <div class="screen-wrap">
+    <div class="screen-label"><span>Pantalla 3</span> Registrar avances</div>
+    <div class="phone">
+
+      <div class="topbar">
+        <button class="topbar-back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div>
+          <div class="topbar-title">Registrar sesión</div>
+          <div class="topbar-sub">18 mayo 2026 · Juan Pérez</div>
+        </div>
+        <div class="chip chip-draft" style="margin-left:auto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          En curso
+        </div>
+      </div>
+
+      <div class="body-scroll">
+
+        <!-- Cabecera de la sesión -->
+        <div class="log-session-header">
+          <div class="log-session-day">
+            <div class="badge-day bd-lun">L</div>
+            <div class="day-label">Lunes — Hombros / Core</div>
+          </div>
+          <div class="log-session-meta">
+            <span class="metric-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>18 mayo 2026</span>
+            <span class="metric-chip">3 planificados · 1/3 completados</span>
+          </div>
+        </div>
+
+        <div class="section-label">Ejercicios del día</div>
+
+        <!-- Ejercicio 1: Completado con avances -->
+        <div class="log-ex-card">
+          <div class="log-ex-header">
+            <div class="log-ex-check check-done">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="log-ex-name">Hombro Mancuerna</div>
+              <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.15rem;align-items:center">
+                <span class="muscle-badge mb-shoulders">Hombros</span>
+                <span class="planned-tag">Plan: 3×10 · 20 kg</span>
+                <span class="metric-chip" style="color:var(--success)">Real: 3×10 · 15 kg</span>
+              </div>
+            </div>
+            <div class="chip chip-done" style="font-size:.6rem">OK</div>
+          </div>
+        </div>
+
+        <!-- Ejercicio 2: Expandido para registrar -->
+        <div class="log-ex-card open">
+          <div class="log-ex-header">
+            <div class="log-ex-check check-pending"></div>
+            <div style="flex:1;min-width:0">
+              <div class="log-ex-name">Trotar</div>
+              <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.15rem;align-items:center">
+                <span class="muscle-badge mb-cardio">Cardio</span>
+                <span class="planned-tag">Plan: 20 min</span>
+              </div>
+            </div>
+            <div class="day-chevron" style="transform:rotate(180deg)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+          <div class="log-ex-form">
+            <div class="planned-hint">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Planificado: 20 minutos
+            </div>
+            <div class="frow c2">
+              <div class="fg">
+                <div class="flabel">Minutos reales</div>
+                <input class="finput has-value" type="number" value="25" placeholder="0">
+              </div>
+              <div class="fg">
+                <div class="flabel">Distancia (m)</div>
+                <input class="finput" type="number" placeholder="–">
+              </div>
+            </div>
+            <div class="fg" style="margin-bottom:.4rem">
+              <div class="flabel">Notas</div>
+              <input class="finput" type="text" placeholder="Observaciones opcionales…">
+            </div>
+            <div class="form-footer">
+              <button class="btn btn-ghost btn-sm">Cancelar</button>
+              <button class="btn btn-primary btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ejercicio 3: Pendiente colapsado -->
+        <div class="log-ex-card">
+          <div class="log-ex-header">
+            <div class="log-ex-check check-pending"></div>
+            <div style="flex:1;min-width:0">
+              <div class="log-ex-name">Abdominales</div>
+              <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.15rem;align-items:center">
+                <span class="muscle-badge mb-core">Core</span>
+                <span class="planned-tag">Plan: 3×20</span>
+              </div>
+            </div>
+            <div class="day-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+        </div>
+
+        <!-- Ejercicio extra -->
+        <div class="log-ex-card" style="border-left:3px solid #be185d">
+          <div class="log-ex-header">
+            <div class="log-ex-check check-done" style="background:#fce7f3;color:#be185d">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="log-ex-name">Plancha isométrica</div>
+              <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.15rem;align-items:center">
+                <span class="muscle-badge mb-core">Core</span>
+                <span class="chip chip-extra">Extra</span>
+                <span class="metric-chip" style="color:var(--success)">2 min</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón agregar extra -->
+        <button class="add-extra-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar ejercicio extra
+        </button>
+
+      </div><!-- /body-scroll -->
+
+      <!-- Footer fijo -->
+      <div class="sticky-footer">
+        <button class="btn btn-outline">Guardar borrador</button>
+        <button class="btn btn-success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Completar sesión
+        </button>
+      </div>
+
+    </div><!-- /phone -->
+  </div><!-- /screen 3 -->
+
+</div><!-- /screens-grid -->
+
+
+<!-- ════════════════════════════════════════════════
+     Tabla del modelo de datos
+     ════════════════════════════════════════════════ -->
+<div class="model-section">
+  <div class="model-title">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    Modelo de datos — 5 tablas
+  </div>
+  <div class="model-grid">
+
+    <!-- Columna PLAN -->
+    <div>
+      <div class="model-col-title col-plan">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Plan (instrucciones del instructor)
+      </div>
+      <table class="model-table">
+        <tr><th>Tabla</th><th>Descripción</th></tr>
+        <tr>
+          <td>WorkoutPlans</td>
+          <td class="field-note">Rutina asignada al socio. Objetivo, período, medidas físicas (peso/talla/% grasa), status (Active/Completed/Cancelled)</td>
+        </tr>
+        <tr>
+          <td>WorkoutPlanDays</td>
+          <td class="field-note">Día de semana configurado (1=Lun…7=Dom). Único por rutina. Notas opcionales (ej. "Pecho/Tríceps")</td>
+        </tr>
+        <tr>
+          <td>WorkoutPlanExercises</td>
+          <td class="field-note">Ejercicio planificado: nombre (texto libre), grupo muscular, PlannedSets, PlannedReps, PlannedWeightKg, PlannedDurationMinutes, PlannedDistanceMeters</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Columna LOG -->
+    <div>
+      <div class="model-col-title col-log">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Log (avances del socio)
+      </div>
+      <table class="model-table">
+        <tr><th>Tabla</th><th>Descripción</th></tr>
+        <tr>
+          <td>WorkoutLogs</td>
+          <td class="field-note">Sesión real. Referencia al plan + al día de la rutina realizado. Fecha de ejecución. Status (Draft/Completed)</td>
+        </tr>
+        <tr>
+          <td>WorkoutLogExercises</td>
+          <td class="field-note">Ejercicio realizado. ActualSets, ActualReps, ActualWeightKg, ActualDurationMinutes, ActualDistanceMeters. WorkoutPlanExerciseId nullable (null si IsExtra=true)</td>
+        </tr>
+      </table>
+
+      <div style="margin-top:.875rem;padding:.625rem;background:var(--primary-subtle);border-radius:var(--r-sm);font-size:.72rem;color:#3730a3">
+        <strong>Regla clave:</strong> un socio solo puede tener <em>una rutina activa</em> a la vez. El socio elige qué día del plan realizó (puede hacer el Lunes aunque sea Martes).
+      </div>
+    </div>
+
+  </div><!-- /model-grid -->
+</div><!-- /model-section -->
+
+</body>
+</html>

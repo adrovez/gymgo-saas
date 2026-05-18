@@ -45,10 +45,11 @@ export class MemberEditComponent implements OnInit {
   readonly errorStatus     = signal<string | null>(null);
   readonly errorAssignment = signal<string | null>(null);
 
-  readonly successStatus    = signal(false);
   readonly member           = signal<MemberDto | null>(null);
+  readonly activeTab        = signal<'perfil' | 'membresia'>('perfil');
   readonly activeAssignment = signal<MembershipAssignmentDto | null>(null);
 
+  readonly MemberStatus     = MemberStatus;
   readonly AssignmentStatus = AssignmentStatus;
   readonly PaymentStatus    = PaymentStatus;
 
@@ -311,7 +312,6 @@ export class MemberEditComponent implements OnInit {
 
     this.loadingStatus.set(true);
     this.errorStatus.set(null);
-    this.successStatus.set(false);
 
     this.memberService
       .changeMemberStatus(this.id(), { newStatus })
@@ -319,7 +319,7 @@ export class MemberEditComponent implements OnInit {
         next: () => {
           const current = this.member();
           if (current) this.member.set({ ...current, status: newStatus, statusLabel });
-          this.successStatus.set(true);
+          this.dialog.toast('Estado actualizado correctamente', 'success');
           this.loadingStatus.set(false);
         },
         error: (err: HttpErrorResponse) => {

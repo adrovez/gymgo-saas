@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Adrovez\\\\DevAzure\\\\gymgo-saas\\\\frontend\\\\gymgo-app\\\\src\\\\app\\\\features\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Adrovez\\\\DevAzure\\\\gymgo-saas\" -Directory)",
+      "Bash(dotnet build *)",
+      "Read(//c/Users/alexi/.claude/projects/c--Adrovez-DevAzure-gymgo-saas/memory/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\alexi\\.claude\\projects\\c--Adrovez-DevAzure-gymgo-saas\\memory"
+    ]
+  }
+}

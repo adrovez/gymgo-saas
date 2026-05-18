@@ -9,10 +9,7 @@ public sealed class UpdateWorkoutLogCommandHandler : IRequestHandler<UpdateWorko
 {
     private readonly IApplicationDbContext _context;
 
-    public UpdateWorkoutLogCommandHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
+    public UpdateWorkoutLogCommandHandler(IApplicationDbContext context) => _context = context;
 
     public async Task Handle(UpdateWorkoutLogCommand request, CancellationToken cancellationToken)
     {
@@ -20,7 +17,7 @@ public sealed class UpdateWorkoutLogCommandHandler : IRequestHandler<UpdateWorko
             .FirstOrDefaultAsync(w => w.Id == request.Id, cancellationToken)
             ?? throw new NotFoundException("WorkoutLog", request.Id);
 
-        log.Update(request.Title, request.Notes);
+        log.UpdateNotes(request.Notes);
 
         await _context.SaveChangesAsync(cancellationToken);
     }
