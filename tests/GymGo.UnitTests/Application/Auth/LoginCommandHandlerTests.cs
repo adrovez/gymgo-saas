@@ -1,13 +1,19 @@
 using FluentAssertions;
 using GymGo.Application.Auth.Commands.Login;
 using GymGo.Application.Common.Interfaces;
+using GymGo.Domain.Cash;
+using GymGo.Domain.ClassAttendances;
+using GymGo.Domain.ClassReservations;
 using GymGo.Domain.Exceptions;
 using GymGo.Domain.GymClasses;
+using GymGo.Domain.GymEntries;
+using GymGo.Domain.Maintenance;
 using GymGo.Domain.Members;
 using GymGo.Domain.MembershipAssignments;
 using GymGo.Domain.MembershipPlans;
 using GymGo.Domain.Tenants;
 using GymGo.Domain.Users;
+using GymGo.Domain.WorkoutLogs;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
@@ -199,6 +205,17 @@ internal sealed class AuthTestDbContext : DbContext, IApplicationDbContext
     public DbSet<MembershipAssignment>   MembershipAssignments => Set<MembershipAssignment>();
     public DbSet<GymClass>               GymClasses            => Set<GymClass>();
     public DbSet<ClassSchedule>          ClassSchedules        => Set<ClassSchedule>();
+    public DbSet<ClassAttendance>        ClassAttendances      => Set<ClassAttendance>();
+    public DbSet<GymEntry>               GymEntries            => Set<GymEntry>();
+    public DbSet<ClassReservation>       ClassReservations     => Set<ClassReservation>();
+    public DbSet<GymGo.Domain.Equipments.Equipment> Equipment => Set<GymGo.Domain.Equipments.Equipment>();
+    public DbSet<MaintenanceRecord>      MaintenanceRecords    => Set<MaintenanceRecord>();
+    public DbSet<WorkoutPlan>            WorkoutPlans          => Set<WorkoutPlan>();
+    public DbSet<WorkoutPlanDay>         WorkoutPlanDays       => Set<WorkoutPlanDay>();
+    public DbSet<WorkoutPlanExercise>    WorkoutPlanExercises  => Set<WorkoutPlanExercise>();
+    public DbSet<WorkoutLog>             WorkoutLogs           => Set<WorkoutLog>();
+    public DbSet<WorkoutLogExercise>     WorkoutLogExercises   => Set<WorkoutLogExercise>();
+    public DbSet<CashTransaction>        CashTransactions      => Set<CashTransaction>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -220,7 +237,6 @@ internal sealed class AuthTestDbContext : DbContext, IApplicationDbContext
         mb.Entity<GymClass>().HasKey(c => c.Id);
         mb.Entity<GymClass>().Ignore(c => c.DomainEvents);
         mb.Entity<ClassSchedule>().HasKey(s => s.Id);
-        mb.Entity<ClassSchedule>().Ignore(s => s.DomainEvents);
         mb.Entity<ClassSchedule>().Property(s => s.DayOfWeek).HasConversion<int>();
         mb.Entity<GymClass>()
             .HasMany(c => c.Schedules)

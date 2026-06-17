@@ -1,0 +1,144 @@
+<div class="p-6 max-w-lg mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Nueva rutina</h1>
+      <p class="page-description">Asigna un plan de entrenamiento al socio.</p>
+    </div>
+    <a routerLink="/app/workout-plans" class="btn btn-ghost btn-sm">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver
+    </a>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card p-6 space-y-5" novalidate>
+
+    <!-- Socio -->
+    <div>
+      <label class="form-label" for="memberId">
+        Socio <span style="color: var(--color-error)">*</span>
+      </label>
+      <select id="memberId" formControlName="memberId" class="input w-full"
+              [class.input-error]="isInvalid('memberId')">
+        <option value="">
+          @if (loadingMembers()) { Cargando socios… } @else { — Selecciona un socio — }
+        </option>
+        @for (m of members(); track m.id) {
+          <option [value]="m.id">{{ m.fullName }} — {{ m.rut }}</option>
+        }
+      </select>
+      @if (hasError('memberId', 'required')) {
+        <p class="form-error">Selecciona un socio.</p>
+      }
+    </div>
+
+    <!-- Objetivo -->
+    <div>
+      <label class="form-label" for="objective">
+        Objetivo <span style="color: var(--color-error)">*</span>
+      </label>
+      <input id="objective" type="text" formControlName="objective" class="input w-full"
+             [class.input-error]="isInvalid('objective')"
+             placeholder="Ej: Hipertrofia, Pérdida de peso, Fuerza…" maxlength="200"/>
+      @if (hasError('objective', 'required')) {
+        <p class="form-error">El objetivo es obligatorio.</p>
+      }
+    </div>
+
+    <!-- Período -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label class="form-label" for="startDate">
+          Fecha de inicio <span style="color: var(--color-error)">*</span>
+        </label>
+        <input id="startDate" type="date" formControlName="startDate" class="input w-full"
+               [class.input-error]="isInvalid('startDate')"/>
+        @if (hasError('startDate', 'required')) {
+          <p class="form-error">La fecha de inicio es obligatoria.</p>
+        }
+      </div>
+      <div>
+        <label class="form-label" for="endDate">
+          Fecha de término <span style="color: var(--color-error)">*</span>
+        </label>
+        <input id="endDate" type="date" formControlName="endDate" class="input w-full"
+               [class.input-error]="isInvalid('endDate')"/>
+        @if (hasError('endDate', 'required')) {
+          <p class="form-error">La fecha de término es obligatoria.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Notas -->
+    <div>
+      <label class="form-label" for="notes">
+        Notas
+        <span class="text-xs font-normal" style="color: var(--color-muted-fg)">(opcional)</span>
+      </label>
+      <textarea id="notes" formControlName="notes" class="input w-full" rows="2"
+                placeholder="Observaciones generales de la rutina…" maxlength="1000"></textarea>
+    </div>
+
+    <!-- Toggle medidas iniciales -->
+    <div>
+      <button type="button" class="btn btn-ghost btn-sm"
+              (click)="showMedidas.set(!showMedidas())">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                [attr.d]="showMedidas() ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'"/>
+        </svg>
+        Medidas corporales iniciales (opcional)
+      </button>
+
+      @if (showMedidas()) {
+        <div class="grid grid-cols-3 gap-3 mt-3">
+          <div>
+            <label class="form-label" for="weight">Peso (kg)</label>
+            <input id="weight" type="number" formControlName="initialWeightKg"
+                   min="30" max="300" step="0.1" class="input w-full" placeholder="70"/>
+          </div>
+          <div>
+            <label class="form-label" for="height">Talla (cm)</label>
+            <input id="height" type="number" formControlName="initialHeightCm"
+                   min="100" max="250" class="input w-full" placeholder="175"/>
+          </div>
+          <div>
+            <label class="form-label" for="fat">% Grasa</label>
+            <input id="fat" type="number" formControlName="initialBodyFatPercentage"
+                   min="1" max="60" step="0.1" class="input w-full" placeholder="18"/>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Acciones -->
+    <div class="flex justify-end gap-3 pt-2" style="border-top: 1px solid var(--color-border)">
+      <a routerLink="/app/workout-plans" class="btn btn-ghost">Cancelar</a>
+      <button type="submit" class="btn btn-primary" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner spinner-sm" style="border-top-color: white; border-color: rgba(255,255,255,0.3)"></span>
+          Creando…
+        } @else {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Crear rutina
+        }
+      </button>
+    </div>
+
+  </form>
+</div>

@@ -172,28 +172,18 @@ public static class MaintenanceEndpoints
 
 /// <summary>Cuerpo del request para crear un registro de mantención.</summary>
 public sealed record CreateMaintenanceRecordRequest(
-    /// <summary>Id de la máquina a mantener.</summary>
-    Guid            EquipmentId,
-    /// <summary>Tipo: 0=Preventiva, 1=Correctiva.</summary>
-    MaintenanceType Type,
-    /// <summary>Fecha programada de la mantención.</summary>
-    DateOnly        ScheduledDate,
-    /// <summary>Descripción del trabajo a realizar.</summary>
-    string          Description,
-    /// <summary>Responsable: 0=Interno, 1=Externo.</summary>
-    ResponsibleType ResponsibleType,
-    /// <summary>Id del usuario interno responsable (requerido si ResponsibleType=0).</summary>
-    Guid?           ResponsibleUserId,
-    /// <summary>Nombre del proveedor externo (requerido si ResponsibleType=1).</summary>
-    string?         ExternalProviderName,
-    /// <summary>Teléfono o email del proveedor externo.</summary>
-    string?         ExternalProviderContact
+    Guid            EquipmentId,            // Id de la máquina a mantener.
+    MaintenanceType Type,                   // 0=Preventiva, 1=Correctiva.
+    DateOnly        ScheduledDate,          // Fecha programada de la mantención.
+    string          Description,            // Descripción del trabajo a realizar.
+    ResponsibleType ResponsibleType,        // 0=Interno, 1=Externo.
+    Guid?           ResponsibleUserId,      // Requerido si ResponsibleType=0 (usuario interno).
+    string?         ExternalProviderName,   // Requerido si ResponsibleType=1.
+    string?         ExternalProviderContact // Teléfono o email del proveedor externo.
 );
 
 /// <summary>Cuerpo del request para completar una mantención.</summary>
 public sealed record CompleteMaintenanceRequest(
-    /// <summary>Observaciones de cierre (opcional).</summary>
-    string?  Notes,
-    /// <summary>Costo incurrido en la mantención (opcional).</summary>
-    decimal? Cost
+    string?  Notes,  // Observaciones de cierre (opcional).
+    decimal? Cost    // Costo incurrido en la mantención (opcional).
 );

@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import {
   MembershipAssignmentDto,
   MembershipAssignmentSummaryDto,
+  ExpiringAssignmentsDto,
   AssignMembershipPlanRequest,
 } from '../models/membership-assignment.models';
 
@@ -31,10 +32,10 @@ export class MembershipAssignmentService {
 
   // ── Queries del tenant ───────────────────────────────────────────────────
 
-  /** GET /api/v1/assignments/overdue — membresías morosas del tenant */
-  getOverdueAssignments(): Observable<MembershipAssignmentSummaryDto[]> {
-    return this.http.get<MembershipAssignmentSummaryDto[]>(
-      `${this.apiUrl}/assignments/overdue`,
+  /** GET /api/v1/assignments/expiring — por vencer (7 días) y vencidas recientes (14 días) */
+  getExpiringAssignments(): Observable<ExpiringAssignmentsDto> {
+    return this.http.get<ExpiringAssignmentsDto>(
+      `${this.apiUrl}/assignments/expiring`,
     );
   }
 
@@ -66,14 +67,6 @@ export class MembershipAssignmentService {
   registerPayment(assignmentId: string): Observable<void> {
     return this.http.patch<void>(
       `${this.apiUrl}/assignments/${assignmentId}/pay`,
-      {},
-    );
-  }
-
-  /** PATCH /api/v1/assignments/{id}/overdue — marcar como morosa */
-  markOverdue(assignmentId: string): Observable<void> {
-    return this.http.patch<void>(
-      `${this.apiUrl}/assignments/${assignmentId}/overdue`,
       {},
     );
   }

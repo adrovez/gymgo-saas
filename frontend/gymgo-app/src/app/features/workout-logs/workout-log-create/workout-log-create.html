@@ -3,16 +3,37 @@
   <!-- Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">Nueva sesión</h1>
-      <p class="page-description">Selecciona el socio y la fecha para comenzar.</p>
+      <h1 class="page-title">Registrar sesión</h1>
+      @if (day(); as d) {
+        <p class="page-description">{{ plan()?.objective }} · {{ d.dayOfWeekName }}</p>
+      } @else {
+        <p class="page-description">Confirma la fecha de la sesión.</p>
+      }
     </div>
-    <a routerLink="/app/workout-logs" class="btn btn-ghost btn-sm">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-      </svg>
-      Volver
-    </a>
+    @if (plan()) {
+      <a [routerLink]="['/app/workout-plans', plan()!.id]" class="btn btn-ghost btn-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Volver
+      </a>
+    } @else {
+      <a routerLink="/app/workout-plans" class="btn btn-ghost btn-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Volver
+      </a>
+    }
   </div>
+
+  <!-- Loading plan -->
+  @if (loadingPlan()) {
+    <div class="flex items-center justify-center gap-3 py-8" style="color: var(--color-muted-fg)">
+      <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+      <span class="text-sm">Cargando rutina...</span>
+    </div>
+  }
 
   <!-- Error -->
   @if (error()) {
@@ -24,66 +45,103 @@
     </div>
   }
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card p-6 space-y-5" novalidate>
+  @if (!loadingPlan() && plan()) {
 
-    <!-- Socio -->
-    <div>
-      <label class="form-label" for="memberId">
-        Socio <span style="color: var(--color-error)">*</span>
-      </label>
-      <select id="memberId" formControlName="memberId" class="input w-full"
-              [class.input-error]="isInvalid('memberId')">
-        <option value="">
-          @if (loadingMembers()) { Cargando socios… } @else { — Selecciona un socio — }
-        </option>
-        @for (m of members(); track m.id) {
-          <option [value]="m.id">{{ m.fullName }} — {{ m.rut }}</option>
+    <!-- Resumen del día planificado -->
+    @if (day(); as d) {
+      <div class="card p-4 space-y-3">
+        <p class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-muted-fg)">
+          Ejercicios planificados — {{ d.dayOfWeekName }}
+        </p>
+
+        @if (d.exercises.length === 0) {
+          <p class="text-sm" style="color: var(--color-muted-fg)">Este día no tiene ejercicios planificados.</p>
+        } @else {
+          <div class="space-y-2">
+            @for (ex of d.exercises; track ex.id; let i = $index) {
+              <div class="flex items-center gap-2.5">
+                <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style="background: var(--color-primary-subtle); color: var(--color-primary)">
+                  {{ i + 1 }}
+                </span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-sm font-medium" style="color: var(--color-foreground)">{{ ex.exerciseName }}</span>
+                    <span [class]="muscleGroupBadgeClass(ex.muscleGroup)">{{ ex.muscleGroupName }}</span>
+                  </div>
+                  <div class="flex gap-1.5 mt-0.5 flex-wrap">
+                    @if (ex.plannedSets && ex.plannedReps) {
+                      <span class="metric-chip">{{ ex.plannedSets }} × {{ ex.plannedReps }}</span>
+                    } @else if (ex.plannedSets) {
+                      <span class="metric-chip">{{ ex.plannedSets }} series</span>
+                    }
+                    @if (ex.plannedWeightKg) {
+                      <span class="metric-chip">{{ ex.plannedWeightKg }} kg</span>
+                    }
+                    @if (ex.plannedDurationMinutes) {
+                      <span class="metric-chip">{{ ex.plannedDurationMinutes }} min</span>
+                    }
+                    @if (ex.plannedDistanceMeters) {
+                      <span class="metric-chip">{{ ex.plannedDistanceMeters }} m</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
         }
-      </select>
-      @if (hasError('memberId', 'required')) {
-        <p class="form-error">Selecciona un socio.</p>
-      }
-    </div>
+      </div>
+    }
 
-    <!-- Fecha + Título en grid -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+    <!-- Formulario iniciar sesión -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card p-6 space-y-5" novalidate>
+
+      <p class="text-sm font-medium" style="color: var(--color-foreground)">
+        ¿Cuándo realizaste esta sesión?
+      </p>
+
+      <!-- Fecha -->
       <div>
         <label class="form-label" for="date">
           Fecha <span style="color: var(--color-error)">*</span>
         </label>
         <input id="date" type="date" formControlName="date" class="input w-full"
                [class.input-error]="isInvalid('date')"/>
-        @if (hasError('date', 'required')) {
+        @if (isInvalid('date')) {
           <p class="form-error">La fecha es obligatoria.</p>
         }
       </div>
 
+      <!-- Notas -->
       <div>
-        <label class="form-label" for="title">
-          Título
+        <label class="form-label" for="notes">
+          Notas
           <span class="text-xs font-normal" style="color: var(--color-muted-fg)">(opcional)</span>
         </label>
-        <input id="title" type="text" formControlName="title"
-               placeholder="Ej: Push A, Full Body semana 3…"
-               class="input w-full" maxlength="200"/>
+        <input id="notes" type="text" formControlName="notes"
+               placeholder="Ej: Con resfrío, poco descanso previo…"
+               class="input w-full" maxlength="1000"/>
       </div>
-    </div>
 
-    <!-- Acciones -->
-    <div class="flex justify-end gap-3 pt-2" style="border-top: 1px solid var(--color-border)">
-      <a routerLink="/app/workout-logs" class="btn btn-ghost">Cancelar</a>
-      <button type="submit" class="btn btn-primary" [disabled]="loading()">
-        @if (loading()) {
-          <span class="spinner spinner-sm" style="border-top-color: white; border-color: rgba(255,255,255,0.3)"></span>
-          Creando…
-        } @else {
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Crear sesión
+      <!-- Acciones -->
+      <div class="flex justify-end gap-3 pt-2" style="border-top: 1px solid var(--color-border)">
+        @if (plan()) {
+          <a [routerLink]="['/app/workout-plans', plan()!.id]" class="btn btn-ghost">Cancelar</a>
         }
-      </button>
-    </div>
+        <button type="submit" class="btn btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner spinner-sm" style="border-top-color: white; border-color: rgba(255,255,255,0.3)"></span>
+            Iniciando…
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Iniciar sesión
+          }
+        </button>
+      </div>
 
-  </form>
+    </form>
+  }
+
 </div>

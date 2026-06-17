@@ -62,22 +62,11 @@ public static class ClassAttendanceEndpoints
 
 // ── Request bodies ─────────────────────────────────────────────────────────────
 
-/// <summary>
-/// Cuerpo del request para registrar un check-in.
-/// </summary>
+/// <summary>Cuerpo del request para registrar un check-in.</summary>
 public sealed record CheckInRequest(
-    /// <summary>Id del socio.</summary>
-    Guid MemberId,
-
-    /// <summary>Id del horario semanal (ClassSchedule).</summary>
-    Guid ClassScheduleId,
-
-    /// <summary>Fecha de la sesión. Si es null se usa la fecha UTC actual.</summary>
-    DateOnly? SessionDate,
-
-    /// <summary>Método de check-in: 0 = Manual (default), 1 = QR.</summary>
-    CheckInMethod? CheckInMethod,
-
-    /// <summary>Observaciones opcionales de la recepcionista.</summary>
-    string? Notes
+    Guid           MemberId,        // Id del socio.
+    Guid           ClassScheduleId, // Id del horario semanal (ClassSchedule).
+    DateOnly?      SessionDate,     // Fecha de la sesión; null usa la fecha UTC actual.
+    CheckInMethod? CheckInMethod,   // 0=Manual (default), 1=QR.
+    string?        Notes            // Observaciones opcionales de la recepcionista.
 );

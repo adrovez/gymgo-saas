@@ -1,0 +1,247 @@
+<!-- Cash form page -->
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Registrar movimiento</h1>
+      <p class="page-description">Ingresa un nuevo ingreso o egreso en caja.</p>
+    </div>
+    <a routerLink="/app/cash" class="btn btn-secondary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Volver
+    </a>
+  </div>
+
+  <div class="card">
+
+    <!-- Error banner -->
+    @if (error()) {
+      <div class="alert alert-error mb-6" role="alert">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"/>
+        </svg>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-6">
+
+      <!-- ── Tipo ──────────────────────────────────────────────────────────── -->
+      <div>
+        <p class="block text-sm font-medium mb-2" style="color: var(--color-foreground)">
+          Tipo de movimiento <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </p>
+        <div class="flex gap-3" role="group" aria-label="Tipo de movimiento">
+
+          <label
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border cursor-pointer text-sm font-medium transition-colors"
+            [style]="form.controls.type.value === CashTransactionType.Ingreso
+              ? 'background: color-mix(in srgb, var(--color-success, #16a34a) 10%, transparent); border-color: var(--color-success, #16a34a); color: var(--color-success, #16a34a)'
+              : 'background: var(--color-card-bg); border-color: var(--color-border); color: var(--color-muted-fg)'"
+          >
+            <input type="radio" formControlName="type" [value]="CashTransactionType.Ingreso" class="sr-only"/>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+            </svg>
+            Ingreso
+          </label>
+
+          <label
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border cursor-pointer text-sm font-medium transition-colors"
+            [style]="form.controls.type.value === CashTransactionType.Egreso
+              ? 'background: color-mix(in srgb, var(--color-error) 10%, transparent); border-color: var(--color-error); color: var(--color-error)'
+              : 'background: var(--color-card-bg); border-color: var(--color-border); color: var(--color-muted-fg)'"
+          >
+            <input type="radio" formControlName="type" [value]="CashTransactionType.Egreso" class="sr-only"/>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+            </svg>
+            Egreso
+          </label>
+
+        </div>
+      </div>
+
+      <!-- ── Fecha y Monto ──────────────────────────────────────────────────── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <div>
+          <label for="date" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Fecha <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="date"
+            type="date"
+            formControlName="date"
+            class="input w-full"
+            [class.input-error]="isInvalid('date')"
+            aria-required="true"
+          />
+          @if (isInvalid('date')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">La fecha es requerida.</p>
+          }
+        </div>
+
+        <div>
+          <label for="amount" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Monto (CLP) <span style="color: var(--color-error)" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="amount"
+            type="number"
+            min="1"
+            step="1"
+            formControlName="amount"
+            class="input w-full"
+            [class.input-error]="isInvalid('amount')"
+            placeholder="0"
+            aria-required="true"
+          />
+          @if (isInvalid('amount')) {
+            <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Ingresa un monto mayor a 0.</p>
+          }
+        </div>
+
+      </div>
+
+      <!-- ── Método de pago ────────────────────────────────────────────────── -->
+      <div>
+        <p class="block text-sm font-medium mb-2" style="color: var(--color-foreground)">
+          Método de pago <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </p>
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Método de pago">
+          @for (pm of PAYMENT_METHOD_OPTIONS; track pm.value) {
+            <label
+              class="flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer text-sm font-medium transition-colors"
+              [style]="form.controls.paymentMethod.value === pm.value
+                ? 'background: var(--color-primary-subtle); border-color: var(--color-primary); color: var(--color-primary)'
+                : 'background: var(--color-card-bg); border-color: var(--color-border); color: var(--color-muted-fg)'"
+            >
+              <input type="radio" formControlName="paymentMethod" [value]="pm.value" class="sr-only"/>
+              {{ pm.label }}
+            </label>
+          }
+        </div>
+      </div>
+
+      <!-- ── Concepto ──────────────────────────────────────────────────────── -->
+      <div>
+        <label for="concept" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Concepto <span style="color: var(--color-error)" aria-hidden="true">*</span>
+        </label>
+        <select
+          id="concept"
+          formControlName="concept"
+          class="input w-full"
+          [class.input-error]="isInvalid('concept')"
+          aria-required="true"
+        >
+          @for (c of availableConcepts(); track c.value) {
+            <option [value]="c.value">{{ c.label }}</option>
+          }
+        </select>
+        @if (isInvalid('concept')) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">Selecciona un concepto.</p>
+        }
+      </div>
+
+      <!-- ── Socio (solo Ingreso) ──────────────────────────────────────────── -->
+      @if (!isExpense()) {
+        <div>
+          <label for="memberId" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+            Socio
+            <span class="text-xs font-normal ml-1" style="color: var(--color-muted-fg)">(opcional)</span>
+          </label>
+
+          @if (loadingData()) {
+            <div class="flex items-center gap-2 text-sm" style="color: var(--color-muted-fg)">
+              <span class="spinner"
+                    style="width:1rem; height:1rem;
+                           border-top-color: var(--color-primary);
+                           border-color: var(--color-border)">
+              </span>
+              Cargando socios...
+            </div>
+          } @else {
+            <select
+              id="memberId"
+              formControlName="memberId"
+              class="input w-full"
+            >
+              <option value="">— Sin socio vinculado —</option>
+              @for (m of members(); track m.id) {
+                <option [value]="m.id">{{ m.fullName }} — {{ m.rut }}</option>
+              }
+            </select>
+            <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">
+              Vincula el ingreso a un socio para verlo en su historial.
+            </p>
+          }
+        </div>
+      }
+
+      <!-- ── Descripción ───────────────────────────────────────────────────── -->
+      <div>
+        <label for="description" class="block text-sm font-medium mb-1.5" style="color: var(--color-foreground)">
+          Descripción
+          @if (isExpense()) {
+            <span style="color: var(--color-error)" aria-hidden="true"> *</span>
+          } @else {
+            <span class="text-xs font-normal ml-1" style="color: var(--color-muted-fg)">(opcional)</span>
+          }
+        </label>
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="3"
+          class="input w-full resize-none"
+          [class.input-error]="isInvalid('description')"
+          [placeholder]="isExpense()
+            ? 'Detalla el motivo del egreso (requerido)...'
+            : 'Observaciones adicionales...'"
+          [attr.aria-required]="isExpense()"
+        ></textarea>
+        @if (isInvalid('description') && isExpense()) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-error)" role="alert">
+            La descripción es requerida para egresos.
+          </p>
+        }
+        @if (form.controls.description.value.length > 450) {
+          <p class="mt-1.5 text-xs" style="color: var(--color-muted-fg)">
+            {{ form.controls.description.value.length }}/500 caracteres
+          </p>
+        }
+      </div>
+
+      <!-- ── Actions ───────────────────────────────────────────────────────── -->
+      <div class="flex items-center justify-end gap-3 pt-1">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="loading()"
+        >
+          @if (loading()) {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Registrando...</span>
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            Registrar {{ form.controls.type.value === CashTransactionType.Ingreso ? 'ingreso' : 'egreso' }}
+          }
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

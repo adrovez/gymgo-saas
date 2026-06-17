@@ -6,7 +6,8 @@
       "Bash(Select-Object Name)",
       "Bash(Get-ChildItem -Path \"c:\\\\Adrovez\\\\DevAzure\\\\gymgo-saas\" -Directory)",
       "Bash(dotnet build *)",
-      "Read(//c/Users/alexi/.claude/projects/c--Adrovez-DevAzure-gymgo-saas/memory/**)"
+      "Read(//c/Users/alexi/.claude/projects/c--Adrovez-DevAzure-gymgo-saas/memory/**)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Adrovez\\\\DevAzure\\\\gymgo-saas\\\\frontend\\\\gymgo-app\\\\src\\\\app\\\\features\\\\\" -Recurse -Force | Select-Object FullName | Sort-Object FullName)"
     ],
     "additionalDirectories": [
       "c:\\Users\\alexi\\.claude\\projects\\c--Adrovez-DevAzure-gymgo-saas\\memory"

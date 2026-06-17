@@ -82,16 +82,9 @@ public static class GymEntryEndpoints
 
 // ── Request bodies ─────────────────────────────────────────────────────────────
 
-/// <summary>
-/// Cuerpo del request para registrar el ingreso de un socio.
-/// </summary>
+/// <summary>Cuerpo del request para registrar el ingreso de un socio.</summary>
 public sealed record RegisterGymEntryRequest(
-    /// <summary>Id del socio que ingresa al gimnasio.</summary>
-    Guid MemberId,
-
-    /// <summary>Método de ingreso: 0 = Manual (default), 1 = QR, 2 = Badge.</summary>
-    GymEntryMethod? Method,
-
-    /// <summary>Observaciones opcionales de la recepcionista.</summary>
-    string? Notes
+    Guid            MemberId,  // Id del socio que ingresa al gimnasio.
+    GymEntryMethod? Method,    // 0=Manual (default), 1=QR, 2=Badge.
+    string?         Notes      // Observaciones opcionales de la recepcionista.
 );

@@ -21,14 +21,14 @@
   @if (log(); as log) {
 
     <!-- ═══════════════════════════════════════════════════════════════
-         1. CABECERA DE SESIÓN — compact con meta chips
+         1. CABECERA DE SESIÓN
     ════════════════════════════════════════════════════════════════════ -->
     <div class="card p-4">
       <div class="flex items-start gap-3">
-        <a routerLink="/app/workout-logs"
+        <a [routerLink]="['/app/workout-plans', log.workoutPlanId]"
            class="btn btn-ghost btn-sm shrink-0"
            style="padding-inline: 0.5rem; min-height: 2rem"
-           aria-label="Volver al listado">
+           aria-label="Volver al plan">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
           </svg>
@@ -36,7 +36,7 @@
 
         <div class="flex-1 min-w-0">
           <h1 class="font-bold leading-tight text-base truncate" style="color: var(--color-foreground)">
-            @if (log.title) { {{ log.title }} } @else { Sesión del {{ formatDate(log.date) }} }
+            Sesión — {{ log.dayOfWeekName }}
           </h1>
 
           <div class="flex flex-wrap gap-1.5 mt-1.5">
@@ -63,7 +63,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════
-         2. BARRA DE RESUMEN — 4 métricas de la sesión
+         2. BARRA DE RESUMEN
     ════════════════════════════════════════════════════════════════════ -->
     <div class="grid grid-cols-4 gap-2">
       <div class="card text-center shadow-none" style="padding: 0.625rem 0.5rem">
@@ -105,19 +105,19 @@
 
     <!-- Separador de sección -->
     <div class="flex items-center gap-2" style="color: var(--color-muted-fg)">
-      <span class="text-xs font-bold uppercase tracking-widest">Ejercicios</span>
+      <span class="text-xs font-bold uppercase tracking-widest">Ejercicios registrados</span>
       <div class="flex-1 h-px" style="background: var(--color-border)"></div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════
-         3. TARJETAS DE EJERCICIO — compactas, expanden para editar
+         3. TARJETAS DE EJERCICIO
     ════════════════════════════════════════════════════════════════════ -->
     @for (exercise of log.exercises; track exercise.id; let i = $index) {
 
       <div class="card p-0 overflow-hidden transition-all"
            [class.wl-ex-open]="editingId() === exercise.id">
 
-        <!-- ── Cabecera de la tarjeta (siempre visible) ────────────────── -->
+        <!-- Cabecera de la tarjeta -->
         <div class="flex items-center gap-2.5 px-3.5 py-2.5"
              [class.cursor-pointer]="isDraft"
              (click)="isDraft && toggleExCard(exercise)">
@@ -133,33 +133,36 @@
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="text-sm font-semibold" style="color: var(--color-foreground)">{{ exercise.exerciseName }}</span>
               <span [class]="muscleGroupBadgeClass(exercise.muscleGroup)">{{ exercise.muscleGroupName }}</span>
+              @if (exercise.isExtra) {
+                <span class="badge" style="background: var(--color-warning-subtle, #fef3c7); color: #92400e; border-color: #fde68a">Extra</span>
+              }
             </div>
 
             <div class="flex gap-1.5 mt-0.5 flex-wrap">
-              @if (exercise.sets) {
+              @if (exercise.actualSets) {
                 <span class="metric-chip">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 18l4-5 4 5M8 6l4 5 4-5"/>
                   </svg>
-                  @if (exercise.reps) { {{ exercise.sets }} × {{ exercise.reps }} }
-                  @else               { {{ exercise.sets }} series }
+                  @if (exercise.actualReps) { {{ exercise.actualSets }} × {{ exercise.actualReps }} }
+                  @else                     { {{ exercise.actualSets }} series }
                 </span>
               }
-              @if (exercise.weightKg != null) {
-                <span class="metric-chip">{{ exercise.weightKg | number:'1.0-2' }} kg</span>
+              @if (exercise.actualWeightKg != null) {
+                <span class="metric-chip">{{ exercise.actualWeightKg | number:'1.0-2' }} kg</span>
               }
-              @if (exercise.durationSeconds != null) {
+              @if (exercise.actualDurationMinutes != null) {
                 <span class="metric-chip">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
-                  {{ formatDuration(exercise.durationSeconds) }}
+                  {{ formatDuration(exercise.actualDurationMinutes) }}
                 </span>
               }
-              @if (exercise.distanceMeters != null) {
-                <span class="metric-chip">{{ exercise.distanceMeters | number:'1.0-0' }} m</span>
+              @if (exercise.actualDistanceMeters != null) {
+                <span class="metric-chip">{{ exercise.actualDistanceMeters | number:'1.0-0' }} m</span>
               }
-              @if (!exercise.sets && exercise.weightKg == null && exercise.durationSeconds == null && exercise.distanceMeters == null) {
+              @if (!exercise.actualSets && exercise.actualWeightKg == null && exercise.actualDurationMinutes == null && exercise.actualDistanceMeters == null) {
                 <span class="text-xs" style="color: var(--color-muted-fg)">Sin métricas</span>
               }
             </div>
@@ -178,7 +181,6 @@
               </button>
             </div>
 
-            <!-- Chevron expansión -->
             <span class="shrink-0 transition-transform duration-200"
                   [style.transform]="editingId() === exercise.id ? 'rotate(180deg)' : 'rotate(0deg)'"
                   style="color: var(--color-border)">
@@ -194,11 +196,10 @@
           <p class="px-3.5 pb-2 text-xs" style="color: var(--color-muted-fg)">📝 {{ exercise.notes }}</p>
         }
 
-        <!-- ── Formulario de edición (expandido) ───────────────────────── -->
+        <!-- Formulario de edición -->
         @if (editingId() === exercise.id) {
           <div class="px-3.5 pb-3.5" style="border-top: 1px solid var(--color-border)">
 
-            <!-- Selector de tipo -->
             <div class="wl-type-tabs mt-3 mb-3">
               <button type="button" class="wl-type-tab" [class.active]="editFormType() === 'strength'"
                       (click)="setEditType('strength')">
@@ -225,7 +226,6 @@
 
             <form [formGroup]="editForm" (ngSubmit)="onUpdateExercise(exercise.id)" novalidate class="space-y-3">
 
-              <!-- Nombre + Músculo -->
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="form-label">Ejercicio <span style="color: var(--color-error)">*</span></label>
@@ -245,20 +245,19 @@
                 </div>
               </div>
 
-              <!-- Campos condicionales por tipo -->
               @if (editFormType() === 'strength') {
                 <div class="grid grid-cols-3 gap-3">
                   <div>
                     <label class="form-label">Series</label>
-                    <input type="number" formControlName="sets" min="1" class="input w-full" placeholder="4"/>
+                    <input type="number" formControlName="actualSets" min="1" class="input w-full" placeholder="4"/>
                   </div>
                   <div>
                     <label class="form-label">Reps</label>
-                    <input type="number" formControlName="reps" min="1" class="input w-full" placeholder="10"/>
+                    <input type="number" formControlName="actualReps" min="1" class="input w-full" placeholder="10"/>
                   </div>
                   <div>
                     <label class="form-label">Peso (kg)</label>
-                    <input type="number" formControlName="weightKg" min="0" step="0.5" class="input w-full" placeholder="60"/>
+                    <input type="number" formControlName="actualWeightKg" min="0" step="0.5" class="input w-full" placeholder="60"/>
                   </div>
                 </div>
               }
@@ -266,12 +265,12 @@
               @if (editFormType() === 'cardio') {
                 <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="form-label">Duración (seg)</label>
-                    <input type="number" formControlName="durationSeconds" min="1" class="input w-full" placeholder="1200"/>
+                    <label class="form-label">Duración (min)</label>
+                    <input type="number" formControlName="actualDurationMinutes" min="1" class="input w-full" placeholder="30"/>
                   </div>
                   <div>
                     <label class="form-label">Distancia (m)</label>
-                    <input type="number" formControlName="distanceMeters" min="0" class="input w-full" placeholder="2000"/>
+                    <input type="number" formControlName="actualDistanceMeters" min="0" class="input w-full" placeholder="2000"/>
                   </div>
                 </div>
               }
@@ -280,23 +279,21 @@
                 <div class="grid grid-cols-2 gap-3">
                   <div>
                     <label class="form-label">Series</label>
-                    <input type="number" formControlName="sets" min="1" class="input w-full" placeholder="3"/>
+                    <input type="number" formControlName="actualSets" min="1" class="input w-full" placeholder="3"/>
                   </div>
                   <div>
-                    <label class="form-label">Duración/serie (seg)</label>
-                    <input type="number" formControlName="durationSeconds" min="1" class="input w-full" placeholder="60"/>
+                    <label class="form-label">Duración/serie (min)</label>
+                    <input type="number" formControlName="actualDurationMinutes" min="1" class="input w-full" placeholder="1"/>
                   </div>
                 </div>
               }
 
-              <!-- Notas -->
               <div>
                 <label class="form-label">Notas <span class="text-xs font-normal" style="color: var(--color-muted-fg)">(opcional)</span></label>
                 <input type="text" formControlName="notes" class="input w-full"
                        placeholder="Ej: pausa larga, grip neutro, último set al fallo…" maxlength="500"/>
               </div>
 
-              <!-- Acciones -->
               <div class="flex justify-end gap-2 pt-1" style="border-top: 1px solid var(--color-border)">
                 <button type="button" class="btn btn-ghost btn-sm" (click)="cancelEdit()">Cancelar</button>
                 <button type="submit" class="btn btn-primary btn-sm" [disabled]="savingExercise()">
@@ -343,16 +340,14 @@
     }
 
     <!-- ═══════════════════════════════════════════════════════════════
-         4. PANEL AGREGAR EJERCICIO — quick-add expandible
+         4. PANEL AGREGAR EJERCICIO EXTRA
     ════════════════════════════════════════════════════════════════════ -->
     @if (isDraft) {
       <div class="card p-0 overflow-hidden transition-all"
            [class.wl-ex-open]="showAddForm()"
            [style.border-style]="showAddForm() ? 'solid' : 'dashed'">
 
-        <!-- Trigger (click para abrir/cerrar) -->
         <div class="flex items-center gap-2 px-4 py-3 cursor-pointer select-none font-medium text-sm"
-             style="color: var(--color-muted-fg)"
              [style.color]="showAddForm() ? 'var(--color-foreground)' : 'var(--color-muted-fg)'"
              (click)="toggleAddForm()">
           @if (!showAddForm()) {
@@ -361,7 +356,7 @@
               <line x1="12" y1="8" x2="12" y2="16" stroke-width="2"/>
               <line x1="8" y1="12" x2="16" y2="12" stroke-width="2"/>
             </svg>
-            Agregar ejercicio
+            Agregar ejercicio extra
           } @else {
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" stroke-width="2"/>
@@ -371,11 +366,9 @@
           }
         </div>
 
-        <!-- Formulario de agregar (expandido) -->
         @if (showAddForm()) {
           <div class="px-3.5 pb-3.5" style="border-top: 1px solid var(--color-border)">
 
-            <!-- Selector de tipo -->
             <div class="wl-type-tabs mt-3 mb-3">
               <button type="button" class="wl-type-tab" [class.active]="addFormType() === 'strength'"
                       (click)="setAddType('strength')">
@@ -402,7 +395,6 @@
 
             <form [formGroup]="addForm" (ngSubmit)="onAddExercise()" novalidate class="space-y-3">
 
-              <!-- Nombre + Músculo -->
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="form-label" for="add-name">Ejercicio <span style="color: var(--color-error)">*</span></label>
@@ -423,20 +415,19 @@
                 </div>
               </div>
 
-              <!-- Campos condicionales por tipo -->
               @if (addFormType() === 'strength') {
                 <div class="grid grid-cols-3 gap-3">
                   <div>
                     <label class="form-label" for="add-sets">Series</label>
-                    <input id="add-sets" type="number" formControlName="sets" min="1" class="input w-full" placeholder="4"/>
+                    <input id="add-sets" type="number" formControlName="actualSets" min="1" class="input w-full" placeholder="4"/>
                   </div>
                   <div>
                     <label class="form-label" for="add-reps">Reps</label>
-                    <input id="add-reps" type="number" formControlName="reps" min="1" class="input w-full" placeholder="10"/>
+                    <input id="add-reps" type="number" formControlName="actualReps" min="1" class="input w-full" placeholder="10"/>
                   </div>
                   <div>
                     <label class="form-label" for="add-weight">Peso (kg)</label>
-                    <input id="add-weight" type="number" formControlName="weightKg" min="0" step="0.5" class="input w-full" placeholder="60"/>
+                    <input id="add-weight" type="number" formControlName="actualWeightKg" min="0" step="0.5" class="input w-full" placeholder="60"/>
                   </div>
                 </div>
               }
@@ -444,12 +435,12 @@
               @if (addFormType() === 'cardio') {
                 <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="form-label" for="add-dur">Duración (seg)</label>
-                    <input id="add-dur" type="number" formControlName="durationSeconds" min="1" class="input w-full" placeholder="1200"/>
+                    <label class="form-label" for="add-dur">Duración (min)</label>
+                    <input id="add-dur" type="number" formControlName="actualDurationMinutes" min="1" class="input w-full" placeholder="30"/>
                   </div>
                   <div>
                     <label class="form-label" for="add-dist">Distancia (m)</label>
-                    <input id="add-dist" type="number" formControlName="distanceMeters" min="0" class="input w-full" placeholder="2000"/>
+                    <input id="add-dist" type="number" formControlName="actualDistanceMeters" min="0" class="input w-full" placeholder="2000"/>
                   </div>
                 </div>
               }
@@ -458,23 +449,21 @@
                 <div class="grid grid-cols-2 gap-3">
                   <div>
                     <label class="form-label" for="add-timed-sets">Series</label>
-                    <input id="add-timed-sets" type="number" formControlName="sets" min="1" class="input w-full" placeholder="3"/>
+                    <input id="add-timed-sets" type="number" formControlName="actualSets" min="1" class="input w-full" placeholder="3"/>
                   </div>
                   <div>
-                    <label class="form-label" for="add-timed-dur">Duración/serie (seg)</label>
-                    <input id="add-timed-dur" type="number" formControlName="durationSeconds" min="1" class="input w-full" placeholder="60"/>
+                    <label class="form-label" for="add-timed-dur">Duración/serie (min)</label>
+                    <input id="add-timed-dur" type="number" formControlName="actualDurationMinutes" min="1" class="input w-full" placeholder="1"/>
                   </div>
                 </div>
               }
 
-              <!-- Notas -->
               <div>
                 <label class="form-label" for="add-notes">Notas <span class="text-xs font-normal" style="color: var(--color-muted-fg)">(opcional)</span></label>
                 <input id="add-notes" type="text" formControlName="notes" class="input w-full"
                        placeholder="Ej: con pausa en fondo, ROM completo…" maxlength="500"/>
               </div>
 
-              <!-- Acciones -->
               <div class="flex justify-end gap-2 pt-1" style="border-top: 1px solid var(--color-border)">
                 <button type="button" class="btn btn-ghost btn-sm" (click)="toggleAddForm()">Cancelar</button>
                 <button type="submit" class="btn btn-primary btn-sm" [disabled]="savingExercise()">
@@ -503,7 +492,7 @@
     </p>
 
     <!-- ═══════════════════════════════════════════════════════════════
-         5. FOOTER FIJO — acciones principales siempre visibles
+         5. FOOTER FIJO
     ════════════════════════════════════════════════════════════════════ -->
     @if (isDraft) {
       <div class="fixed bottom-0 left-0 right-0 z-50 flex gap-3 p-3"

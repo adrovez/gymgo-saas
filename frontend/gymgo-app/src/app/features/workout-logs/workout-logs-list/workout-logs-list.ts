@@ -9,6 +9,8 @@ import {
   WORKOUT_STATUS_LABELS,
 } from '../models/workout-log.models';
 
+// historial de sesiones: el punto de entrada principal es /app/workout-plans
+
 @Component({
   selector: 'app-workout-logs-list',
   standalone: true,
@@ -91,13 +93,13 @@ export class WorkoutLogsListComponent implements OnInit {
     this.router.navigate(['/app/workout-logs', log.id]);
   }
 
-  newLog(): void {
-    const url = this.selectedMemberId
-      ? ['/app/workout-logs/new']
-      : ['/app/workout-logs/new'];
-    this.router.navigate(url, {
-      queryParams: this.selectedMemberId ? { memberId: this.selectedMemberId } : {},
-    });
+  viewPlan(log: WorkoutLogSummaryDto, event: Event): void {
+    event.stopPropagation();
+    this.router.navigate(['/app/workout-plans', log.workoutPlanId]);
+  }
+
+  goToPlans(): void {
+    this.router.navigate(['/app/workout-plans']);
   }
 
   statusBadgeClass(status: WorkoutLogStatus): string {

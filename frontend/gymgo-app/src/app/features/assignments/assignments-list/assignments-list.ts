@@ -29,22 +29,23 @@ export class AssignmentsListComponent implements OnInit {
   private readonly assignmentService = inject(MembershipAssignmentService);
   private readonly dialog            = inject(DialogService);
 
-  // ── Membresías morosas ────────────────────────────────────────────────────
-  readonly overdueLoading = signal(false);
-  readonly overdueError   = signal<string | null>(null);
-  readonly overdue        = signal<MembershipAssignmentSummaryDto[]>([]);
+  // ── Membresías por vencer / vencidas ─────────────────────────────────────
+  readonly expiringLoading    = signal(false);
+  readonly expiringError      = signal<string | null>(null);
+  readonly expiringSoon       = signal<MembershipAssignmentSummaryDto[]>([]);
+  readonly recentlyExpired    = signal<MembershipAssignmentSummaryDto[]>([]);
 
   // ── Búsqueda ──────────────────────────────────────────────────────────────
   readonly searchQuery    = signal('');
   readonly searchLoading  = signal(false);
   readonly searchResults  = signal<MembershipAssignmentSummaryDto[]>([]);
-  readonly searchTouched  = signal(false);   // true tras la primera búsqueda
+  readonly searchTouched  = signal(false);
 
   readonly hasSearchQuery = computed(() => this.searchQuery().trim().length >= 2);
 
   // ── Constantes ────────────────────────────────────────────────────────────
-  readonly AssignmentStatus       = AssignmentStatus;
-  readonly PaymentStatus          = PaymentStatus;
+  readonly AssignmentStatus         = AssignmentStatus;
+  readonly PaymentStatus            = PaymentStatus;
   readonly ASSIGNMENT_STATUS_LABELS = ASSIGNMENT_STATUS_LABELS;
 
   private readonly searchSubject = new Subject<string>();
@@ -56,23 +57,24 @@ export class AssignmentsListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadOverdue();
+    this.loadExpiring();
   }
 
-  // ── Morosas ───────────────────────────────────────────────────────────────
+  // ── Por vencer / vencidas ─────────────────────────────────────────────────
 
-  loadOverdue(): void {
-    this.overdueLoading.set(true);
-    this.overdueError.set(null);
+  loadExpiring(): void {
+    this.expiringLoading.set(true);
+    this.expiringError.set(null);
 
-    this.assignmentService.getOverdueAssignments().subscribe({
+    this.assignmentService.getExpiringAssignments().subscribe({
       next: (result) => {
-        this.overdue.set(result);
-        this.overdueLoading.set(false);
+        this.expiringSoon.set(result.expiringSoon);
+        this.recentlyExpired.set(result.recentlyExpired);
+        this.expiringLoading.set(false);
       },
       error: () => {
-        this.overdueError.set('No se pudo cargar el listado de membresías morosas.');
-        this.overdueLoading.set(false);
+        this.expiringError.set('No se pudo cargar el listado de membresías.');
+        this.expiringLoading.set(false);
       },
     });
   }
@@ -123,8 +125,7 @@ export class AssignmentsListComponent implements OnInit {
     this.assignmentService.registerPayment(assignment.id).subscribe({
       next: () => {
         this.dialog.toast('Pago registrado exitosamente', 'success');
-        this.loadOverdue();
-        // Refrescar resultados de búsqueda si hay una búsqueda activa
+        this.loadExpiring();
         if (this.hasSearchQuery()) {
           this.doSearch(this.searchQuery().trim());
         }
@@ -144,7 +145,7 @@ export class AssignmentsListComponent implements OnInit {
     this.assignmentService.cancelAssignment(assignment.id).subscribe({
       next: () => {
         this.dialog.toast('Membresía cancelada', 'success');
-        this.loadOverdue();
+        this.loadExpiring();
         if (this.hasSearchQuery()) {
           this.doSearch(this.searchQuery().trim());
         }
@@ -157,6 +158,24 @@ export class AssignmentsListComponent implements OnInit {
 
   formatAmount(amount: number): string {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
+  }
+
+  /** Días hasta el vencimiento (desde hoy). Retorna 0 si ya venció. */
+  daysUntilExpiry(endDate: string): number {
+    const today  = new Date();
+    today.setHours(0, 0, 0, 0);
+    const end    = new Date(endDate + 'T00:00:00');
+    const diff   = Math.ceil((end.getTime() - today.getTime()) / 86_400_000);
+    return Math.max(diff, 0);
+  }
+
+  /** Días desde que venció (desde hoy). Retorna 0 si aún no venció. */
+  daysSinceExpiry(endDate: string): number {
+    const today  = new Date();
+    today.setHours(0, 0, 0, 0);
+    const end    = new Date(endDate + 'T00:00:00');
+    const diff   = Math.ceil((today.getTime() - end.getTime()) / 86_400_000);
+    return Math.max(diff, 0);
   }
 
   statusBadgeStyle(status: AssignmentStatus): string {

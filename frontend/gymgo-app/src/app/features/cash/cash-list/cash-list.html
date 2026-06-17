@@ -1,0 +1,330 @@
+<!-- Cash list page -->
+<div class="p-6 space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Caja</h1>
+      <p class="page-description">Registro de ingresos y egresos del gimnasio</p>
+    </div>
+    <a routerLink="/app/cash/new" class="btn btn-primary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Registrar movimiento
+    </a>
+  </div>
+
+  <!-- ── Filtros ──────────────────────────────────────────────────────────── -->
+  <div class="card p-4">
+    <div class="flex flex-wrap items-end gap-3">
+
+      <div class="flex flex-col gap-1 min-w-[140px]">
+        <label for="filter-from" class="text-xs font-medium" style="color: var(--color-muted-fg)">Desde</label>
+        <input
+          id="filter-from"
+          type="date"
+          class="form-input"
+          [value]="filterFrom()"
+          (change)="filterFrom.set($any($event.target).value)"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1 min-w-[140px]">
+        <label for="filter-to" class="text-xs font-medium" style="color: var(--color-muted-fg)">Hasta</label>
+        <input
+          id="filter-to"
+          type="date"
+          class="form-input"
+          [value]="filterTo()"
+          (change)="filterTo.set($any($event.target).value)"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1 min-w-[140px]">
+        <label for="filter-type" class="text-xs font-medium" style="color: var(--color-muted-fg)">Tipo</label>
+        <select
+          id="filter-type"
+          class="form-input"
+          [value]="filterType()"
+          (change)="filterType.set($any($event.target).value)"
+        >
+          <option value="">Todos</option>
+          <option value="0">Ingresos</option>
+          <option value="1">Egresos</option>
+        </select>
+      </div>
+
+      <button type="button" class="btn btn-primary" (click)="applyFilters()">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
+        </svg>
+        Filtrar
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── Resumen del período ──────────────────────────────────────────────── -->
+  @if (summaryLoading()) {
+    <div class="card p-6 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+      <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+      <span class="text-sm">Calculando resumen...</span>
+    </div>
+  } @else if (summary()) {
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+      <!-- Ingresos -->
+      <div class="card p-5 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+             style="background: color-mix(in srgb, var(--color-success, #16a34a) 12%, transparent)">
+          <svg class="w-5 h-5" style="color: var(--color-success, #16a34a)"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Ingresos</p>
+          <p class="text-xl font-bold" style="color: var(--color-success, #16a34a); font-variant-numeric: tabular-nums">
+            {{ formatAmount(summary()!.totalIncome) }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Egresos -->
+      <div class="card p-5 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+             style="background: color-mix(in srgb, var(--color-error) 12%, transparent)">
+          <svg class="w-5 h-5" style="color: var(--color-error)"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Egresos</p>
+          <p class="text-xl font-bold" style="color: var(--color-error); font-variant-numeric: tabular-nums">
+            {{ formatAmount(summary()!.totalExpenses) }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Balance -->
+      <div class="card p-5 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+             style="background: color-mix(in srgb, var(--color-primary) 12%, transparent)">
+          <svg class="w-5 h-5" style="color: var(--color-primary)"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Balance neto</p>
+          <p class="text-xl font-bold" style="color: var(--color-primary); font-variant-numeric: tabular-nums">
+            {{ formatAmount(summary()!.netBalance) }}
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Desglose por método de pago -->
+    @if (summary()!.transactionCount > 0) {
+      <div class="card p-4">
+        <p class="text-sm font-semibold mb-3" style="color: var(--color-foreground)">
+          Desglose por método de pago
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          @for (entry of summary()!.incomeByPaymentMethod | keyvalue; track entry.key) {
+            <div class="flex items-center justify-between rounded-lg px-3 py-2"
+                 style="background: var(--color-surface-raised, var(--color-border))">
+              <span class="text-sm" style="color: var(--color-muted-fg)">{{ entry.key }}</span>
+              <span class="text-sm font-semibold" style="color: var(--color-success, #16a34a); font-variant-numeric: tabular-nums">
+                +{{ formatAmount(entry.value) }}
+              </span>
+            </div>
+          }
+          @for (entry of summary()!.expensesByPaymentMethod | keyvalue; track entry.key) {
+            <div class="flex items-center justify-between rounded-lg px-3 py-2"
+                 style="background: var(--color-surface-raised, var(--color-border))">
+              <span class="text-sm" style="color: var(--color-muted-fg)">{{ entry.key }}</span>
+              <span class="text-sm font-semibold" style="color: var(--color-error); font-variant-numeric: tabular-nums">
+                −{{ formatAmount(entry.value) }}
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ── Error banner ──────────────────────────────────────────────────────── -->
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- ── Tabla de movimientos ─────────────────────────────────────────────── -->
+  <section aria-labelledby="movements-heading">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 id="movements-heading" class="text-base font-semibold" style="color: var(--color-foreground)">
+          Movimientos
+        </h2>
+        @if (!loading() && transactions().length > 0) {
+          <p class="text-sm mt-0.5" style="color: var(--color-muted-fg)">
+            {{ activeCount() }} movimiento(s) en el período seleccionado
+          </p>
+        }
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" (click)="load()" aria-label="Recargar">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Actualizar
+      </button>
+    </div>
+
+    <div class="card p-0 overflow-hidden">
+
+      @if (loading()) {
+        <div class="p-8 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+          <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+          <span class="text-sm">Cargando movimientos...</span>
+        </div>
+
+      } @else if (transactions().length === 0) {
+        <div class="p-10 flex flex-col items-center gap-3 text-center">
+          <svg class="w-10 h-10" style="color: var(--color-muted-fg)" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <p class="text-sm font-medium" style="color: var(--color-foreground)">Sin movimientos</p>
+          <p class="text-sm" style="color: var(--color-muted-fg)">
+            No hay movimientos en el período seleccionado.
+          </p>
+          <a routerLink="/app/cash/new" class="btn btn-primary btn-sm mt-1">Registrar movimiento</a>
+        </div>
+
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Concepto</th>
+                <th>Socio</th>
+                <th class="cell-center">Método</th>
+                <th class="cell-center">Tipo</th>
+                <th class="cell-right">Monto</th>
+                <th class="cell-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (tx of transactions(); track tx.id) {
+                <tr [style]="tx.isVoided ? 'opacity: 0.5' : ''">
+
+                  <!-- Fecha -->
+                  <td style="font-size: 0.8125rem; white-space: nowrap; color: var(--color-muted-fg)">
+                    {{ formatDate(tx.date) }}
+                  </td>
+
+                  <!-- Concepto + descripción -->
+                  <td>
+                    <span class="block text-sm font-medium" style="color: var(--color-foreground)">
+                      {{ CONCEPT_LABELS[tx.concept] }}
+                    </span>
+                    @if (tx.description) {
+                      <span class="block text-xs" style="color: var(--color-muted-fg)">
+                        {{ tx.description }}
+                      </span>
+                    }
+                    @if (tx.isVoided) {
+                      <span class="block text-xs font-medium" style="color: var(--color-error)">
+                        ANULADO{{ tx.voidReason ? ' — ' + tx.voidReason : '' }}
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Socio -->
+                  <td>
+                    @if (tx.memberFullName) {
+                      <span class="text-sm" style="color: var(--color-foreground)">
+                        {{ tx.memberFullName }}
+                      </span>
+                    } @else {
+                      <span style="color: var(--color-muted-fg)">—</span>
+                    }
+                  </td>
+
+                  <!-- Método de pago -->
+                  <td class="cell-center">
+                    <span class="badge">{{ PAYMENT_METHOD_LABELS[tx.paymentMethod] }}</span>
+                  </td>
+
+                  <!-- Tipo -->
+                  <td class="cell-center">
+                    <span [class]="typeBadgeClass(tx)">{{ typeLabel(tx.type) }}</span>
+                  </td>
+
+                  <!-- Monto -->
+                  <td class="cell-right font-medium" style="font-variant-numeric: tabular-nums"
+                      [style.color]="amountColor(tx)">
+                    {{ amountSign(tx) }}{{ formatAmount(tx.amount) }}
+                  </td>
+
+                  <!-- Acciones -->
+                  <td class="cell-actions">
+                    @if (!tx.isVoided) {
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        [disabled]="voidingId() === tx.id"
+                        (click)="voidTransaction(tx)"
+                        title="Anular movimiento"
+                        aria-label="Anular movimiento"
+                        style="color: var(--color-error)"
+                      >
+                        @if (voidingId() === tx.id) {
+                          <span class="spinner"
+                                style="width:1rem; height:1rem;
+                                       border-top-color: var(--color-error);
+                                       border-color: var(--color-border)">
+                          </span>
+                        } @else {
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                          </svg>
+                        }
+                      </button>
+                    }
+                  </td>
+
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer de tabla -->
+        <div class="flex items-center px-4 py-3"
+             style="border-top: 1px solid var(--color-border); color: var(--color-muted-fg); font-size: 0.8125rem">
+          <span>{{ transactions().length }} movimiento(s) — {{ activeCount() }} activo(s)</span>
+        </div>
+      }
+
+    </div>
+  </section>
+
+</div>

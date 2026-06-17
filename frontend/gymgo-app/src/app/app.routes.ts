@@ -180,6 +180,39 @@ export const routes: Routes = [
       },
       // ── Rutinas de entrenamiento ───────────────────────────────────────
       {
+        path: 'workout-plans',
+        loadComponent: () =>
+          import('./features/workout-plans/workout-plans-list/workout-plans-list').then(
+            (m) => m.WorkoutPlansListComponent,
+          ),
+      },
+      {
+        path: 'workout-plans/new',
+        loadComponent: () =>
+          import('./features/workout-plans/workout-plan-create/workout-plan-create').then(
+            (m) => m.WorkoutPlanCreateComponent,
+          ),
+      },
+      {
+        path: 'workout-plans/:id',
+        loadComponent: () =>
+          import('./features/workout-plans/workout-plan-detail/workout-plan-detail').then(
+            (m) => m.WorkoutPlanDetailComponent,
+          ),
+      },
+      // ── Caja ──────────────────────────────────────────────────────────────
+      {
+        path: 'cash',
+        loadComponent: () =>
+          import('./features/cash/cash-list/cash-list').then((m) => m.CashListComponent),
+      },
+      {
+        path: 'cash/new',
+        loadComponent: () =>
+          import('./features/cash/cash-form/cash-form').then((m) => m.CashFormComponent),
+      },
+      // ── Historial de sesiones ──────────────────────────────────────────
+      {
         path: 'workout-logs',
         loadComponent: () =>
           import('./features/workout-logs/workout-logs-list/workout-logs-list').then(

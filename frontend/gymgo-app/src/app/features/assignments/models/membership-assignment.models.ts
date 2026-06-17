@@ -60,6 +60,12 @@ export interface MembershipAssignmentSummaryDto {
   paymentStatusLabel: string;
 }
 
+/** Respuesta de GET /assignments/expiring */
+export interface ExpiringAssignmentsDto {
+  expiringSoon:    MembershipAssignmentSummaryDto[];
+  recentlyExpired: MembershipAssignmentSummaryDto[];
+}
+
 /** Body para POST /members/{memberId}/assignments */
 export interface AssignMembershipPlanRequest {
   membershipPlanId: string;

@@ -1,12 +1,11 @@
 using GymGo.Application.MembershipAssignments.Commands.AssignMembershipPlan;
 using GymGo.Application.MembershipAssignments.Commands.CancelAssignment;
 using GymGo.Application.MembershipAssignments.Commands.FreezeMembership;
-using GymGo.Application.MembershipAssignments.Commands.MarkAssignmentOverdue;
 using GymGo.Application.MembershipAssignments.Commands.RegisterPayment;
 using GymGo.Application.MembershipAssignments.Commands.UnfreezeMembership;
 using GymGo.Application.MembershipAssignments.Queries.GetActiveAssignment;
+using GymGo.Application.MembershipAssignments.Queries.GetExpiringAssignments;
 using GymGo.Application.MembershipAssignments.Queries.GetMemberAssignments;
-using GymGo.Application.MembershipAssignments.Queries.GetOverdueAssignments;
 using GymGo.Application.MembershipAssignments.Queries.SearchMembershipAssignments;
 using MediatR;
 
@@ -78,22 +77,6 @@ public static class MembershipAssignmentEndpoints
             .ProducesProblem(422)
             .ProducesProblem(401);
 
-        // ── Marcar como morosa ───────────────────────────────────────────────
-        app.MapPatch("/api/v1/assignments/{id:guid}/overdue",
-            async (Guid id, ISender sender, CancellationToken ct) =>
-            {
-                await sender.Send(new MarkAssignmentOverdueCommand(id), ct);
-                return Results.NoContent();
-            })
-            .WithTags("MembershipAssignments")
-            .WithSummary("Marcar membresía como morosa")
-            .WithDescription("Cambia el estado de pago a Overdue y marca al socio como Delinquent.")
-            .RequireAuthorization()
-            .Produces(204)
-            .ProducesProblem(404)
-            .ProducesProblem(422)
-            .ProducesProblem(401);
-
         // ── Cancelar membresía ───────────────────────────────────────────────
         app.MapPatch("/api/v1/assignments/{id:guid}/cancel",
             async (Guid id, ISender sender, CancellationToken ct) =>
@@ -159,15 +142,19 @@ public static class MembershipAssignmentEndpoints
             .Produces(200)
             .ProducesProblem(401);
 
-        // ── Listado de morosos del tenant ────────────────────────────────────
-        app.MapGet("/api/v1/assignments/overdue",
+        // ── Membresías por vencer y vencidas recientes ───────────────────────
+        // GET /api/v1/assignments/expiring
+        // Por vencer: endDate en los próximos 7 días.
+        // Vencidas recientes: endDate en los últimos 14 días.
+        // Filtra por fecha (no por status, ya que el status no se actualiza automáticamente).
+        app.MapGet("/api/v1/assignments/expiring",
             async (ISender sender, CancellationToken ct) =>
             {
-                var result = await sender.Send(new GetOverdueAssignmentsQuery(), ct);
+                var result = await sender.Send(new GetExpiringAssignmentsQuery(), ct);
                 return Results.Ok(result);
             })
             .WithTags("MembershipAssignments")
-            .WithSummary("Listado de membresías morosas")
+            .WithSummary("Membresías por vencer y vencidas recientemente")
             .RequireAuthorization()
             .Produces(200)
             .ProducesProblem(401);

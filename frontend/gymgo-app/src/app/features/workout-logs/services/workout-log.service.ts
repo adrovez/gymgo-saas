@@ -12,9 +12,10 @@ import {
 } from '../models/workout-log.models';
 
 export interface GetWorkoutLogsParams {
-  memberId: string;
-  from?:    string | null;
-  to?:      string | null;
+  memberId:       string;
+  workoutPlanId?: string | null;
+  from?:          string | null;
+  to?:            string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -22,11 +23,12 @@ export class WorkoutLogService {
   private readonly http   = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/workout-logs`;
 
-  /** GET /api/v1/workout-logs?memberId=...&from=...&to=... */
+  /** GET /api/v1/workout-logs?memberId=...&workoutPlanId=...&from=...&to=... */
   getLogs(params: GetWorkoutLogsParams): Observable<WorkoutLogSummaryDto[]> {
     let httpParams = new HttpParams().set('memberId', params.memberId);
-    if (params.from) httpParams = httpParams.set('from', params.from);
-    if (params.to)   httpParams = httpParams.set('to',   params.to);
+    if (params.workoutPlanId) httpParams = httpParams.set('workoutPlanId', params.workoutPlanId);
+    if (params.from)          httpParams = httpParams.set('from', params.from);
+    if (params.to)            httpParams = httpParams.set('to', params.to);
     return this.http.get<WorkoutLogSummaryDto[]>(this.apiUrl, { params: httpParams });
   }
 

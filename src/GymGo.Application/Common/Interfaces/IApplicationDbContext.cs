@@ -1,3 +1,4 @@
+using GymGo.Domain.Cash;
 using GymGo.Domain.ClassAttendances;
 using GymGo.Domain.ClassReservations;
 using GymGo.Domain.Equipments;
@@ -37,6 +38,7 @@ public interface IApplicationDbContext
     DbSet<WorkoutPlanExercise> WorkoutPlanExercises { get; }
     DbSet<WorkoutLog> WorkoutLogs { get; }
     DbSet<WorkoutLogExercise> WorkoutLogExercises { get; }
+    DbSet<CashTransaction> CashTransactions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

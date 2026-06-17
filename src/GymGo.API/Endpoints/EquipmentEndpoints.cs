@@ -140,16 +140,10 @@ public static class EquipmentEndpoints
 
 /// <summary>Cuerpo del request para crear o actualizar una máquina.</summary>
 public sealed record CreateEquipmentRequest(
-    /// <summary>Nombre de la máquina (obligatorio).</summary>
-    string    Name,
-    /// <summary>Marca del equipo.</summary>
-    string?   Brand,
-    /// <summary>Modelo del equipo.</summary>
-    string?   Model,
-    /// <summary>Número de serie del fabricante.</summary>
-    string?   SerialNumber,
-    /// <summary>Fecha de compra.</summary>
-    DateOnly? PurchaseDate,
-    /// <summary>URL de foto de la máquina.</summary>
-    string?   ImageUrl
+    string    Name,          // Nombre de la máquina (obligatorio).
+    string?   Brand,         // Marca del equipo.
+    string?   Model,         // Modelo del equipo.
+    string?   SerialNumber,  // Número de serie del fabricante.
+    DateOnly? PurchaseDate,  // Fecha de compra.
+    string?   ImageUrl       // URL de foto de la máquina.
 );

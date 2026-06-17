@@ -1,4 +1,5 @@
 using GymGo.Application.Common.Interfaces;
+using GymGo.Domain.Cash;
 using GymGo.Domain.ClassAttendances;
 using GymGo.Domain.ClassReservations;
 using GymGo.Domain.Equipments;
@@ -42,6 +43,7 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<WorkoutPlanExercise> WorkoutPlanExercises => Set<WorkoutPlanExercise>();
     public DbSet<WorkoutLog> WorkoutLogs => Set<WorkoutLog>();
     public DbSet<WorkoutLogExercise> WorkoutLogExercises => Set<WorkoutLogExercise>();
+    public DbSet<CashTransaction> CashTransactions => Set<CashTransaction>();
 
     /// <summary>
     /// EF Core trata los accesos a propiedades de instancia del DbContext
@@ -129,5 +131,9 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
 
         // WorkoutPlanDays/Exercises y WorkoutLogExercises: sin QueryFilter propio —
         // el aislamiento es transitivo a través del WorkoutPlan/WorkoutLog (cascade).
+
+        // CashTransactions: ITenantScoped (sin soft delete — se anulan con IsVoided).
+        modelBuilder.Entity<CashTransaction>().HasQueryFilter(t =>
+            !CurrentHasTenant || t.TenantId == CurrentTenantIdOrEmpty);
     }
 }

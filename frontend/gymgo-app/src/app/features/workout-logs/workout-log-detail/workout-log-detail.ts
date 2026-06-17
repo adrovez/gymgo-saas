@@ -46,41 +46,41 @@ export class WorkoutLogDetailComponent implements OnInit {
 
   // ── Métricas de sesión computadas ───────────────────────────────────────────
   readonly totalSeries = computed(() =>
-    this.log()?.exercises.reduce((s, e) => s + (e.sets ?? 0), 0) ?? 0
+    this.log()?.exercises.reduce((s, e) => s + (e.actualSets ?? 0), 0) ?? 0
   );
 
   readonly totalReps = computed(() =>
-    this.log()?.exercises.reduce((s, e) => s + ((e.sets ?? 0) * (e.reps ?? 0)), 0) ?? 0
+    this.log()?.exercises.reduce((s, e) => s + ((e.actualSets ?? 0) * (e.actualReps ?? 0)), 0) ?? 0
   );
 
   readonly maxWeight = computed(() => {
-    const weights = this.log()?.exercises.map(e => e.weightKg ?? 0) ?? [];
+    const weights = this.log()?.exercises.map(e => e.actualWeightKg ?? 0) ?? [];
     return weights.length > 0 ? Math.max(...weights) : 0;
   });
 
   // ── Formulario agregar ejercicio ─────────────────────────────────────────────
   readonly addForm = this.fb.nonNullable.group({
-    exerciseName:    ['', [Validators.required, Validators.maxLength(200)]],
-    muscleGroup:     [MuscleGroup.NotSpecified],
-    sets:            [null as number | null],
-    reps:            [null as number | null],
-    weightKg:        [null as number | null],
-    durationSeconds: [null as number | null],
-    distanceMeters:  [null as number | null],
-    notes:           [''],
+    exerciseName:          ['', [Validators.required, Validators.maxLength(200)]],
+    muscleGroup:           [MuscleGroup.NotSpecified],
+    actualSets:            [null as number | null],
+    actualReps:            [null as number | null],
+    actualWeightKg:        [null as number | null],
+    actualDurationMinutes: [null as number | null],
+    actualDistanceMeters:  [null as number | null],
+    notes:                 [''],
   });
 
   // ── Formulario editar ejercicio ──────────────────────────────────────────────
   readonly editForm = this.fb.nonNullable.group({
-    exerciseName:    ['', [Validators.required, Validators.maxLength(200)]],
-    muscleGroup:     [MuscleGroup.NotSpecified],
-    sortOrder:       [0],
-    sets:            [null as number | null],
-    reps:            [null as number | null],
-    weightKg:        [null as number | null],
-    durationSeconds: [null as number | null],
-    distanceMeters:  [null as number | null],
-    notes:           [''],
+    exerciseName:          ['', [Validators.required, Validators.maxLength(200)]],
+    muscleGroup:           [MuscleGroup.NotSpecified],
+    sortOrder:             [0],
+    actualSets:            [null as number | null],
+    actualReps:            [null as number | null],
+    actualWeightKg:        [null as number | null],
+    actualDurationMinutes: [null as number | null],
+    actualDistanceMeters:  [null as number | null],
+    notes:                 [''],
   });
 
   private logId!: string;
@@ -109,34 +109,33 @@ export class WorkoutLogDetailComponent implements OnInit {
     return `${d}/${m}/${y}`;
   }
 
-  formatDuration(seconds: number): string {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    if (min > 0 && sec > 0) return `${min}m ${sec}s`;
-    if (min > 0) return `${min} min`;
-    return `${sec}s`;
+  formatDuration(minutes: number): string {
+    if (minutes < 60) return `${minutes} min`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h}h ${m}min` : `${h}h`;
   }
 
   // ── Tipo de ejercicio ─────────────────────────────────────────────────────────
   private detectExerciseType(e: WorkoutLogExerciseDto): ExerciseType {
-    const hasStrength = e.weightKg != null || (e.sets != null && e.reps != null);
-    if (e.distanceMeters != null || (e.durationSeconds != null && !hasStrength)) return 'cardio';
-    if (e.durationSeconds != null && e.sets != null && !e.reps) return 'timed';
+    const hasStrength = e.actualWeightKg != null || (e.actualSets != null && e.actualReps != null);
+    if (e.actualDistanceMeters != null || (e.actualDurationMinutes != null && !hasStrength)) return 'cardio';
+    if (e.actualDurationMinutes != null && e.actualSets != null && !e.actualReps) return 'timed';
     return 'strength';
   }
 
   setAddType(type: ExerciseType): void {
     this.addFormType.set(type);
-    if (type === 'cardio')   this.addForm.patchValue({ sets: null, reps: null, weightKg: null });
-    if (type === 'strength') this.addForm.patchValue({ durationSeconds: null, distanceMeters: null });
-    if (type === 'timed')    this.addForm.patchValue({ reps: null, weightKg: null, distanceMeters: null });
+    if (type === 'cardio')   this.addForm.patchValue({ actualSets: null, actualReps: null, actualWeightKg: null });
+    if (type === 'strength') this.addForm.patchValue({ actualDurationMinutes: null, actualDistanceMeters: null });
+    if (type === 'timed')    this.addForm.patchValue({ actualReps: null, actualWeightKg: null, actualDistanceMeters: null });
   }
 
   setEditType(type: ExerciseType): void {
     this.editFormType.set(type);
-    if (type === 'cardio')   this.editForm.patchValue({ sets: null, reps: null, weightKg: null });
-    if (type === 'strength') this.editForm.patchValue({ durationSeconds: null, distanceMeters: null });
-    if (type === 'timed')    this.editForm.patchValue({ reps: null, weightKg: null, distanceMeters: null });
+    if (type === 'cardio')   this.editForm.patchValue({ actualSets: null, actualReps: null, actualWeightKg: null });
+    if (type === 'strength') this.editForm.patchValue({ actualDurationMinutes: null, actualDistanceMeters: null });
+    if (type === 'timed')    this.editForm.patchValue({ actualReps: null, actualWeightKg: null, actualDistanceMeters: null });
   }
 
   // ── Toggle expand/collapse de tarjeta de ejercicio ───────────────────────────
@@ -186,7 +185,12 @@ export class WorkoutLogDetailComponent implements OnInit {
       next: async () => {
         this.saving.set(false);
         await this.dialog.success('Sesión eliminada', '');
-        this.router.navigate(['/app/workout-logs']);
+        const planId = this.log()?.workoutPlanId;
+        if (planId) {
+          this.router.navigate(['/app/workout-plans', planId]);
+        } else {
+          this.router.navigate(['/app/workout-plans']);
+        }
       },
       error: () => {
         this.dialog.toast('No se pudo eliminar la sesión.', 'error');
@@ -221,14 +225,16 @@ export class WorkoutLogDetailComponent implements OnInit {
     this.exerciseError.set(null);
 
     this.workoutLogService.addExercise(this.logId, {
-      exerciseName:    raw.exerciseName.trim(),
-      muscleGroup:     Number(raw.muscleGroup) as MuscleGroup,
-      sets:            raw.sets    ? Number(raw.sets)            : null,
-      reps:            raw.reps    ? Number(raw.reps)            : null,
-      weightKg:        raw.weightKg        ? Number(raw.weightKg)        : null,
-      durationSeconds: raw.durationSeconds ? Number(raw.durationSeconds) : null,
-      distanceMeters:  raw.distanceMeters  ? Number(raw.distanceMeters)  : null,
-      notes:           raw.notes.trim() || null,
+      workoutPlanExerciseId: null,
+      isExtra:               true,
+      exerciseName:          raw.exerciseName.trim(),
+      muscleGroup:           Number(raw.muscleGroup) as MuscleGroup,
+      actualSets:            raw.actualSets            ? Number(raw.actualSets)            : null,
+      actualReps:            raw.actualReps            ? Number(raw.actualReps)            : null,
+      actualWeightKg:        raw.actualWeightKg        ? Number(raw.actualWeightKg)        : null,
+      actualDurationMinutes: raw.actualDurationMinutes ? Number(raw.actualDurationMinutes) : null,
+      actualDistanceMeters:  raw.actualDistanceMeters  ? Number(raw.actualDistanceMeters)  : null,
+      notes:                 raw.notes.trim() || null,
     }).subscribe({
       next: () => {
         this.savingExercise.set(false);
@@ -252,15 +258,15 @@ export class WorkoutLogDetailComponent implements OnInit {
     this.editFormType.set(this.detectExerciseType(exercise));
     this.exerciseError.set(null);
     this.editForm.patchValue({
-      exerciseName:    exercise.exerciseName,
-      muscleGroup:     exercise.muscleGroup,
-      sortOrder:       exercise.sortOrder,
-      sets:            exercise.sets,
-      reps:            exercise.reps,
-      weightKg:        exercise.weightKg,
-      durationSeconds: exercise.durationSeconds,
-      distanceMeters:  exercise.distanceMeters,
-      notes:           exercise.notes ?? '',
+      exerciseName:          exercise.exerciseName,
+      muscleGroup:           exercise.muscleGroup,
+      sortOrder:             exercise.sortOrder,
+      actualSets:            exercise.actualSets,
+      actualReps:            exercise.actualReps,
+      actualWeightKg:        exercise.actualWeightKg,
+      actualDurationMinutes: exercise.actualDurationMinutes,
+      actualDistanceMeters:  exercise.actualDistanceMeters,
+      notes:                 exercise.notes ?? '',
     });
   }
 
@@ -284,15 +290,15 @@ export class WorkoutLogDetailComponent implements OnInit {
     this.exerciseError.set(null);
 
     this.workoutLogService.updateExercise(this.logId, exerciseId, {
-      exerciseName:    raw.exerciseName.trim(),
-      muscleGroup:     Number(raw.muscleGroup) as MuscleGroup,
-      sortOrder:       raw.sortOrder,
-      sets:            raw.sets            ? Number(raw.sets)            : null,
-      reps:            raw.reps            ? Number(raw.reps)            : null,
-      weightKg:        raw.weightKg        ? Number(raw.weightKg)        : null,
-      durationSeconds: raw.durationSeconds ? Number(raw.durationSeconds) : null,
-      distanceMeters:  raw.distanceMeters  ? Number(raw.distanceMeters)  : null,
-      notes:           raw.notes.trim() || null,
+      exerciseName:          raw.exerciseName.trim(),
+      muscleGroup:           Number(raw.muscleGroup) as MuscleGroup,
+      sortOrder:             raw.sortOrder,
+      actualSets:            raw.actualSets            ? Number(raw.actualSets)            : null,
+      actualReps:            raw.actualReps            ? Number(raw.actualReps)            : null,
+      actualWeightKg:        raw.actualWeightKg        ? Number(raw.actualWeightKg)        : null,
+      actualDurationMinutes: raw.actualDurationMinutes ? Number(raw.actualDurationMinutes) : null,
+      actualDistanceMeters:  raw.actualDistanceMeters  ? Number(raw.actualDistanceMeters)  : null,
+      notes:                 raw.notes.trim() || null,
     }).subscribe({
       next: () => {
         this.savingExercise.set(false);

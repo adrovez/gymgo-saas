@@ -114,20 +114,11 @@ public static class ClassReservationEndpoints
 
 // ── Request bodies ─────────────────────────────────────────────────────────────
 
-/// <summary>
-/// Cuerpo del request para crear una reserva.
-/// </summary>
+/// <summary>Cuerpo del request para crear una reserva.</summary>
 public sealed record CreateReservationRequest(
-    /// <summary>Id del socio.</summary>
-    Guid MemberId,
-
-    /// <summary>Id del horario semanal (ClassSchedule).</summary>
-    Guid ClassScheduleId,
-
-    /// <summary>Fecha exacta de la sesión a reservar.</summary>
-    DateOnly SessionDate,
-
-    /// <summary>Observaciones opcionales.</summary>
-    string? Notes
+    Guid      MemberId,        // Id del socio.
+    Guid      ClassScheduleId, // Id del horario semanal (ClassSchedule).
+    DateOnly  SessionDate,     // Fecha exacta de la sesión a reservar.
+    string?   Notes            // Observaciones opcionales.
 );
 
