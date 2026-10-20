@@ -41,7 +41,7 @@
     class="hidden lg:flex items-center gap-0.5 flex-1"
     aria-label="Navegación principal"
   >
-    @for (entry of navEntries; track entry.label) {
+    @for (entry of navEntries(); track entry.label) {
 
       @if (entry.type === 'link') {
         <!-- Ítem directo (Dashboard, Ingreso) -->
@@ -231,7 +231,7 @@
   >
     <div class="px-3 py-3 space-y-0.5">
 
-      @for (entry of navEntries; track entry.label) {
+      @for (entry of navEntries(); track entry.label) {
 
         @if (entry.type === 'link') {
           <!-- Ítem directo -->

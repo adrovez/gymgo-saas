@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.Users.Commands.ChangeUserPassword;
 using GymGo.Application.Users.Commands.CreateUser;
 using GymGo.Application.Users.Commands.ToggleUserActive;
@@ -16,7 +17,7 @@ public static class UserEndpoints
     {
         var group = app.MapGroup("/api/v1/users")
             .WithTags("Users")
-            .RequireAuthorization();
+            .RequireAuthorization(AuthPolicies.AdminOrOwner);
 
         // ── GET /api/v1/users ────────────────────────────────────────────────
         group.MapGet("/", async (

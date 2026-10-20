@@ -62,6 +62,13 @@ public sealed class MembershipAssignment : AggregateRoot, IAuditable, ITenantSco
     /// <summary>Días acumulados de congelamiento. Se suman a EndDate al descongelar.</summary>
     public int FrozenDaysAccumulated { get; private set; }
 
+    // ── Vínculo con la venta que originó esta asignación ─────────────────
+    /// <summary>
+    /// Id de la Sale que creó esta asignación.
+    /// Null para asignaciones creadas antes del módulo de ventas (flujo legado).
+    /// </summary>
+    public Guid? SaleId { get; private set; }
+
     // ── Observaciones ─────────────────────────────────────────────────────
     public string? Notes { get; private set; }
 
@@ -81,7 +88,8 @@ public sealed class MembershipAssignment : AggregateRoot, IAuditable, ITenantSco
 
     private MembershipAssignment(
         Guid id, Guid tenantId, Guid memberId, Guid membershipPlanId,
-        DateOnly startDate, DateOnly endDate, decimal amountSnapshot, string? notes)
+        DateOnly startDate, DateOnly endDate, decimal amountSnapshot,
+        Guid? saleId, string? notes)
         : base(id)
     {
         TenantId          = tenantId;
@@ -92,6 +100,7 @@ public sealed class MembershipAssignment : AggregateRoot, IAuditable, ITenantSco
         AmountSnapshot    = amountSnapshot;
         Status            = AssignmentStatus.Active;
         PaymentStatus     = PaymentStatus.Pending;
+        SaleId            = saleId;
         Notes             = notes;
         FrozenDaysAccumulated = 0;
     }
@@ -115,6 +124,7 @@ public sealed class MembershipAssignment : AggregateRoot, IAuditable, ITenantSco
         int planDurationDays,
         decimal amountSnapshot,
         DateOnly? startDate = null,
+        Guid? saleId = null,
         string? notes = null)
     {
         if (tenantId == Guid.Empty)
@@ -147,6 +157,7 @@ public sealed class MembershipAssignment : AggregateRoot, IAuditable, ITenantSco
         return new MembershipAssignment(
             Guid.NewGuid(), tenantId, memberId, membershipPlanId,
             start, end, amountSnapshot,
+            saleId,
             string.IsNullOrWhiteSpace(notes) ? null : notes.Trim());
     }
 

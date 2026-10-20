@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.MembershipAssignments.Commands.AssignMembershipPlan;
 using GymGo.Application.MembershipAssignments.Commands.CancelAssignment;
 using GymGo.Application.MembershipAssignments.Commands.FreezeMembership;
@@ -24,7 +25,7 @@ public static class MembershipAssignmentEndpoints
             })
             .WithTags("MembershipAssignments")
             .WithSummary("Historial de membresías del socio")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -38,7 +39,7 @@ public static class MembershipAssignmentEndpoints
             .WithTags("MembershipAssignments")
             .WithSummary("Membresía activa del socio")
             .WithDescription("Retorna la membresía activa o congelada del socio. 204 si no tiene membresía vigente.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .Produces(204)
             .ProducesProblem(401);
@@ -54,7 +55,7 @@ public static class MembershipAssignmentEndpoints
             .WithTags("MembershipAssignments")
             .WithSummary("Asignar plan de membresía a un socio")
             .WithDescription("El socio no puede tener ya una membresía activa o congelada. El plan debe estar activo.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(201)
             .ProducesProblem(400)
             .ProducesProblem(404)
@@ -71,7 +72,7 @@ public static class MembershipAssignmentEndpoints
             .WithTags("MembershipAssignments")
             .WithSummary("Registrar pago de membresía")
             .WithDescription("Marca la membresía como pagada. Si el socio estaba moroso, se reactiva automáticamente a Activo.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -86,7 +87,7 @@ public static class MembershipAssignmentEndpoints
             })
             .WithTags("MembershipAssignments")
             .WithSummary("Cancelar membresía")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -102,7 +103,7 @@ public static class MembershipAssignmentEndpoints
             .WithTags("MembershipAssignments")
             .WithSummary("Congelar membresía")
             .WithDescription("Solo disponible si el plan tiene AllowsFreezing = true.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -118,7 +119,7 @@ public static class MembershipAssignmentEndpoints
             .WithTags("MembershipAssignments")
             .WithSummary("Descongelar membresía")
             .WithDescription("Extiende la fecha de vencimiento por los días que estuvo congelada.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -138,7 +139,7 @@ public static class MembershipAssignmentEndpoints
                 "Devuelve todas las asignaciones de membresía de los socios cuyo nombre o RUT " +
                 "coincida con el término de búsqueda. Mínimo 2 caracteres. " +
                 "Incluye asignaciones activas, vencidas y canceladas.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -155,7 +156,7 @@ public static class MembershipAssignmentEndpoints
             })
             .WithTags("MembershipAssignments")
             .WithSummary("Membresías por vencer y vencidas recientemente")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 

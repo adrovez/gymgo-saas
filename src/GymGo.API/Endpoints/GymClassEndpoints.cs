@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.GymClasses.Commands.CreateClassSchedule;
 using GymGo.Application.GymClasses.Commands.CreateGymClass;
 using GymGo.Application.GymClasses.Commands.DeactivateGymClass;
@@ -26,7 +27,7 @@ public static class GymClassEndpoints
             })
             .WithTags("GymClasses")
             .WithSummary("Listado de clases del gimnasio")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -39,7 +40,7 @@ public static class GymClassEndpoints
             })
             .WithTags("GymClasses")
             .WithSummary("Detalle de una clase con sus horarios")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(200)
             .ProducesProblem(404)
             .ProducesProblem(401);
@@ -58,7 +59,7 @@ public static class GymClassEndpoints
             })
             .WithTags("GymClasses")
             .WithSummary("Crear tipo de clase")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(201)
             .ProducesProblem(400)
             .ProducesProblem(401);
@@ -77,7 +78,7 @@ public static class GymClassEndpoints
             })
             .WithTags("GymClasses")
             .WithSummary("Actualizar tipo de clase")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(400)
@@ -92,7 +93,7 @@ public static class GymClassEndpoints
             })
             .WithTags("GymClasses")
             .WithSummary("Desactivar clase")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -107,7 +108,7 @@ public static class GymClassEndpoints
             })
             .WithTags("GymClasses")
             .WithSummary("Reactivar clase")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -123,7 +124,7 @@ public static class GymClassEndpoints
             .WithTags("GymClasses")
             .WithSummary("Calendario semanal de horarios activos")
             .WithDescription("Devuelve todos los horarios activos de clases activas, ordenados por día y hora.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -141,7 +142,7 @@ public static class GymClassEndpoints
             })
             .WithTags("GymClasses")
             .WithSummary("Crear horario para una clase")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(201)
             .ProducesProblem(400)
             .ProducesProblem(404)
@@ -162,7 +163,7 @@ public static class GymClassEndpoints
             })
             .WithTags("GymClasses")
             .WithSummary("Actualizar horario")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(400)
@@ -177,7 +178,7 @@ public static class GymClassEndpoints
             })
             .WithTags("GymClasses")
             .WithSummary("Eliminar horario (soft delete)")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(401);

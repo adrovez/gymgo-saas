@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.GymEntries.Commands.RegisterGymEntry;
 using GymGo.Application.GymEntries.Commands.RegisterGymExit;
 using GymGo.Application.GymEntries.Queries.GetGymEntriesByDate;
@@ -32,7 +33,7 @@ public static class GymEntryEndpoints
                 "en el plan (si el plan tiene días fijos) y que el horario sea el correcto " +
                 "(si el plan tiene horario restringido). " +
                 "Retorna 422 si alguna validación falla.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(201)
             .ProducesProblem(400)
             .ProducesProblem(404)
@@ -52,7 +53,7 @@ public static class GymEntryEndpoints
             .WithDescription(
                 "Registra la hora de salida del socio para el registro de ingreso indicado. " +
                 "Retorna 422 si la salida ya fue registrada o si el id no existe.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -72,7 +73,7 @@ public static class GymEntryEndpoints
                 "Devuelve todos los ingresos registrados para la fecha indicada, " +
                 "ordenados del más reciente al más antiguo. " +
                 "Si no se indica date, se usa la fecha actual (UTC).")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 

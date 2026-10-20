@@ -3,6 +3,41 @@
   <!-- Topnav horizontal (incluye menú mobile) -->
   <app-navbar />
 
+  <!-- Banner de acceso denegado ─────────────────────────────────────────── -->
+  @if (forbidden.message(); as msg) {
+    <div
+      role="alert"
+      class="flex items-center justify-between gap-3 px-4 py-3 text-sm font-medium"
+      style="
+        background: #FEF3C7;
+        border-bottom: 1px solid #F59E0B;
+        color: #92400E;
+      "
+    >
+      <div class="flex items-center gap-2">
+        <!-- Icono advertencia -->
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <span>{{ msg }}</span>
+      </div>
+
+      <!-- Botón cerrar -->
+      <button
+        type="button"
+        (click)="forbidden.clear()"
+        aria-label="Cerrar aviso"
+        class="shrink-0 rounded p-0.5 transition-opacity hover:opacity-70"
+        style="color: #92400E"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  }
+
   <!-- Contenido principal -->
   <main class="flex-1 overflow-y-auto p-6" id="main-content" tabindex="-1">
     <router-outlet />

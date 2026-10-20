@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.WorkoutLogs.Commands.AddExercise;
 using GymGo.Application.WorkoutLogs.Commands.CompleteWorkoutLog;
 using GymGo.Application.WorkoutLogs.Commands.CreateWorkoutLog;
@@ -32,7 +33,7 @@ public static class WorkoutLogEndpoints
             .WithTags("WorkoutLogs")
             .WithSummary("Registrar sesión de entrenamiento")
             .WithDescription("Crea un registro de avances para el día de rutina indicado. El estado inicial es Draft.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(201).ProducesProblem(400).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // GET /api/v1/workout-logs?memberId=...&workoutPlanId=...&from=...&to=...
@@ -44,7 +45,7 @@ public static class WorkoutLogEndpoints
             })
             .WithTags("WorkoutLogs")
             .WithSummary("Historial de sesiones de un socio")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(200).ProducesProblem(401);
 
         // GET /api/v1/workout-logs/{id}
@@ -56,7 +57,7 @@ public static class WorkoutLogEndpoints
             })
             .WithTags("WorkoutLogs")
             .WithSummary("Obtener detalle de una sesión")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(200).ProducesProblem(404).ProducesProblem(401);
 
         // PUT /api/v1/workout-logs/{id}
@@ -68,7 +69,7 @@ public static class WorkoutLogEndpoints
             })
             .WithTags("WorkoutLogs")
             .WithSummary("Editar notas de la sesión")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(400).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // PATCH /api/v1/workout-logs/{id}/complete
@@ -80,7 +81,7 @@ public static class WorkoutLogEndpoints
             })
             .WithTags("WorkoutLogs")
             .WithSummary("Completar sesión de entrenamiento")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // DELETE /api/v1/workout-logs/{id}
@@ -92,7 +93,7 @@ public static class WorkoutLogEndpoints
             })
             .WithTags("WorkoutLogs")
             .WithSummary("Eliminar sesión de entrenamiento")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(404).ProducesProblem(401);
 
         // POST /api/v1/workout-logs/{id}/exercises
@@ -118,7 +119,7 @@ public static class WorkoutLogEndpoints
             })
             .WithTags("WorkoutLogs")
             .WithSummary("Registrar ejercicio en la sesión")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(201).ProducesProblem(400).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // PUT /api/v1/workout-logs/{id}/exercises/{exerciseId}
@@ -142,7 +143,7 @@ public static class WorkoutLogEndpoints
             })
             .WithTags("WorkoutLogs")
             .WithSummary("Actualizar ejercicio de la sesión")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(400).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // DELETE /api/v1/workout-logs/{id}/exercises/{exerciseId}
@@ -154,7 +155,7 @@ public static class WorkoutLogEndpoints
             })
             .WithTags("WorkoutLogs")
             .WithSummary("Eliminar ejercicio de la sesión")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         return app;

@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.MembershipPlans.Commands.CreateMembershipPlan;
 using GymGo.Application.MembershipPlans.Commands.DeactivateMembershipPlan;
 using GymGo.Application.MembershipPlans.Commands.ReactivateMembershipPlan;
@@ -16,7 +17,7 @@ public static class MembershipPlanEndpoints
     {
         var group = app.MapGroup("/api/v1/membership-plans")
             .WithTags("MembershipPlans")
-            .RequireAuthorization();
+            .RequireAuthorization(AuthPolicies.StaffOrAbove);
 
         // ── GET /api/v1/membership-plans ─────────────────────────────────────
         group.MapGet("/", async (

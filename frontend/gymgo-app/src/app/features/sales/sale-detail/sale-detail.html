@@ -1,0 +1,215 @@
+<!-- Sale detail page -->
+<div class="p-6 max-w-3xl mx-auto space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Detalle de venta</h1>
+      @if (sale(); as s) {
+        <p class="page-description">
+          {{ s.memberFullName }} · {{ s.date }}
+        </p>
+      }
+    </div>
+    <div class="flex items-center gap-2">
+      @if (sale()?.status === SaleStatus.Confirmed) {
+        <button type="button" class="btn btn-danger"
+                [disabled]="voiding()"
+                (click)="voidSale()">
+          @if (voiding()) { Anulando... } @else { Anular venta }
+        </button>
+      }
+      <a routerLink="/app/sales" class="btn btn-ghost">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Volver
+      </a>
+    </div>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="card p-10 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+      <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+      <span class="text-sm">Cargando...</span>
+    </div>
+  } @else if (sale(); as s) {
+
+    <!-- ── Estado de la venta ──────────────────────────────────────────────────── -->
+    @if (s.status === SaleStatus.Voided) {
+      <div class="alert" role="alert"
+           style="background: var(--color-error-subtle, #fee2e2); border-color: var(--color-error); color: var(--color-error)">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"/>
+        </svg>
+        <div>
+          <p class="font-medium">Venta anulada</p>
+          @if (s.voidReason) {
+            <p class="text-sm mt-0.5">Motivo: {{ s.voidReason }}</p>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ── Datos generales ─────────────────────────────────────────────────────── -->
+    <div class="card p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold" style="color: var(--color-foreground)">Información general</h2>
+        <span [class]="statusBadgeStyle(s.status)">{{ s.statusLabel }}</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+        <div>
+          <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Socio</p>
+          <a [routerLink]="['/app/members', s.memberId, 'edit']"
+             class="font-medium hover:underline" style="color: var(--color-foreground)">
+            {{ s.memberFullName || '—' }}
+          </a>
+          <p class="font-mono text-xs mt-0.5" style="color: var(--color-muted-fg)">{{ s.memberRut }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Fecha</p>
+          <p style="color: var(--color-foreground)">{{ s.date }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Método de pago</p>
+          <p style="color: var(--color-foreground)">{{ s.paymentMethodLabel }}</p>
+        </div>
+        @if (s.membershipAssignmentId) {
+          <div>
+            <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Membresía generada</p>
+            <a [routerLink]="['/app/members', s.memberId, 'assignments']"
+               class="text-xs font-mono hover:underline" style="color: var(--color-primary)">
+              Ver historial
+            </a>
+          </div>
+        }
+        @if (s.cashTransactionId) {
+          <div>
+            <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Transacción en Caja</p>
+            <a routerLink="/app/cash"
+               class="text-xs hover:underline" style="color: var(--color-primary)">
+              Ver Caja
+            </a>
+          </div>
+        }
+        @if (s.notes) {
+          <div class="col-span-2 sm:col-span-3">
+            <p class="text-xs font-medium mb-0.5" style="color: var(--color-muted-fg)">Notas</p>
+            <p class="text-sm" style="color: var(--color-foreground)">{{ s.notes }}</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ── Ítems ───────────────────────────────────────────────────────────────── -->
+    <div class="card p-0 overflow-hidden">
+      <div class="px-4 py-3" style="border-bottom: 1px solid var(--color-border)">
+        <h2 class="text-sm font-semibold" style="color: var(--color-foreground)">Ítems vendidos</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Descripción</th>
+              <th class="cell-right">Precio unit.</th>
+              <th class="cell-center">Cant.</th>
+              <th class="cell-right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of s.items; track item.id) {
+              <tr>
+                <td><span class="badge">{{ SALE_ITEM_TYPE_LABELS[item.itemType] }}</span></td>
+                <td class="text-sm" style="color: var(--color-foreground)">
+                  {{ item.description }}
+                  @if (item.planName) {
+                    <span class="block text-xs" style="color: var(--color-muted-fg)">{{ item.planName }}</span>
+                  }
+                </td>
+                <td class="cell-right text-sm" style="font-variant-numeric: tabular-nums; color: var(--color-muted-fg)">
+                  {{ formatAmount(item.unitPrice) }}
+                </td>
+                <td class="cell-center text-sm" style="color: var(--color-muted-fg)">{{ item.quantity }}</td>
+                <td class="cell-right text-sm font-medium" style="font-variant-numeric: tabular-nums">
+                  {{ formatAmount(item.subtotal) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Descuentos ──────────────────────────────────────────────────────────── -->
+    @if (s.discounts.length > 0) {
+      <div class="card p-0 overflow-hidden">
+        <div class="px-4 py-3" style="border-bottom: 1px solid var(--color-border)">
+          <h2 class="text-sm font-semibold" style="color: var(--color-foreground)">Descuentos aplicados</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th class="cell-right">Valor</th>
+                <th class="cell-right">Monto desc.</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of s.discounts; track d.id) {
+                <tr>
+                  <td><span class="badge">{{ SALE_DISCOUNT_TYPE_LABELS[d.discountType] }}</span></td>
+                  <td class="text-sm" style="color: var(--color-foreground)">{{ d.description }}</td>
+                  <td class="cell-right text-sm" style="color: var(--color-muted-fg)">
+                    {{ d.discountType === SaleDiscountType.Porcentaje ? d.value + '%' : formatAmount(d.value) }}
+                  </td>
+                  <td class="cell-right text-sm font-medium" style="color: var(--color-error); font-variant-numeric: tabular-nums">
+                    −{{ formatAmount(d.amount) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- ── Totales ─────────────────────────────────────────────────────────────── -->
+    <div class="card p-4 space-y-2 text-sm">
+      <div class="flex justify-between" style="color: var(--color-muted-fg)">
+        <span>Subtotal</span>
+        <span style="font-variant-numeric: tabular-nums">{{ formatAmount(s.subtotalAmount) }}</span>
+      </div>
+      @if (s.discountAmount > 0) {
+        <div class="flex justify-between" style="color: var(--color-error)">
+          <span>Descuento total</span>
+          <span style="font-variant-numeric: tabular-nums">−{{ formatAmount(s.discountAmount) }}</span>
+        </div>
+      }
+      <div class="flex justify-between text-base font-bold pt-2"
+           style="border-top: 2px solid var(--color-border); color: var(--color-foreground)">
+        <span>Total cobrado</span>
+        <span style="font-variant-numeric: tabular-nums">{{ formatAmount(s.totalAmount) }}</span>
+      </div>
+    </div>
+
+  }
+
+</div>

@@ -97,6 +97,17 @@ Ejecutar scripts SQL en orden:
 database/sql/00_database/01_CreateDatabase.sql
 database/sql/01_schema/01_Tenants.sql
 database/sql/01_schema/02_Users.sql
+database/sql/01_schema/03_Members.sql
+database/sql/01_schema/04_MembershipPlans.sql
+database/sql/01_schema/05_MembershipAssignments.sql
+database/sql/01_schema/06_GymClasses.sql
+database/sql/01_schema/07_ClassAttendances.sql
+database/sql/01_schema/08_GymEntries.sql
+database/sql/01_schema/08b_GymEntries_AddExitedAt.sql
+database/sql/01_schema/09_ClassReservations.sql
+database/sql/01_schema/10_Equipment.sql
+database/sql/01_schema/11_MaintenanceRecords.sql
+database/sql/01_schema/13_WorkoutRoutines.sql   ← reemplaza al 12 (elimina tablas anteriores primero)
 database/sql/02_seed/01_DefaultData.sql
 ```
 
@@ -128,7 +139,34 @@ npm run start
 
 ---
 
-## 6) Calidad y validación
+## 6) Módulos implementados
+
+| Módulo | Ruta frontend | Estado |
+|--------|--------------|--------|
+| Dashboard | `/app/dashboard` | ✅ |
+| Socios | `/app/members` | ✅ |
+| Usuarios | `/app/users` | ✅ |
+| Planes de membresía | `/app/membership-plans` | ✅ |
+| Membresías | `/app/assignments` | ✅ Solo monitoreo — nueva membresía se crea desde Ventas |
+| Ingreso al gimnasio | `/app/gym-entry` | ✅ |
+| Clases | `/app/classes` | ✅ |
+| Reservas | `/app/reservations` | ✅ |
+| Equipamiento | `/app/equipment` | ✅ |
+| Mantención | `/app/maintenance` | ✅ |
+| Ventas (POS) | `/app/sales` | ✅ Pantalla única — crea membresía + caja al confirmar |
+| Caja | `/app/cash` | ✅ |
+| Rutinas | `/app/workout-plans` | ✅ |
+| Sesiones de entrenamiento | `/app/workout-logs` | ✅ |
+
+### Flujo de venta (resumen)
+1. Cajero busca socio → selecciona → se crea borrador automáticamente.
+2. Agrega conceptos: **Membresía** (selecciona plan → vigencia calculada en frontend), Matrícula, Servicio Extra u Otro.
+3. Aplica descuento (monto fijo opcional).
+4. Presiona **Cobrar** → backend confirma en una transacción: crea `MembershipAssignment` (si hay plan) + `CashTransaction` (siempre).
+
+---
+
+## 7) Calidad y validación
 
 ### Backend
 ```bash
@@ -145,7 +183,7 @@ npm run build
 
 ---
 
-## 7) Convenciones operativas
+## 8) Convenciones operativas
 
 - Mantener aislamiento multi-tenant como requisito no negociable.
 - No introducir cambios de esquema sin script SQL asociado.
@@ -154,7 +192,7 @@ npm run build
 
 ---
 
-## 8) Documentación complementaria
+## 9) Documentación complementaria
 
 - `AGENTS.md`: guía operativa para cambios de código y seguridad SaaS.
 - `docs/arquitectura/`: documentación técnica de backend/frontend.

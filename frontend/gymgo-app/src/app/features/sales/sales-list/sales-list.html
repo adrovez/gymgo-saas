@@ -1,0 +1,245 @@
+<!-- Sales list page -->
+<div class="p-6 space-y-6">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Ventas</h1>
+      <p class="page-description">Registro de ventas de planes y servicios</p>
+    </div>
+    <a routerLink="/app/sales/new" class="btn btn-primary">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nueva venta
+    </a>
+  </div>
+
+  <!-- ── Filtros ────────────────────────────────────────────────────────────── -->
+  <section aria-label="Filtros">
+    <div class="card p-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+        <!-- Estado -->
+        <div>
+          <label for="filter-status" class="block text-xs font-medium mb-1"
+                 style="color: var(--color-muted-fg)">Estado</label>
+          <select id="filter-status" class="form-input"
+                  [ngModel]="filterStatus()"
+                  (ngModelChange)="filterStatus.set($event)">
+            <option value="">Todos</option>
+            @for (opt of statusOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Desde -->
+        <div>
+          <label for="filter-from" class="block text-xs font-medium mb-1"
+                 style="color: var(--color-muted-fg)">Desde</label>
+          <input id="filter-from" type="date" class="form-input"
+                 [ngModel]="filterFrom()"
+                 (ngModelChange)="filterFrom.set($event)" />
+        </div>
+
+        <!-- Hasta -->
+        <div>
+          <label for="filter-to" class="block text-xs font-medium mb-1"
+                 style="color: var(--color-muted-fg)">Hasta</label>
+          <input id="filter-to" type="date" class="form-input"
+                 [ngModel]="filterTo()"
+                 (ngModelChange)="filterTo.set($event)" />
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-end gap-2 mt-3">
+        <button type="button" class="btn btn-ghost btn-sm" (click)="clearFilters()">
+          Limpiar
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="applyFilters()">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0114 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.586a1 1 0 00-.293-.707L1.293 6.707A1 1 0 011 6V4z"/>
+          </svg>
+          Filtrar
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Error ──────────────────────────────────────────────────────────────── -->
+  @if (error()) {
+    <div class="alert alert-error" role="alert">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- ── Resumen ingresos confirmados ────────────────────────────────────────── -->
+  @if (!loading() && sales().length > 0) {
+    <div class="card p-4 flex items-center gap-4">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+           style="background: var(--color-success-subtle, #dcfce7)">
+        <svg class="w-5 h-5" style="color: var(--color-success, #16a34a)"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-medium" style="color: var(--color-muted-fg)">Total ingresos confirmados</p>
+        <p class="text-lg font-bold" style="color: var(--color-foreground)">{{ formatAmount(totalIncome()) }}</p>
+      </div>
+      <span class="ml-auto text-xs" style="color: var(--color-muted-fg)">
+        {{ sales().length }} venta(s) en el período
+      </span>
+    </div>
+  }
+
+  <!-- ── Tabla ───────────────────────────────────────────────────────────────── -->
+  <div class="card p-0 overflow-hidden">
+
+    @if (loading()) {
+      <div class="p-10 flex items-center justify-center gap-3" style="color: var(--color-muted-fg)">
+        <span class="spinner" style="border-top-color: var(--color-primary); border-color: var(--color-border)"></span>
+        <span class="text-sm">Cargando ventas...</span>
+      </div>
+    } @else if (sales().length === 0) {
+      <div class="p-12 flex flex-col items-center gap-3 text-center">
+        <svg class="w-10 h-10" style="color: var(--color-muted-fg)"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        <p class="text-sm font-medium" style="color: var(--color-foreground)">Sin ventas registradas</p>
+        <p class="text-sm" style="color: var(--color-muted-fg)">
+          No hay ventas para los filtros seleccionados.
+        </p>
+        <a routerLink="/app/sales/new" class="btn btn-primary btn-sm mt-2">Crear primera venta</a>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Socio</th>
+              <th class="cell-center">Ítems</th>
+              <th>Método</th>
+              <th class="cell-right">Subtotal</th>
+              <th class="cell-right">Descuento</th>
+              <th class="cell-right">Total</th>
+              <th class="cell-center">Estado</th>
+              <th class="cell-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sale of sales(); track sale.id) {
+              <tr>
+
+                <!-- Fecha -->
+                <td style="font-size: 0.8125rem; white-space: nowrap; color: var(--color-muted-fg)">
+                  {{ sale.date }}
+                </td>
+
+                <!-- Socio -->
+                <td>
+                  <a [routerLink]="['/app/members', sale.memberId, 'edit']"
+                     class="group" style="color: var(--color-foreground)">
+                    <span class="block font-medium text-sm group-hover:underline">
+                      {{ sale.memberFullName || '—' }}
+                    </span>
+                    <span class="block text-xs font-mono" style="color: var(--color-muted-fg)">
+                      {{ sale.memberRut || '—' }}
+                    </span>
+                  </a>
+                </td>
+
+                <!-- Ítems -->
+                <td class="cell-center">
+                  <span class="text-sm" style="color: var(--color-muted-fg)">
+                    {{ sale.itemCount }}
+                  </span>
+                </td>
+
+                <!-- Método de pago -->
+                <td class="text-sm" style="color: var(--color-muted-fg)">
+                  {{ sale.paymentMethodLabel }}
+                </td>
+
+                <!-- Subtotal -->
+                <td class="cell-right text-sm" style="font-variant-numeric: tabular-nums; color: var(--color-muted-fg)">
+                  {{ formatAmount(sale.subtotalAmount) }}
+                </td>
+
+                <!-- Descuento -->
+                <td class="cell-right text-sm"
+                    [style.color]="sale.discountAmount > 0 ? 'var(--color-error)' : 'var(--color-muted-fg)'"
+                    style="font-variant-numeric: tabular-nums">
+                  @if (sale.discountAmount > 0) {
+                    −{{ formatAmount(sale.discountAmount) }}
+                  } @else {
+                    —
+                  }
+                </td>
+
+                <!-- Total -->
+                <td class="cell-right font-semibold text-sm" style="font-variant-numeric: tabular-nums">
+                  {{ formatAmount(sale.totalAmount) }}
+                </td>
+
+                <!-- Estado -->
+                <td class="cell-center">
+                  <span [class]="statusBadgeStyle(sale.status)">{{ sale.statusLabel }}</span>
+                </td>
+
+                <!-- Acciones -->
+                <td class="cell-actions">
+                  <div class="flex items-center justify-end gap-1">
+
+                    <!-- Ver detalle -->
+                    <a [routerLink]="['/app/sales', sale.id]"
+                       class="btn btn-ghost btn-sm" title="Ver detalle" aria-label="Ver detalle"
+                       style="color: var(--color-muted-fg)">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-3-9a9 9 0 100 18A9 9 0 0012 3z"/>
+                      </svg>
+                    </a>
+
+                    <!-- Eliminar (solo Draft) -->
+                    @if (sale.status === SaleStatus.Draft) {
+                      <button type="button" class="btn btn-ghost btn-sm"
+                              (click)="deleteVenta(sale)" title="Eliminar borrador" aria-label="Eliminar borrador"
+                              style="color: var(--color-error)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    }
+
+                  </div>
+                </td>
+
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center px-4 py-3"
+           style="border-top: 1px solid var(--color-border); color: var(--color-muted-fg); font-size: 0.8125rem">
+        <span>{{ sales().length }} venta(s)</span>
+      </div>
+    }
+
+  </div>
+
+</div>

@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './components/navbar/navbar';
+import { ForbiddenMessageService } from '../../core/services/forbidden-message.service';
 
 @Component({
   selector: 'app-shell',
@@ -8,4 +9,6 @@ import { NavbarComponent } from './components/navbar/navbar';
   imports: [RouterOutlet, NavbarComponent],
   templateUrl: './shell.html',
 })
-export class ShellComponent {}
+export class ShellComponent {
+  readonly forbidden = inject(ForbiddenMessageService);
+}

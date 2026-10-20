@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.ClassAttendances.Commands.CheckInMember;
 using GymGo.Application.ClassAttendances.Queries.GetAttendancesBySession;
 using GymGo.Domain.ClassAttendances;
@@ -31,7 +32,7 @@ public static class ClassAttendanceEndpoints
                 "Registra el check-in de un socio a una sesión concreta de clase. " +
                 "Si no se indica sessionDate, se usa la fecha actual (UTC). " +
                 "Retorna 422 si el socio ya tiene check-in para esa sesión.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(201)
             .ProducesProblem(400)
             .ProducesProblem(404)
@@ -52,7 +53,7 @@ public static class ClassAttendanceEndpoints
             .WithDescription(
                 "Devuelve todos los check-ins de un horario para la fecha indicada. " +
                 "Si no se indica sessionDate, se usa la fecha actual (UTC).")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 

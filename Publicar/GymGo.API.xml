@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>GymGo.API</name>
+    </assembly>
+    <members>
+        <member name="T:GymGo.API.Endpoints.RegisterCashRequest">
+            <summary>Cuerpo del request para registrar una transacción de caja.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.RegisterCashRequest.#ctor(System.DateOnly,GymGo.Domain.Cash.CashTransactionType,System.Decimal,GymGo.Domain.Cash.CashPaymentMethod,GymGo.Domain.Cash.TransactionConcept,System.String,System.Nullable{System.Guid},System.Nullable{System.Guid})">
+            <summary>Cuerpo del request para registrar una transacción de caja.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.VoidCashRequest">
+            <summary>Cuerpo del request para anular una transacción.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.VoidCashRequest.#ctor(System.String)">
+            <summary>Cuerpo del request para anular una transacción.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.CheckInRequest">
+            <summary>Cuerpo del request para registrar un check-in.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.CheckInRequest.#ctor(System.Guid,System.Guid,System.Nullable{System.DateOnly},System.Nullable{GymGo.Domain.ClassAttendances.CheckInMethod},System.String)">
+            <summary>Cuerpo del request para registrar un check-in.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.CreateReservationRequest">
+            <summary>Cuerpo del request para crear una reserva.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.CreateReservationRequest.#ctor(System.Guid,System.Guid,System.DateOnly,System.String)">
+            <summary>Cuerpo del request para crear una reserva.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.CreateEquipmentRequest">
+            <summary>Cuerpo del request para crear o actualizar una máquina.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.CreateEquipmentRequest.#ctor(System.String,System.String,System.String,System.String,System.Nullable{System.DateOnly},System.String)">
+            <summary>Cuerpo del request para crear o actualizar una máquina.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.RegisterGymEntryRequest">
+            <summary>Cuerpo del request para registrar el ingreso de un socio.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.RegisterGymEntryRequest.#ctor(System.Guid,System.Nullable{GymGo.Domain.GymEntries.GymEntryMethod},System.String)">
+            <summary>Cuerpo del request para registrar el ingreso de un socio.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.CreateMaintenanceRecordRequest">
+            <summary>Cuerpo del request para crear un registro de mantención.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.CreateMaintenanceRecordRequest.#ctor(System.Guid,GymGo.Domain.Maintenance.MaintenanceType,System.DateOnly,System.String,GymGo.Domain.Maintenance.ResponsibleType,System.Nullable{System.Guid},System.String,System.String)">
+            <summary>Cuerpo del request para crear un registro de mantención.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.CompleteMaintenanceRequest">
+            <summary>Cuerpo del request para completar una mantención.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.CompleteMaintenanceRequest.#ctor(System.String,System.Nullable{System.Decimal})">
+            <summary>Cuerpo del request para completar una mantención.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.UpdateMemberRequest">
+            <summary>Body para PUT /members/{id}.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.UpdateMemberRequest.#ctor(System.String,System.String,System.DateOnly,GymGo.Domain.Members.Gender,System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>Body para PUT /members/{id}.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.ChangeMemberStatusRequest">
+            <summary>Body para PATCH /members/{id}/status.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.ChangeMemberStatusRequest.#ctor(GymGo.Domain.Members.MemberStatus)">
+            <summary>Body para PATCH /members/{id}/status.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.UpdateMembershipPlanRequest">
+            <summary>Body para PUT /membership-plans/{id}.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.UpdateMembershipPlanRequest.#ctor(System.String,System.String,GymGo.Domain.MembershipPlans.Periodicity,System.Int32,System.Boolean,System.Boolean,System.Boolean,System.Boolean,System.Boolean,System.Boolean,System.Boolean,System.Boolean,System.Boolean,System.Nullable{System.TimeOnly},System.Nullable{System.TimeOnly},System.Decimal,System.Boolean)">
+            <summary>Body para PUT /membership-plans/{id}.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.UpdateUserRequest">
+            <summary>Body para PUT /api/v1/users/{id}.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.UpdateUserRequest.#ctor(System.String,GymGo.Domain.Users.UserRole,System.Boolean)">
+            <summary>Body para PUT /api/v1/users/{id}.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.ToggleActiveRequest">
+            <summary>Body para PATCH /api/v1/users/{id}/toggle-active.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.ToggleActiveRequest.#ctor(System.Boolean)">
+            <summary>Body para PATCH /api/v1/users/{id}/toggle-active.</summary>
+        </member>
+        <member name="T:GymGo.API.Endpoints.ChangePasswordRequest">
+            <summary>Body para PATCH /api/v1/users/{id}/password.</summary>
+        </member>
+        <member name="M:GymGo.API.Endpoints.ChangePasswordRequest.#ctor(System.String)">
+            <summary>Body para PATCH /api/v1/users/{id}/password.</summary>
+        </member>
+        <member name="T:GymGo.API.Middleware.GlobalExceptionHandler">
+            <summary>
+            Captura excepciones no manejadas y las traduce a ProblemDetails.
+            Registrado vía AddExceptionHandler + UseExceptionHandler.
+            </summary>
+        </member>
+        <member name="T:GymGo.API.Middleware.TenantResolutionMiddleware">
+            <summary>
+            Hace logs por request enriquecidos con tenant_id y user_id.
+            El ICurrentTenant se materializa al primer acceso (Lazy).
+            </summary>
+        </member>
+    </members>
+</doc>

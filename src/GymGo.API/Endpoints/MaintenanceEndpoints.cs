@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.Maintenance.Commands.CancelMaintenance;
 using GymGo.Application.Maintenance.Commands.CompleteMaintenance;
 using GymGo.Application.Maintenance.Commands.CreateMaintenanceRecord;
@@ -32,7 +33,7 @@ public static class MaintenanceEndpoints
                 "Devuelve registros de mantención del tenant. Filtros opcionales: " +
                 "equipmentId, type (0=Preventiva, 1=Correctiva), " +
                 "status (0=Pendiente, 1=EnProceso, 2=Completada, 3=Cancelada).")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -46,7 +47,7 @@ public static class MaintenanceEndpoints
             })
             .WithTags("Maintenance")
             .WithSummary("Obtener registro de mantención por Id")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(404)
             .ProducesProblem(401);
@@ -67,7 +68,7 @@ public static class MaintenanceEndpoints
             .WithTags("Maintenance")
             .WithSummary("Historial de mantención de una máquina")
             .WithDescription("Devuelve todos los registros de mantención de la máquina indicada.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -95,7 +96,7 @@ public static class MaintenanceEndpoints
                 "Crea un registro de mantención en estado Pendiente. " +
                 "Para responsable interno (0) se requiere responsibleUserId. " +
                 "Para responsable externo (1) se requiere externalProviderName.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(201)
             .ProducesProblem(400)
             .ProducesProblem(404)
@@ -115,7 +116,7 @@ public static class MaintenanceEndpoints
             .WithDescription(
                 "Cambia el estado de Pendiente a En Proceso. " +
                 "Retorna 422 si la mantención no está en estado Pendiente.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -137,7 +138,7 @@ public static class MaintenanceEndpoints
                 "Cambia el estado de En Proceso a Completada. " +
                 "Se pueden registrar observaciones y costo. " +
                 "Retorna 422 si la mantención no está En Proceso.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(400)
             .ProducesProblem(404)
@@ -158,7 +159,7 @@ public static class MaintenanceEndpoints
                 "Cancela una mantención Pendiente o En Proceso. " +
                 "El motivo se puede indicar como query param reason. " +
                 "Retorna 422 si la mantención ya está Completada o Cancelada.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)

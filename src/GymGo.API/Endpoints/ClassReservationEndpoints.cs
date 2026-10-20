@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.ClassReservations.Commands.CancelReservation;
 using GymGo.Application.ClassReservations.Commands.CreateReservation;
 using GymGo.Application.ClassReservations.Queries.GetReservationsByMember;
@@ -33,7 +34,7 @@ public static class ClassReservationEndpoints
                 "Valida que el socio esté activo, que el horario esté activo, que la fecha " +
                 "coincida con el día del horario, que no haya reserva duplicada y que " +
                 "existan cupos disponibles. Retorna 422 si alguna validación falla.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(201)
             .ProducesProblem(400)
             .ProducesProblem(404)
@@ -61,7 +62,7 @@ public static class ClassReservationEndpoints
                 "cancelStatus puede ser 1 (CancelledByMember) o 2 (CancelledByStaff). " +
                 "Parámetros opcionales vía query string: cancelStatus, reason. " +
                 "Retorna 422 si la reserva ya está cancelada o completada.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -81,7 +82,7 @@ public static class ClassReservationEndpoints
             .WithDescription(
                 "Devuelve todas las reservas (en cualquier estado) para la sesión indicada " +
                 "(ClassScheduleId + SessionDate), ordenadas por fecha de reserva.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -104,7 +105,7 @@ public static class ClassReservationEndpoints
             .WithDescription(
                 "Devuelve las reservas del socio, opcionalmente filtradas por estado y/o " +
                 "rango de fechas de sesión. Ordenadas por SessionDate descendente.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 

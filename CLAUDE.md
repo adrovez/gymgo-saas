@@ -119,6 +119,49 @@ Use Signals for local component state, reactive forms for forms, strict typing �
 6. **Frontend** — model interface, service, components under `features/<feature>/`; add route to `app.routes.ts`.
 7. **Tests** — unit tests for domain and handlers; integration test if endpoint is non-trivial.
 
+## Decisiones de diseño de módulos (historial de cambios UI/UX)
+
+### Módulo Membresías (`/app/assignments`)
+
+La ruta `/app/assignments/new` y el componente `AssignmentCreateComponent` fueron **eliminados** en julio 2026.
+
+**Motivo:** la creación de membresías se unificó en el módulo Ventas. Al confirmar una venta con un ítem de tipo `Plan`, el backend crea automáticamente el `MembershipAssignment` y el `CashTransaction` en una sola transacción (`ConfirmSaleCommandHandler`). Tener dos entradas para lo mismo generaba duplicidad y saltaba el registro de caja.
+
+**Impacto en frontend:**
+- `features/assignments/assignment-create/` → carpeta eliminada.
+- `app.routes.ts` → ruta `assignments/new` eliminada.
+- `assignments-list.html` → botón "Nueva asignación" reemplazado por "Nueva venta" → `/app/sales/new`.
+- `member-edit.html` → botón "Asignar plan" (tab Membresía, estado sin membresía) reemplazado por "Nueva venta" → `/app/sales/new`.
+
+**Lo que se mantiene en `/app/assignments`:** monitoreo de membresías por vencer (próximos 7 días) y vencidas recientemente (últimos 14 días), búsqueda por socio/RUT, y acciones de registrar pago / cancelar membresía.
+
+---
+
+### Módulo Ventas (`/app/sales/new`) — Rediseño POS
+
+`SaleCreateComponent` fue reescrito en julio 2026. Se eliminó el wizard de 4 pasos (Info → Ítems → Descuentos → Revisar) y se reemplazó por una **pantalla única tipo POS** de dos columnas.
+
+**Columna izquierda:** búsqueda de socio (con card informativa al seleccionar: nombre, RUT, estado), forma de pago, observación.
+
+**Columna derecha:** tabla de conceptos, formulario inline para agregar concepto, campo de descuento, total y botón Cobrar.
+
+**Reglas del nuevo diseño:**
+- El borrador (`Sale` con `Status = Draft`) se crea automáticamente en background cuando el usuario selecciona un socio. No hay "Paso 1 → Continuar".
+- Al limpiar el socio, el borrador se elimina en backend (`DELETE /sales/{id}`).
+- **Descuento:** solo monto fijo (`SaleDiscountType.MontoFijo`). Se guarda en estado local y se aplica vía `POST /sales/{id}/discounts` justo antes de `PATCH /sales/{id}/confirm` al cobrar.
+- **Total:** calculado reactivamente con `computed()`: `localTotal = subtotalAmount - discountAmount`. No requiere llamada extra al servidor.
+- **Vigencia de plan:** cuando el ítem es de tipo `Plan`, se muestra la vigencia calculada en frontend: `startDate = hoy`, `endDate = hoy + plan.durationDays - 1`.
+- El botón **Cobrar** lanza la confirmación. Al confirmar, el backend (`ConfirmSaleCommandHandler`) crea el `MembershipAssignment` (si hay ítem Plan) y el `CashTransaction` en una sola transacción atómica.
+- **Error conocido al cobrar:** si el socio ya tiene membresía activa o congelada, el backend retorna HTTP 422 con mensaje `"SALE_MEMBER_ALREADY_ACTIVE"`. Se muestra en el banner de error global.
+
+**Archivos modificados:**
+- `features/sales/sale-create/sale-create.ts` — reescritura completa.
+- `features/sales/sale-create/sale-create.html` — reescritura completa.
+
+**Archivos sin cambios:** `sale.models.ts`, `sale.service.ts`, `sales-list`, `sale-detail`, `app.routes.ts` (ruta `sales/new` intacta).
+
+---
+
 ## Módulo Rutinas de Entrenamiento
 
 ### Modelo de datos (5 tablas, script 13)

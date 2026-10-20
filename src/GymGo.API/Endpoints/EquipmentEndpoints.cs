@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.Equipment.Commands.CreateEquipment;
 using GymGo.Application.Equipment.Commands.DeactivateEquipment;
 using GymGo.Application.Equipment.Commands.ReactivateEquipment;
@@ -25,7 +26,7 @@ public static class EquipmentEndpoints
             .WithDescription(
                 "Devuelve el catálogo de máquinas del tenant. " +
                 "isActive=true devuelve solo activas, false solo inactivas, sin filtro devuelve todas.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -39,7 +40,7 @@ public static class EquipmentEndpoints
             })
             .WithTags("Equipment")
             .WithSummary("Obtener máquina por Id")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(404)
             .ProducesProblem(401);
@@ -66,7 +67,7 @@ public static class EquipmentEndpoints
             .WithDescription(
                 "Registra una nueva máquina en el catálogo del tenant. " +
                 "Solo el nombre es obligatorio.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(201)
             .ProducesProblem(400)
             .ProducesProblem(422)
@@ -91,7 +92,7 @@ public static class EquipmentEndpoints
             })
             .WithTags("Equipment")
             .WithSummary("Actualizar datos de una máquina")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(400)
             .ProducesProblem(404)
@@ -109,7 +110,7 @@ public static class EquipmentEndpoints
             .WithTags("Equipment")
             .WithSummary("Desactivar una máquina")
             .WithDescription("Marca la máquina como inactiva. Retorna 422 si ya está inactiva.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)
@@ -126,7 +127,7 @@ public static class EquipmentEndpoints
             .WithTags("Equipment")
             .WithSummary("Reactivar una máquina")
             .WithDescription("Reactiva una máquina previamente desactivada. Retorna 422 si ya está activa.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(404)
             .ProducesProblem(422)

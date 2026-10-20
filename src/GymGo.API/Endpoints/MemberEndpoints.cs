@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.Members.Commands.ChangeMemberStatus;
 using GymGo.Application.Members.Commands.CreateMember;
 using GymGo.Application.Members.Commands.DeleteMember;
@@ -14,9 +15,12 @@ public static class MemberEndpoints
 {
     public static IEndpointRouteBuilder MapMemberEndpoints(this IEndpointRouteBuilder app)
     {
+        // Instructor tiene solo lectura: el grupo aplica InstructorOrAbove (mínimo).
+        // Las rutas de escritura añaden StaffOrAbove; las políticas se suman (AND),
+        // por lo que Instructor queda bloqueado en POST/PUT/PATCH/DELETE.
         var group = app.MapGroup("/api/v1/members")
             .WithTags("Members")
-            .RequireAuthorization();
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove);
 
         // ── GET /api/v1/members ──────────────────────────────────────────────
         group.MapGet("/", async (
@@ -56,6 +60,7 @@ public static class MemberEndpoints
         })
         .WithSummary("Crear socio")
         .WithDescription("Da de alta a un nuevo socio en el gimnasio. El RUT debe ser válido (módulo 11) y único dentro del gimnasio.")
+        .RequireAuthorization(AuthPolicies.StaffOrAbove)
         .Produces(201)
         .ProducesProblem(400)
         .ProducesProblem(422)
@@ -82,6 +87,7 @@ public static class MemberEndpoints
         })
         .WithSummary("Actualizar socio")
         .WithDescription("Actualiza los datos personales y de contacto de un socio. No modifica el RUT ni el estado.")
+        .RequireAuthorization(AuthPolicies.StaffOrAbove)
         .Produces(204)
         .ProducesProblem(400)
         .ProducesProblem(404)
@@ -100,6 +106,7 @@ public static class MemberEndpoints
         })
         .WithSummary("Cambiar estado del socio")
         .WithDescription("Cambia el estado del socio: 0=Activo, 1=Suspendido, 2=Moroso.")
+        .RequireAuthorization(AuthPolicies.StaffOrAbove)
         .Produces(204)
         .ProducesProblem(400)
         .ProducesProblem(404)
@@ -114,6 +121,7 @@ public static class MemberEndpoints
         })
         .WithSummary("Dar de baja a un socio")
         .WithDescription("Realiza un soft-delete del socio. El registro se conserva en la base de datos con IsDeleted = true.")
+        .RequireAuthorization(AuthPolicies.StaffOrAbove)
         .Produces(204)
         .ProducesProblem(404)
         .ProducesProblem(401);

@@ -1,7 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+
+const ERROR_MESSAGES: Record<string, string> = {
+  'no-access': 'Esta cuenta no tiene acceso al panel de gestión.',
+};
 
 @Component({
   selector: 'app-login',
@@ -9,20 +13,28 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [ReactiveFormsModule],
   templateUrl: './login.html',
 })
-export class LoginComponent {
-  private readonly fb = inject(FormBuilder);
-  private readonly auth = inject(AuthService);
+export class LoginComponent implements OnInit {
+  private readonly fb     = inject(FormBuilder);
+  private readonly auth   = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route  = inject(ActivatedRoute);
 
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
+  readonly loading      = signal(false);
+  readonly error        = signal<string | null>(null);
   readonly showPassword = signal(false);
 
   readonly form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    email:    ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     tenantId: [''],
   });
+
+  ngOnInit(): void {
+    const errorParam = this.route.snapshot.queryParamMap.get('error');
+    if (errorParam && ERROR_MESSAGES[errorParam]) {
+      this.error.set(ERROR_MESSAGES[errorParam]);
+    }
+  }
 
   onSubmit(): void {
     if (this.form.invalid || this.loading()) return;

@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.WorkoutPlans.Commands.AddPlanDay;
 using GymGo.Application.WorkoutPlans.Commands.AddPlanExercise;
 using GymGo.Application.WorkoutPlans.Commands.CreateWorkoutPlan;
@@ -35,7 +36,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Crear rutina de entrenamiento")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(201).ProducesProblem(400).ProducesProblem(422).ProducesProblem(401);
 
         // GET /api/v1/workout-plans?memberId=...&status=0
@@ -47,7 +48,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Listar rutinas de un socio")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(200).ProducesProblem(401);
 
         // GET /api/v1/workout-plans/{id}
@@ -59,7 +60,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Obtener detalle de una rutina")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(200).ProducesProblem(404).ProducesProblem(401);
 
         // PUT /api/v1/workout-plans/{id}
@@ -80,7 +81,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Editar rutina")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(400).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // DELETE /api/v1/workout-plans/{id}
@@ -92,7 +93,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Eliminar rutina")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(404).ProducesProblem(401);
 
         // ── Días ──────────────────────────────────────────────────────────────
@@ -106,7 +107,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Agregar día a la rutina")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(201).ProducesProblem(400).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // DELETE /api/v1/workout-plans/{id}/days/{dayId}
@@ -118,7 +119,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Eliminar día de la rutina")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // ── Ejercicios del plan ───────────────────────────────────────────────
@@ -142,7 +143,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Agregar ejercicio al día de rutina")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(201).ProducesProblem(400).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // PUT /api/v1/workout-plans/days/{dayId}/exercises/{exerciseId}
@@ -166,7 +167,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Actualizar ejercicio del plan")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(400).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         // DELETE /api/v1/workout-plans/days/{dayId}/exercises/{exerciseId}
@@ -178,7 +179,7 @@ public static class WorkoutPlanEndpoints
             })
             .WithTags("WorkoutPlans")
             .WithSummary("Eliminar ejercicio del plan")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.InstructorOrAbove)
             .Produces(204).ProducesProblem(404).ProducesProblem(422).ProducesProblem(401);
 
         return app;

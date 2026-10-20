@@ -91,6 +91,7 @@ try
     app.MapWorkoutPlanEndpoints();
     app.MapWorkoutLogEndpoints();
     app.MapCashEndpoints();
+    app.MapSaleEndpoints();
     app.MapControllers();
 
     Log.Information("GymGo.API listo. Escuchando...");

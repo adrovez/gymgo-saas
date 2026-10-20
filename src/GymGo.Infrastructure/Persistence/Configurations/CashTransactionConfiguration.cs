@@ -1,4 +1,5 @@
 using GymGo.Domain.Cash;
+using GymGo.Domain.Sales;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -42,6 +43,19 @@ public sealed class CashTransactionConfiguration : IEntityTypeConfiguration<Cash
         // ── Vínculos opcionales ────────────────────────────────────────────
         builder.Property(t => t.MemberId);
         builder.Property(t => t.MembershipAssignmentId);
+        builder.Property(t => t.SaleId);
+
+        builder.HasIndex(t => t.SaleId)
+            .HasDatabaseName("IX_CashTransactions_SaleId")
+            .HasFilter("[SaleId] IS NOT NULL");
+
+        // FK explícita (sin navegación) para que EF conozca la dependencia y
+        // ordene los INSERT correctamente cuando Sale y CashTransaction se
+        // crean en el mismo SaveChanges (ver CheckoutSaleCommandHandler).
+        builder.HasOne<Sale>()
+            .WithMany()
+            .HasForeignKey(t => t.SaleId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         // ── Auditoría ──────────────────────────────────────────────────────
         builder.Property(t => t.ProcessedByUserId).IsRequired();

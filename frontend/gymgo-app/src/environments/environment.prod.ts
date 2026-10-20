@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: '/api/v1',
+  apiUrl: 'http://gymgo.api.nxoservicios.cl/api/v1',
 };

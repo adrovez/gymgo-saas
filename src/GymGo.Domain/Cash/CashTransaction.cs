@@ -31,6 +31,12 @@ public sealed class CashTransaction : AggregateRoot, ITenantScoped
     public Guid? MemberId { get; private set; }
     public Guid? MembershipAssignmentId { get; private set; }
 
+    /// <summary>
+    /// Id de la Sale que generó esta transacción.
+    /// Null para transacciones manuales o del flujo legado.
+    /// </summary>
+    public Guid? SaleId { get; private set; }
+
     // ── Auditoría ─────────────────────────────────────────────────────────
     public Guid ProcessedByUserId { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
@@ -63,7 +69,7 @@ public sealed class CashTransaction : AggregateRoot, ITenantScoped
         DateOnly date, CashTransactionType type, decimal amount,
         CashPaymentMethod paymentMethod, TransactionConcept concept,
         string? description, Guid? memberId, Guid? membershipAssignmentId,
-        Guid processedByUserId, DateTime createdAtUtc)
+        Guid? saleId, Guid processedByUserId, DateTime createdAtUtc)
         : base(id)
     {
         TenantId                = tenantId;
@@ -75,6 +81,7 @@ public sealed class CashTransaction : AggregateRoot, ITenantScoped
         Description             = description;
         MemberId                = memberId;
         MembershipAssignmentId  = membershipAssignmentId;
+        SaleId                  = saleId;
         ProcessedByUserId       = processedByUserId;
         CreatedAtUtc            = createdAtUtc;
     }
@@ -92,7 +99,8 @@ public sealed class CashTransaction : AggregateRoot, ITenantScoped
         Guid? memberId,
         Guid? membershipAssignmentId,
         Guid processedByUserId,
-        DateTime createdAtUtc)
+        DateTime createdAtUtc,
+        Guid? saleId = null)
     {
         if (amount <= 0)
             throw new BusinessRuleViolationException(
@@ -123,7 +131,7 @@ public sealed class CashTransaction : AggregateRoot, ITenantScoped
             date, type, amount, paymentMethod, concept,
             string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             memberId, membershipAssignmentId,
-            processedByUserId, createdAtUtc);
+            saleId, processedByUserId, createdAtUtc);
     }
 
     // ── Comportamiento ────────────────────────────────────────────────────

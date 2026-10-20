@@ -1,4 +1,5 @@
 using GymGo.Domain.MembershipAssignments;
+using GymGo.Domain.Sales;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -59,6 +60,20 @@ public sealed class MembershipAssignmentConfiguration : IEntityTypeConfiguration
         builder.Property(a => a.FrozenDaysAccumulated)
             .IsRequired()
             .HasDefaultValue(0);
+
+        // ── Vínculo con Sale ───────────────────────────────────────────
+        builder.Property(a => a.SaleId);
+        builder.HasIndex(a => a.SaleId)
+            .HasDatabaseName("IX_MembershipAssignments_SaleId")
+            .HasFilter("[SaleId] IS NOT NULL");
+
+        // FK explícita (sin navegación) para que EF conozca la dependencia y
+        // ordene los INSERT correctamente cuando Sale y MembershipAssignment se
+        // crean en el mismo SaveChanges (ver CheckoutSaleCommandHandler).
+        builder.HasOne<Sale>()
+            .WithMany()
+            .HasForeignKey(a => a.SaleId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         // ── Observaciones ──────────────────────────────────────────────
         builder.Property(a => a.Notes).HasMaxLength(500);

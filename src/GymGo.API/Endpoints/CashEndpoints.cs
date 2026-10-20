@@ -1,3 +1,4 @@
+using GymGo.API.Extensions;
 using GymGo.Application.Cash.Commands.RegisterTransaction;
 using GymGo.Application.Cash.Commands.VoidTransaction;
 using GymGo.Application.Cash.Queries.GetCashSummary;
@@ -33,7 +34,7 @@ public static class CashEndpoints
             .WithDescription(
                 "Registra un ingreso (cuota, matrícula, venta) o un egreso (servicios, mantención, insumos). " +
                 "Los egresos requieren descripción. Los vínculos a socio o membresía son solo para ingresos.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(201)
             .ProducesProblem(400)
             .ProducesProblem(422)
@@ -53,7 +54,7 @@ public static class CashEndpoints
             .WithTags("Cash")
             .WithSummary("Historial de transacciones de caja")
             .WithDescription("Incluye ingresos y egresos, incluyendo los anulados. Filtrar por 'type' para ver solo ingresos o solo egresos.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -69,7 +70,7 @@ public static class CashEndpoints
             .WithDescription(
                 "Retorna totales de ingresos, egresos y balance neto para el período. " +
                 "Las transacciones anuladas no se incluyen en los totales.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(200)
             .ProducesProblem(401);
 
@@ -83,7 +84,7 @@ public static class CashEndpoints
             .WithTags("Cash")
             .WithSummary("Anular transacción de caja")
             .WithDescription("La transacción queda en el historial como anulada. No se puede reactivar.")
-            .RequireAuthorization()
+            .RequireAuthorization(AuthPolicies.StaffOrAbove)
             .Produces(204)
             .ProducesProblem(400)
             .ProducesProblem(404)

@@ -7,6 +7,7 @@ Documento de referencia para funcionalidades planificadas, decisiones de diseño
 | 1.0     | 2026-04-22 | Documento inicial tras Sprint 0-1 + módulos Members y MembershipPlans. |
 | 1.1     | 2026-04-22 | Ítem 6 resuelto: `POST /auth/login` con JWT. |
 | 1.2     | 2026-05-04 | Ítems 16-19, 24-25, 31-32, 35, 41 resueltos. Módulo WorkoutLogs completado. Fix ruta Rutinas en navbar. |
+| 1.3     | 2026-07-16 | Ítems 11 y 12 resueltos por diseño (ver nota). Módulo Ventas rediseñado como POS. `AssignmentCreate` eliminado — flujo unificado en Ventas. |
 
 ---
 
@@ -36,10 +37,14 @@ Documento de referencia para funcionalidades planificadas, decisiones de diseño
 
 ## Módulo: Pagos
 
+> **Nota v1.3 (2026-07-16):** Los ítems 11 y 12 se resuelven por diseño a través del módulo Ventas.
+> Al confirmar una venta (`PATCH /sales/{id}/confirm`), `ConfirmSaleCommandHandler` crea automáticamente un `CashTransaction` (Ingreso) con el total de la venta, el método de pago y el concepto correspondiente (`CuotaMembresia` o `ProductoServicio`). Si la venta incluye un ítem de tipo Plan, también crea el `MembershipAssignment` vinculado.
+> No se creará una tabla `Payments` independiente — `CashTransaction` cumple esa función.
+
 | # | Ítem | Prioridad | Sprint |
 |---|------|:---------:|:------:|
-| 11 | Tabla `Payments`: registrar cada pago asociado a una asignación de membresía (`MembershipAssignmentId`, monto, fecha, medio de pago). | Alta | Sprint 3 |
-| 12 | Endpoint `POST /payments` — registrar pago manual desde recepción. | Alta | Sprint 3 |
+| ~~11~~ | ~~Tabla `Payments`: registrar cada pago asociado a una asignación de membresía.~~ | ~~Alta~~ | ✅ Resuelto por diseño (v1.3) |
+| ~~12~~ | ~~Endpoint `POST /payments` — registrar pago manual desde recepción.~~ | ~~Alta~~ | ✅ Resuelto por diseño (v1.3) |
 | 13 | Listado de socios morosos (`GET /members?status=Delinquent`). Ya soportado en query filter, falta lógica de marcado automático. | Alta | Sprint 3 |
 | 14 | Integración Transbank/Webpay para pagos en línea (Chile). | Baja | Post-MVP |
 | 15 | Integración MercadoPago para pagos en línea (resto de LATAM). | Baja | Post-MVP |

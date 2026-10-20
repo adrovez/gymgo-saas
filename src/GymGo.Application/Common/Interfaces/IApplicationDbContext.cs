@@ -8,6 +8,7 @@ using GymGo.Domain.Maintenance;
 using GymGo.Domain.Members;
 using GymGo.Domain.MembershipAssignments;
 using GymGo.Domain.MembershipPlans;
+using GymGo.Domain.Sales;
 using GymGo.Domain.Tenants;
 using GymGo.Domain.Users;
 using GymGo.Domain.WorkoutLogs;
@@ -39,6 +40,9 @@ public interface IApplicationDbContext
     DbSet<WorkoutLog> WorkoutLogs { get; }
     DbSet<WorkoutLogExercise> WorkoutLogExercises { get; }
     DbSet<CashTransaction> CashTransactions { get; }
+    DbSet<Sale> Sales { get; }
+    DbSet<SaleItem> SaleItems { get; }
+    DbSet<SaleDiscount> SaleDiscounts { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

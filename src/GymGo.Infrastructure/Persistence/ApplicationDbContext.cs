@@ -9,6 +9,7 @@ using GymGo.Domain.Maintenance;
 using GymGo.Domain.Members;
 using GymGo.Domain.MembershipAssignments;
 using GymGo.Domain.MembershipPlans;
+using GymGo.Domain.Sales;
 using GymGo.Domain.Tenants;
 using GymGo.Domain.Users;
 using GymGo.Domain.WorkoutLogs;
@@ -44,6 +45,9 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<WorkoutLog> WorkoutLogs => Set<WorkoutLog>();
     public DbSet<WorkoutLogExercise> WorkoutLogExercises => Set<WorkoutLogExercise>();
     public DbSet<CashTransaction> CashTransactions => Set<CashTransaction>();
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<SaleDiscount> SaleDiscounts => Set<SaleDiscount>();
 
     /// <summary>
     /// EF Core trata los accesos a propiedades de instancia del DbContext
@@ -135,5 +139,13 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
         // CashTransactions: ITenantScoped (sin soft delete — se anulan con IsVoided).
         modelBuilder.Entity<CashTransaction>().HasQueryFilter(t =>
             !CurrentHasTenant || t.TenantId == CurrentTenantIdOrEmpty);
+
+        // Sales: ITenantScoped + ISoftDeletable.
+        modelBuilder.Entity<Sale>().HasQueryFilter(s =>
+            (!CurrentHasTenant || s.TenantId == CurrentTenantIdOrEmpty)
+            && !s.IsDeleted);
+
+        // SaleItems y SaleDiscounts: sin QueryFilter propio —
+        // el aislamiento es transitivo a través de Sale (cascade).
     }
 }
